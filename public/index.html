@@ -3,679 +3,687 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Unity Mall eSME</title>
+  <title>Unity Mall eSME | Local Shopping Reimagined</title>
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { 
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      background: #111827;
-      color: #f3f4f6;
-      padding-bottom: 70px;
+    :root {
+      --primary: #ca8a04;
+      --primary-hover: #a16207;
+      --bg-dark: #111827;
+      --bg-card: #1f2937;
+      --bg-header: #000000;
+      --text-main: #f3f4f6;
+      --text-muted: #9ca3af;
+      --text-accent: #eab308;
+      --border: #374151;
+      --whatsapp: #25D366;
+      --whatsapp-hover: #1DA851;
+      --facebook: #1877f2;
+      --google: #ffffff;
     }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body { 
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg-dark);
+      color: var(--text-main);
+      padding-bottom: 70px;
+      line-height: 1.5;
+    }
+
+    /* Scrollbar Styling */
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: var(--bg-dark); }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+    /* Header */
     .header {
-      background: #000;
-      border-bottom: 2px solid #ca8a04;
-      padding: 16px;
+      background: var(--bg-header);
+      border-bottom: 2px solid var(--primary);
+      padding: 0.75rem 1rem;
       position: sticky;
       top: 0;
-      z-index: 10;
+      z-index: 100;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      height: 64px;
+    }
+
+    .logo-container {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+    }
+
+    .header h1 {
+      color: var(--text-accent);
+      font-size: 1.25rem;
+      font-weight: 800;
+      letter-spacing: -0.025em;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .cart-trigger {
+      position: relative;
+      background: none;
+      border: none;
+      color: var(--text-main);
+      font-size: 1.5rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 8px;
+    }
+
+    .cart-count {
+      position: absolute;
+      top: 0;
+      right: 0;
+      background: var(--primary);
+      color: #000;
+      font-size: 10px;
+      font-weight: bold;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .auth-btn {
+      background: var(--primary);
+      color: #000;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      font-size: 0.875rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .auth-btn:hover { background: var(--primary-hover); }
+
+    /* Info Bar */
+    .info-bar {
+      background: var(--bg-card);
+      border-bottom: 1px solid var(--border);
+      padding: 6px 16px;
+      text-align: center;
+      font-size: 11px;
+    }
+
+    .info-bar a {
+      color: var(--text-accent);
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    /* Hero Section */
+    .hero {
+      padding: 2.5rem 1rem;
+      background: linear-gradient(to bottom, #000, var(--bg-dark));
+      text-align: center;
+    }
+
+    .hero h2 {
+      font-size: 2.25rem;
+      font-weight: 800;
+      margin-bottom: 0.5rem;
+      background: linear-gradient(to right, #fff, var(--text-accent));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero p {
+      color: var(--text-muted);
+      max-width: 600px;
+      margin: 0 auto 1.5rem;
+    }
+
+    .m-t-1 { margin-top: 1rem; }
+
+    /* Search Section */
+    .search-container {
+      padding: 1rem;
+      position: sticky;
+      top: 64px;
+      background: var(--bg-dark);
+      z-index: 90;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .search-wrapper {
+      position: relative;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    .search-wrapper input {
+      width: 100%;
+      padding: 12px 16px 12px 40px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      color: var(--text-main);
+      font-size: 0.95rem;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .search-wrapper input:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px rgba(202, 138, 4, 0.2);
+    }
+
+    .search-icon {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-muted);
+    }
+
+    /* Categories */
+    .categories {
+      padding: 1rem;
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+
+    .categories::-webkit-scrollbar { display: none; }
+
+    .cat-btn {
+      white-space: nowrap;
+      padding: 8px 16px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      color: var(--text-muted);
+      font-size: 0.875rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .cat-btn.active {
+      background: var(--primary);
+      color: #000;
+      border-color: var(--primary);
+    }
+
+    /* Grid Layout */
+    .section-title {
+      padding: 1rem 1rem 0.5rem;
+      font-size: 1.1rem;
+      font-weight: 700;
       display: flex;
       justify-content: space-between;
       align-items: center;
     }
-    .header-content {
+
+    .results-count {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      font-weight: 400;
+    }
+
+    .grid-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(165px, 1fr));
+      gap: 12px;
+      padding: 1rem;
+    }
+
+    @media (min-width: 768px) {
+      .grid-container {
+        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+        gap: 20px;
+        padding: 1.5rem;
+      }
+    }
+
+    /* Product Card */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      transition: transform 0.2s, border-color 0.2s;
+    }
+
+    .card:hover {
+      transform: translateY(-4px);
+      border-color: var(--primary);
+    }
+
+    .card-img-container {
+      position: relative;
+      aspect-ratio: 1;
+      background: #2d3748;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    .card-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .card-badge {
+      position: absolute;
+      top: 8px;
+      left: 8px;
+      background: var(--primary);
+      color: #000;
+      font-size: 10px;
+      font-weight: 800;
+      padding: 2px 8px;
+      border-radius: 4px;
+      text-transform: uppercase;
+    }
+
+    .card-content {
+      padding: 12px;
       flex: 1;
+      display: flex;
+      flex-direction: column;
     }
-    .header h1 {
-      color: #eab308;
-      font-size: 24px;
-      font-weight: bold;
+
+    .card-category {
+      font-size: 10px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 4px;
     }
-    .auth-btn {
-      background: #ca8a04;
+
+    .card-name {
+      font-size: 0.9rem;
+      font-weight: 600;
+      margin-bottom: 4px;
+      color: var(--text-main);
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      line-height: 1.3;
+    }
+
+    .card-price {
+      font-size: 1.1rem;
+      font-weight: 800;
+      color: var(--text-accent);
+      margin-top: auto;
+    }
+
+    .card-meta {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 4px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .card-actions {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .btn-cart {
+      background: var(--primary);
       color: #000;
       border: none;
-      padding: 8px 16px;
-      border-radius: 6px;
-      font-size: 13px;
-      font-weight: 600;
+      padding: 8px;
+      border-radius: 8px;
+      font-size: 0.8rem;
+      font-weight: 700;
       cursor: pointer;
-      white-space: nowrap;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
     }
-    .auth-btn:active {
-      background: #a16207;
+
+    .btn-whatsapp {
+      background: var(--whatsapp);
+      color: #fff;
+      border: none;
+      padding: 8px;
+      border-radius: 8px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
+
+    /* Modal Styling Improvements */
     .modal {
       display: none;
       position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(0, 0, 0, 0.9);
-      z-index: 100;
-      overflow-y: auto;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(4px);
+      z-index: 200;
+      padding: 1rem;
     }
+
     .modal.show {
       display: flex;
       align-items: center;
       justify-content: center;
     }
+
     .modal-content {
-      background: #1f2937;
-      border: 1px solid #374151;
-      border-radius: 12px;
-      width: 90%;
-      max-width: 400px;
-      margin: 20px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      width: 100%;
+      max-width: 450px;
+      max-height: 90vh;
+      overflow-y: auto;
+      position: relative;
     }
+
     .modal-header {
-      padding: 20px;
-      border-bottom: 1px solid #374151;
-    }
-    .modal-title {
-      color: #eab308;
-      font-size: 20px;
-      font-weight: bold;
-    }
-    .modal-body {
-      padding: 20px;
-    }
-    .close-btn {
-      float: right;
-      background: none;
-      border: none;
-      color: #9ca3af;
-      font-size: 24px;
-      cursor: pointer;
-      line-height: 1;
-    }
-    .social-btns {
+      padding: 1.25rem;
+      border-bottom: 1px solid var(--border);
       display: flex;
-      flex-direction: column;
-      gap: 12px;
-      margin-bottom: 20px;
-    }
-    .social-btn {
-      width: 100%;
-      padding: 12px;
-      border: none;
-      border-radius: 8px;
-      font-weight: 600;
-      font-size: 14px;
-      cursor: pointer;
-      display: flex;
+      justify-content: space-between;
       align-items: center;
-      justify-content: center;
-      gap: 8px;
     }
-    .google-btn {
-      background: #fff;
-      color: #000;
-    }
-    .facebook-btn {
-      background: #1877f2;
-      color: #fff;
-    }
-    .phone-btn {
-      background: #25D366;
-      color: #fff;
-    }
-    .divider {
-      text-align: center;
-      color: #6b7280;
-      margin: 20px 0;
-      font-size: 14px;
-    }
-    .phone-input-group {
-      margin-top: 16px;
-    }
-    .phone-input {
-      width: 100%;
-      padding: 12px;
-      background: #111827;
-      border: 1px solid #374151;
-      border-radius: 8px;
-      color: #f3f4f6;
-      font-size: 14px;
-      margin-bottom: 12px;
-    }
-    .continue-btn {
-      width: 100%;
-      background: #ca8a04;
-      color: #000;
-      border: none;
-      padding: 12px;
-      border-radius: 8px;
-      font-weight: 700;
-      font-size: 16px;
-      cursor: pointer;
-    }
-    .continue-btn:active {
-      background: #a16207;
-    }
-    .toggle-text {
-      text-align: center;
-      margin-top: 16px;
-      color: #9ca3af;
-      font-size: 14px;
-    }
-    .toggle-link {
-      color: #eab308;
-      cursor: pointer;
-      text-decoration: underline;
-    }
-    .header p {
-      color: #9ca3af;
-      font-size: 14px;
-      margin-top: 4px;
-    }
-    .search {
-      padding: 16px;
-      background: #1f2937;
-    }
-    .search input {
-      width: 100%;
-      padding: 10px 12px;
-      background: #111827;
-      border: 1px solid #374151;
-      border-radius: 8px;
-      color: #f3f4f6;
-      font-size: 14px;
-    }
-    .categories {
-      padding: 12px 16px;
-      background: #1f2937;
-      border-bottom: 1px solid #374151;
-      overflow-x: auto;
-      white-space: nowrap;
-    }
-    .cat-btn {
-      display: inline-block;
-      padding: 6px 16px;
-      margin-right: 8px;
-      background: #374151;
-      color: #d1d5db;
-      border: none;
-      border-radius: 20px;
-      font-size: 14px;
-      cursor: pointer;
-    }
-    .cat-btn.active {
-      background: #ca8a04;
-      color: #000;
-    }
-    .results {
-      padding: 8px 16px;
-      color: #9ca3af;
-      font-size: 14px;
-    }
-    .stalls {
-      padding: 0 16px 16px;
-    }
-    .stall-card {
-      background: #1f2937;
-      border: 1px solid #374151;
-      border-radius: 8px;
-      padding: 16px;
-      margin-bottom: 12px;
-    }
-    .stall-name {
-      color: #eab308;
-      font-weight: 600;
-      font-size: 16px;
-    }
-    .stall-category {
-      color: #9ca3af;
-      font-size: 14px;
-      margin-top: 4px;
-    }
-    .stall-location {
-      color: #6b7280;
-      font-size: 12px;
-      margin-top: 4px;
-    }
-    .whatsapp-btn {
-      width: 100%;
-      background: #25D366;
-      color: white;
-      border: none;
-      padding: 10px;
-      border-radius: 8px;
-      font-weight: 600;
-      margin-top: 12px;
-      cursor: pointer;
-      font-size: 14px;
-    }
-    .whatsapp-btn:active {
-      background: #1DA851;
-    }
-    .contact-buttons {
+
+    .modal-body { padding: 1.25rem; }
+
+    /* Cart Specific */
+    .cart-item {
       display: grid;
-      grid-template-columns: 1fr 1fr 1fr;
-      gap: 8px;
-      margin-top: 12px;
+      grid-template-columns: 60px 1fr auto;
+      gap: 12px;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border);
     }
-    .contact-btn {
-      padding: 10px 8px;
-      border: none;
+
+    .cart-item-img {
+      width: 60px;
+      height: 60px;
       border-radius: 8px;
-      font-weight: 600;
-      cursor: pointer;
-      font-size: 13px;
+      object-fit: cover;
+    }
+
+    .cart-item-info h4 { font-size: 0.9rem; margin-bottom: 2px; }
+    .cart-item-info p { font-size: 0.8rem; color: var(--text-muted); }
+
+    .cart-total {
+      margin-top: 1.5rem;
+      padding-top: 1rem;
+      border-top: 2px solid var(--border);
       display: flex;
-      flex-direction: column;
+      justify-content: space-between;
       align-items: center;
-      gap: 4px;
+      font-weight: 800;
+      font-size: 1.2rem;
     }
-    .whatsapp-contact {
-      background: #25D366;
-      color: white;
-    }
-    .whatsapp-contact:active {
-      background: #1DA851;
-    }
-    .facebook-contact {
-      background: #1877f2;
-      color: white;
-    }
-    .facebook-contact:active {
-      background: #1465d6;
-    }
-    .phone-contact {
-      background: #eab308;
-      color: #000;
-    }
-    .phone-contact:active {
-      background: #ca8a04;
-    }
-    .nav {
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      background: #000;
-      border-top: 2px solid #ca8a04;
-      display: flex;
-      justify-content: space-around;
-    }
-    .nav-btn {
-      flex: 1;
-      padding: 12px;
-      border: none;
-      background: none;
-      color: #6b7280;
-      font-size: 12px;
-      cursor: pointer;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 4px;
-    }
-    .nav-btn.active {
-      color: #eab308;
-    }
-    .nav-icon {
-      font-size: 24px;
-    }
-    .vendor-form {
-      padding: 24px 16px;
-    }
-    .form-group {
-      margin-bottom: 20px;
-    }
-    .form-label {
-      display: block;
-      color: #d1d5db;
-      font-size: 14px;
-      margin-bottom: 8px;
-      font-weight: 500;
-    }
+
+    /* Forms */
+    .form-group { margin-bottom: 1.25rem; }
+    .form-label { display: block; color: var(--text-muted); font-size: 0.875rem; margin-bottom: 0.5rem; }
     .form-input {
       width: 100%;
       padding: 10px 12px;
-      background: #1f2937;
-      border: 1px solid #374151;
+      background: var(--bg-dark);
+      border: 1px solid var(--border);
       border-radius: 8px;
-      color: #f3f4f6;
-      font-size: 14px;
+      color: var(--text-main);
     }
     .upload-box {
-      border: 2px dashed #374151;
+      border: 2px dashed var(--border);
       border-radius: 8px;
-      padding: 24px;
+      padding: 2rem;
       text-align: center;
-      background: #1f2937;
+      background: var(--bg-dark);
       cursor: pointer;
     }
-    .upload-box input {
-      display: none;
-    }
-    .upload-text {
-      color: #9ca3af;
-      font-size: 14px;
-    }
-    .submit-btn {
-      width: 100%;
-      background: #ca8a04;
-      color: #000;
-      border: none;
-      padding: 12px;
-      border-radius: 8px;
-      font-weight: 700;
-      font-size: 16px;
-      cursor: pointer;
-    }
-    .submit-btn:active {
-      background: #a16207;
-    }
-    .success-msg {
-      background: #065f46;
-      border: 1px solid #047857;
-      border-radius: 8px;
-      padding: 24px;
-      text-align: center;
-    }
-    .success-icon {
-      font-size: 48px;
-      color: #10b981;
-    }
-    .success-title {
-      color: #34d399;
-      font-size: 18px;
-      font-weight: 600;
-      margin-top: 8px;
-    }
-    .vouchers {
-      padding: 16px;
-    }
+
+    /* Vouchers & Info */
     .info-banner {
       background: rgba(127, 29, 29, 0.3);
       border: 1px solid #7f1d1d;
       border-radius: 8px;
-      padding: 16px;
-      margin-bottom: 24px;
-    }
-    .info-title {
-      color: #f87171;
-      font-weight: 600;
-      margin-bottom: 8px;
-    }
-    .info-list {
-      color: #d1d5db;
-      font-size: 14px;
-      padding-left: 20px;
-    }
-    .info-list li {
-      margin: 4px 0;
+      padding: 1rem;
+      margin-bottom: 1.5rem;
     }
     .voucher-card {
-      background: #1f2937;
-      border: 2px solid #ca8a04;
-      border-radius: 8px;
-      padding: 20px;
-      margin-bottom: 16px;
-    }
-    .voucher-price {
-      font-size: 32px;
-      font-weight: bold;
-      color: #eab308;
-    }
-    .voucher-data {
-      color: #9ca3af;
-      font-size: 14px;
-      margin-top: 4px;
+      background: var(--bg-card);
+      border: 2px solid var(--primary);
+      border-radius: 12px;
+      padding: 1.25rem;
+      margin-bottom: 1rem;
     }
     .voucher-badge {
-      background: #ca8a04;
+      background: var(--primary);
       color: #000;
       padding: 4px 12px;
       border-radius: 12px;
-      font-size: 12px;
-      font-weight: bold;
+      font-size: 10px;
+      font-weight: 800;
       float: right;
     }
-    .voucher-desc {
-      color: #9ca3af;
-      font-size: 14px;
-      margin-top: 12px;
-      padding-top: 12px;
-      border-top: 1px solid #374151;
+
+    /* Bottom Nav */
+    .nav {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      background: var(--bg-header);
+      border-top: 2px solid var(--primary);
+      display: flex;
+      justify-content: space-around;
+      height: 64px;
+      z-index: 100;
     }
-    .location-box {
-      background: #1f2937;
-      border: 1px solid #374151;
-      border-radius: 8px;
-      padding: 16px;
-      margin-top: 24px;
-    }
-    .location-title {
-      color: #eab308;
-      font-weight: 600;
-      margin-bottom: 8px;
-    }
-    .location-text {
-      color: #d1d5db;
-      font-size: 14px;
-      line-height: 1.5;
-    }
-    .hidden { display: none; }
-    .preview-img {
-      max-height: 200px;
-      border-radius: 8px;
-      margin-bottom: 12px;
-    }
-    .remove-btn {
-      color: #ef4444;
+
+    .nav-btn {
+      flex: 1;
       background: none;
       border: none;
-      font-size: 14px;
+      color: var(--text-muted);
+      font-size: 0.7rem;
+      font-weight: 600;
       cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      transition: color 0.2s;
     }
+
+    .nav-btn.active { color: var(--text-accent); }
+    .nav-icon { font-size: 20px; }
+
+    .hidden { display: none; }
+
+    /* Auth Modal Extras */
+    .social-btns { display: flex; flex-direction: column; gap: 0.75rem; }
+    .social-btn {
+      width: 100%; padding: 12px; border: none; border-radius: 8px;
+      font-weight: 700; font-size: 0.875rem; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+    }
+    .google-btn { background: var(--google); color: #000; }
+    .facebook-btn { background: var(--facebook); color: #fff; }
+    .phone-btn { background: var(--whatsapp); color: #fff; }
   </style>
 </head>
 <body>
 
-  <!-- Directory Screen -->
-  <div id="directory" class="screen">
-    <div class="header">
-      <div class="header-content">
-        <h1>Unity Mall eSME</h1>
-      </div>
+  <!-- Info Bar -->
+  <div class="info-bar">
+    A product of <a href="https://www.dspng.tech" target="_blank">Deeps Systems</a>. Supporting Local SMEs in PNG.
+  </div>
+
+  <!-- Header -->
+  <header class="header">
+    <a href="#" class="logo-container" onclick="switchScreen('directory')">
+      <h1>Unity Mall <span style="font-weight: 300;">eSME</span></h1>
+    </a>
+    <div class="header-actions">
+      <button class="cart-trigger" onclick="toggleCart()">
+        🛒 <span class="cart-count" id="cartCount">0</span>
+      </button>
       <button class="auth-btn" onclick="openAuthModal()">Sign In</button>
     </div>
-    
-    <div style="background: #1f2937; border-bottom: 1px solid #374151; padding: 8px 16px; text-align: center;">
-      <p style="color: #9ca3af; font-size: 12px;">A product of <a href="https://www.dspng.tech" target="_blank" style="color: #eab308; text-decoration: none; font-weight: 600;">Deeps Systems</a>. Local Tech SME helping other SME's.</p>
-    </div>
-    
-    <div class="search">
-      <input type="text" id="searchInput" placeholder="Search stalls..." onkeyup="filterStalls()">
-    </div>
-    
-    <div class="categories" id="categories"></div>
-    
-    <div class="results" id="results"></div>
-    
-    <div class="stalls" id="stalls"></div>
-  </div>
+  </header>
 
-  <!-- Vendor Screen -->
-  <div id="vendor" class="screen hidden">
-    <div class="header">
-      <h1>Vendor Portal</h1>
-      <p>Upload your products</p>
-    </div>
-    
-    <div class="vendor-form">
-      <div id="vendorContent">
-        <form onsubmit="submitProduct(event)">
-          <div class="form-group">
-            <label class="form-label">Product Photo</label>
-            <label class="upload-box" id="uploadBox">
-              <div id="uploadContent">
-                <div style="color: #eab308; font-size: 24px; margin-bottom: 8px;">📷</div>
-                <div class="upload-text">Tap to upload photo</div>
-                <div style="color: #6b7280; font-size: 12px; margin-top: 4px;">JPG, PNG (max 5MB)</div>
-              </div>
-              <input type="file" id="photoInput" accept="image/*" onchange="previewImage(event)" required>
-            </label>
-          </div>
-          
-          <div class="form-group">
-            <label class="form-label">Product Name</label>
-            <input type="text" class="form-input" placeholder="e.g., Leather Handbag" required>
-          </div>
-          
-          <div class="form-group">
-            <label class="form-label">Price (PGK)</label>
-            <input type="number" class="form-input" placeholder="0.00" step="0.01" min="0" required style="padding-left: 32px;">
-            <div style="position: relative; margin-top: -38px; margin-left: 12px; color: #9ca3af; pointer-events: none;">K</div>
-          </div>
-          
-          <button type="submit" class="submit-btn">Upload Product</button>
-        </form>
-        
-        <div class="location-box" style="margin-top: 32px;">
-          <div class="location-title">Your Products</div>
-          <div class="location-text">Products you upload will appear here and in the mall directory.</div>
-        </div>
-      </div>
-    </div>
-  </div>
+  <main>
+    <!-- Directory Screen -->
+    <div id="directory" class="screen">
+      <section class="hero">
+        <h2>Local Shopping, Reimagined</h2>
+        <p>Discover unique products and services from talented local SMEs at Unity Mall.</p>
+        <button class="auth-btn m-t-1" onclick="document.getElementById('searchInput').focus()">Shop Now</button>
+      </section>
 
-  <!-- WiFi Screen -->
-  <div id="wifi" class="screen hidden">
-    <div class="header">
-      <h1>Wi-Fi Vouchers</h1>
-      <p>Stay connected at Unity Mall eSME</p>
-    </div>
-    
-    <div class="vouchers">
-      <div class="info-banner">
-        <div class="info-title">How to Purchase</div>
-        <ol class="info-list">
-          <li>Visit the Deeps Systems stall</li>
-          <li>Choose your voucher amount</li>
-          <li>Make payment at the counter</li>
-          <li>Receive your voucher code instantly</li>
-        </ol>
-      </div>
-      
-      <div class="voucher-card">
-        <span class="voucher-badge">24 hours</span>
-        <div class="voucher-price">K2</div>
-        <div class="voucher-data">500MB Data</div>
-        <div class="voucher-desc">Perfect for quick browsing</div>
-      </div>
-      
-      <div class="voucher-card">
-        <span class="voucher-badge">3 days</span>
-        <div class="voucher-price">K5</div>
-        <div class="voucher-data">1.5GB Data</div>
-        <div class="voucher-desc">Perfect for social media & messaging</div>
-      </div>
-      
-      <div class="voucher-card">
-        <span class="voucher-badge">7 days</span>
-        <div class="voucher-price">K10</div>
-        <div class="voucher-data">4GB Data</div>
-        <div class="voucher-desc">Perfect for streaming & downloads</div>
-      </div>
-      
-      <div class="location-box">
-        <div class="location-title">Find Us</div>
-        <div class="location-text">
-          <strong>Deeps Systems Stall</strong><br>
-          Ground Floor, Near Main Entrance<br>
-          Unity Mall eSME<br>
-          <div style="color: #6b7280; margin-top: 8px; font-size: 12px;">Open: Mon-Sat, 9AM - 6PM</div>
+      <div class="search-container">
+        <div class="search-wrapper">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="searchInput" placeholder="Search products, services, or stalls..." onkeyup="filterStalls()">
         </div>
       </div>
-      
-      <div class="location-box">
-        <div class="location-title">Payment Methods</div>
-        <div style="display: flex; gap: 8px; margin-top: 8px;">
-          <span style="background: #374151; padding: 4px 12px; border-radius: 4px; font-size: 12px;">Cash</span>
-          <span style="background: #374151; padding: 4px 12px; border-radius: 4px; font-size: 12px;">Mobile Money</span>
-          <span style="background: #374151; padding: 4px 12px; border-radius: 4px; font-size: 12px;">EFTPOS</span>
-        </div>
-      </div>
-    </div>
-  </div>
 
-  <!-- Accounts Suite Screen -->
-  <div id="accounts" class="screen hidden">
-    <div class="header">
-      <h1>Accounts Suite</h1>
-      <p>Business Management Systems</p>
+      <div class="categories" id="categories"></div>
+
+      <div class="section-title">
+        Featured Listings
+        <span class="results-count" id="results"></span>
+      </div>
+
+      <div class="grid-container" id="stalls"></div>
     </div>
-    
-    <div class="vouchers">
-      <div class="info-banner">
-        <div class="info-title">Business Accounting Tools</div>
-        <p style="color: #d1d5db; font-size: 14px; margin-top: 8px;">Manage your business with professional accounting and POS systems. Talk to Deeps Systems for setup and support.</p>
+
+    <!-- Vendor Screen -->
+    <div id="vendor" class="screen hidden">
+      <div class="hero">
+        <h2>Vendor Portal</h2>
+        <p>List your products and reach thousands of customers.</p>
       </div>
-      
-      <div class="stall-card" style="margin-bottom: 16px;">
-        <div class="stall-name" style="display: flex; align-items: center; gap: 8px;">
-          💼 Loyverse POS
+      <div style="padding: 1.5rem; max-width: 600px; margin: 0 auto;">
+        <div id="vendorContent">
+          <form onsubmit="submitProduct(event)">
+            <div class="form-group">
+              <label class="form-label">Product Photo</label>
+              <label class="upload-box" id="uploadBox">
+                <div id="uploadContent">
+                  <div style="color: var(--primary); font-size: 2rem; margin-bottom: 0.5rem;">📷</div>
+                  <div style="color: var(--text-muted);">Tap to upload photo</div>
+                </div>
+                <input type="file" id="photoInput" accept="image/*" onchange="previewImage(event)" required style="display:none;">
+              </label>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Product Name</label>
+              <input type="text" class="form-input" placeholder="e.g., Hand-woven Basket" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Price (PGK)</label>
+              <input type="number" class="form-input" placeholder="0.00" step="0.01" required>
+            </div>
+            <button type="submit" class="auth-btn" style="width:100%; padding: 12px;">Upload Product</button>
+          </form>
         </div>
-        <div class="stall-category" style="margin-top: 8px;">Point of Sale & Inventory Management</div>
-        <p style="color: #d1d5db; font-size: 14px; margin-top: 8px; line-height: 1.5;">
-          Complete POS solution for retail and hospitality. Track sales, manage inventory, accept payments, and generate reports.
-        </p>
-        <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #374151;">
-          <div style="color: #9ca3af; font-size: 13px;">✓ Free plan available</div>
-          <div style="color: #9ca3af; font-size: 13px;">✓ Inventory tracking</div>
-          <div style="color: #9ca3af; font-size: 13px;">✓ Sales analytics</div>
-          <div style="color: #9ca3af; font-size: 13px;">✓ Multi-device support</div>
-        </div>
-        <a href="https://loyverse.com" target="_blank" style="display: block; width: 100%; background: #ca8a04; color: #000; text-align: center; padding: 10px; border-radius: 8px; font-weight: 600; margin-top: 12px; text-decoration: none;">Visit Loyverse</a>
       </div>
-      
-      <div class="stall-card" style="margin-bottom: 16px;">
-        <div class="stall-name" style="display: flex; align-items: center; gap: 8px;">
-          📊 Wave Accounting
-        </div>
-        <div class="stall-category" style="margin-top: 8px;">Free Accounting Software</div>
-        <p style="color: #d1d5db; font-size: 14px; margin-top: 8px; line-height: 1.5;">
-          Professional accounting tools for small businesses. Invoicing, expense tracking, and financial reporting.
-        </p>
-        <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #374151;">
-          <div style="color: #9ca3af; font-size: 13px;">✓ Completely free</div>
-          <div style="color: #9ca3af; font-size: 13px;">✓ Invoicing & payments</div>
-          <div style="color: #9ca3af; font-size: 13px;">✓ Expense tracking</div>
-          <div style="color: #9ca3af; font-size: 13px;">✓ Financial reports</div>
-        </div>
-        <a href="https://www.waveapps.com" target="_blank" style="display: block; width: 100%; background: #ca8a04; color: #000; text-align: center; padding: 10px; border-radius: 8px; font-weight: 600; margin-top: 12px; text-decoration: none;">Visit Wave</a>
+    </div>
+
+    <!-- WiFi Screen -->
+    <div id="wifi" class="screen hidden">
+      <div class="hero">
+        <h2>Wi-Fi Vouchers</h2>
+        <p>High-speed connectivity within Unity Mall.</p>
       </div>
-      
-      <div class="stall-card" style="margin-bottom: 16px;">
-        <div class="stall-name" style="display: flex; align-items: center; gap: 8px;">
-          🧾 QuickBooks
+      <div style="padding: 1.5rem; max-width: 600px; margin: 0 auto;">
+        <div class="info-banner">
+          <h4 style="color: #f87171; margin-bottom: 0.5rem;">How to Purchase</h4>
+          <p style="font-size: 0.875rem;">Visit Deeps Systems stall (L1) or pay via Mobile Money.</p>
         </div>
-        <div class="stall-category" style="margin-top: 8px;">Professional Accounting Platform</div>
-        <p style="color: #d1d5db; font-size: 14px; margin-top: 8px; line-height: 1.5;">
-          Industry-leading accounting software for growing businesses. Advanced features for accounting and bookkeeping.
-        </p>
-        <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #374151;">
-          <div style="color: #9ca3af; font-size: 13px;">✓ Bank reconciliation</div>
-          <div style="color: #9ca3af; font-size: 13px;">✓ Payroll management</div>
-          <div style="color: #9ca3af; font-size: 13px;">✓ Tax preparation</div>
-          <div style="color: #9ca3af; font-size: 13px;">✓ Advanced reporting</div>
+
+        <div class="voucher-card">
+          <span class="voucher-badge">24 HOURS</span>
+          <h3 style="color: var(--text-accent); font-size: 1.5rem;">K2.00</h3>
+          <p>500MB High Speed Data</p>
         </div>
-        <a href="https://quickbooks.intuit.com" target="_blank" style="display: block; width: 100%; background: #ca8a04; color: #000; text-align: center; padding: 10px; border-radius: 8px; font-weight: 600; margin-top: 12px; text-decoration: none;">Visit QuickBooks</a>
+        <div class="voucher-card">
+          <span class="voucher-badge">3 DAYS</span>
+          <h3 style="color: var(--text-accent); font-size: 1.5rem;">K5.00</h3>
+          <p>1.5GB High Speed Data</p>
+        </div>
+        <div class="voucher-card">
+          <span class="voucher-badge">7 DAYS</span>
+          <h3 style="color: var(--text-accent); font-size: 1.5rem;">K10.00</h3>
+          <p>4GB High Speed Data</p>
+        </div>
       </div>
-      
-      <div class="location-box">
-        <div class="location-title">Need Help?</div>
-        <div class="location-text">
-          Contact <strong>Deeps Systems</strong> for assistance with setup, training, and integration of these accounting tools into your business.
-          <div style="margin-top: 12px;">
-            <a href="https://www.dspng.tech" target="_blank" style="color: #eab308; text-decoration: none; font-weight: 600;">Visit www.dspng.tech</a>
-          </div>
+    </div>
+
+    <!-- Accounts Screen -->
+    <div id="accounts" class="screen hidden">
+      <div class="hero">
+        <h2>Business Suite</h2>
+        <p>Tools to help your SME grow and thrive.</p>
+      </div>
+      <div style="padding: 1.5rem; max-width: 600px; margin: 0 auto;">
+        <div class="card m-t-1" style="padding: 1.25rem;">
+          <h3 style="color: var(--text-accent); margin-bottom: 0.5rem;">📊 Loyverse POS</h3>
+          <p style="color: var(--text-muted); font-size: 0.875rem; margin-bottom: 1rem;">Manage sales, inventory and employees with ease.</p>
+          <a href="https://loyverse.com" target="_blank" class="auth-btn" style="display:inline-block; text-decoration:none; text-align:center;">Learn More</a>
         </div>
+        <div class="card m-t-1" style="padding: 1.25rem;">
+          <h3 style="color: var(--text-accent); margin-bottom: 0.5rem;">🧾 Wave Accounting</h3>
+          <p style="color: var(--text-muted); font-size: 0.875rem; margin-bottom: 1rem;">Professional invoicing and bookkeeping for free.</p>
+          <a href="https://waveapps.com" target="_blank" class="auth-btn" style="display:inline-block; text-decoration:none; text-align:center;">Learn More</a>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Cart Modal -->
+  <div id="cartModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 style="color: var(--text-accent);">Your Shopping Cart</h3>
+        <button onclick="toggleCart()" style="background:none; border:none; color:var(--text-muted); font-size:1.5rem; cursor:pointer;">×</button>
+      </div>
+      <div class="modal-body">
+        <div id="cartItems">
+          <p style="text-align:center; color:var(--text-muted); padding: 2rem;">Your cart is empty.</p>
+        </div>
+        <div class="cart-total">
+          <span>Total:</span>
+          <span id="cartTotal">K0.00</span>
+        </div>
+        <button class="auth-btn" style="width:100%; margin-top:1.5rem; padding: 12px;" onclick="checkout()">
+          Proceed to Checkout
+        </button>
       </div>
     </div>
   </div>
@@ -684,53 +692,34 @@
   <div id="authModal" class="modal">
     <div class="modal-content">
       <div class="modal-header">
-        <button class="close-btn" onclick="closeAuthModal()">×</button>
-        <div class="modal-title" id="modalTitle">Sign In</div>
+        <h3 id="modalTitle" style="color: var(--text-accent);">Sign In</h3>
+        <button onclick="closeAuthModal()" style="background:none; border:none; color:var(--text-muted); font-size:1.5rem; cursor:pointer;">×</button>
       </div>
       <div class="modal-body">
-        <!-- Social Login Buttons -->
         <div class="social-btns">
-          <button class="social-btn google-btn" onclick="socialLogin('google')">
-            <span>🔍</span> Continue with Google
+          <button class="social-btn google-btn" onclick="alert('Google Login coming soon')">
+            Continue with Google
           </button>
-          <button class="social-btn facebook-btn" onclick="socialLogin('facebook')">
-            <span>📘</span> Continue with Facebook
+          <button class="social-btn facebook-btn" onclick="alert('Facebook Login coming soon')">
+            Continue with Facebook
           </button>
-          <button class="social-btn phone-btn" onclick="togglePhoneInput()">
-            <span>📱</span> Continue with Phone
+          <button class="social-btn phone-btn" onclick="alert('Phone Login coming soon')">
+            Continue with Phone
           </button>
-        </div>
-        
-        <!-- Phone Number Input (Hidden by default) -->
-        <div id="phoneInputSection" style="display: none;">
-          <div class="divider">Enter your phone number</div>
-          <div class="phone-input-group">
-            <input 
-              type="tel" 
-              class="phone-input" 
-              placeholder="+675 7XXX XXXX"
-              id="phoneNumber"
-            >
-            <button class="continue-btn" onclick="phoneLogin()">Continue</button>
-          </div>
-        </div>
-        
-        <div class="toggle-text">
-          <span id="toggleText">Don't have an account? <span class="toggle-link" onclick="toggleAuthMode()">Sign Up</span></span>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Bottom Navigation -->
+  <!-- Bottom Nav -->
   <nav class="nav">
     <button class="nav-btn active" onclick="switchScreen('directory')">
       <div class="nav-icon">🏪</div>
-      <div>Directory</div>
+      <div>Shop</div>
     </button>
     <button class="nav-btn" onclick="switchScreen('vendor')">
       <div class="nav-icon">📤</div>
-      <div>Vendor</div>
+      <div>Sell</div>
     </button>
     <button class="nav-btn" onclick="switchScreen('wifi')">
       <div class="nav-icon">📶</div>
@@ -738,217 +727,210 @@
     </button>
     <button class="nav-btn" onclick="switchScreen('accounts')">
       <div class="nav-icon">💰</div>
-      <div>Accounts</div>
+      <div>Business</div>
     </button>
   </nav>
 
   <script>
-    // Sample stall data
-    const categories = ['Fashion', 'Catering', 'Tech', 'Beauty', 'Home & Living', 'Sports', 'Accessories'];
-    const sampleNames = {
-      Fashion: ['Style Hub', 'Trendy Threads', 'Urban Wear', 'Fashion First', 'Chic Boutique'],
-      Catering: ['Tasty Bites', 'Food Paradise', 'Quick Eats', 'Coffee Corner', 'Grill Master'],
-      Tech: ['Phone Fix', 'Gadget Zone', 'Tech Solutions', 'Mobile World', 'Computer Care'],
-      Beauty: ['Glam Studio', 'Beauty Bar', 'Hair & Nails', 'Spa Corner', 'Makeup Magic'],
-      'Home & Living': ['Home Decor', 'Kitchen Essentials', 'Furniture Plus', 'Interior Style'],
-      Sports: ['Fitness Gear', 'Sports World', 'Athletic Wear', 'Game Zone'],
-      Accessories: ['Bag Shop', 'Watch Gallery', 'Jewelry Box', 'Sunglasses Store']
-    };
+    // Sample product data
+    const categories = ['All', 'Fashion', 'Catering', 'Tech', 'Beauty', 'Home & Living', 'Sports', 'Accessories'];
     
-    const stalls = [];
-    for (let i = 0; i < 120; i++) {
-      const category = categories[i % categories.length];
-      const names = sampleNames[category] || ['General Store'];
-      const name = names[i % names.length] + (Math.floor(i / names.length) > 0 ? ' ' + Math.floor(i / names.length) : '');
-      
-      stalls.push({
-        id: i + 1,
-        name: name.trim(),
-        category: category,
-        location: 'Level ' + (Math.floor(i / 40) + 1) + ', Stall ' + ((i % 40) + 1),
-        phone: '+675 7' + String(1000000 + i).slice(1)
-      });
+    const products = [
+      { id: 1, name: 'Traditional Sepik Bilum', category: 'Fashion', price: 150.00, stall: 'Sepik Crafts', level: 1, rating: 4.8, reviews: 12, image: 'https://images.unsplash.com/photo-1590739225287-bd31519780c3?w=400&auto=format' },
+      { id: 2, name: 'Local Coffee Beans (500g)', category: 'Catering', price: 45.00, stall: 'Goroka Brews', level: 1, rating: 4.9, reviews: 45, image: 'https://images.unsplash.com/photo-1559056199-641a0ac8b55e?w=400&auto=format' },
+      { id: 3, name: 'Smartphone Screen Repair', category: 'Tech', price: 120.00, stall: 'Phone Fixers', level: 2, rating: 4.5, reviews: 28, image: 'https://images.unsplash.com/photo-1581092160562-40aa08e78837?w=400&auto=format' },
+      { id: 4, name: 'Organic Coconut Oil', category: 'Beauty', price: 25.00, stall: 'Island Glow', level: 1, rating: 4.7, reviews: 19, image: 'https://images.unsplash.com/photo-1590439471364-192aa70c0b53?w=400&auto=format' },
+      { id: 5, name: 'Hand-woven Floor Mat', category: 'Home & Living', price: 85.00, stall: 'Village Weavers', level: 1, rating: 4.6, reviews: 15, image: 'https://images.unsplash.com/photo-1575410223196-9f6f21c824f1?w=400&auto=format' },
+      { id: 6, name: 'Custom Team Jersey', category: 'Sports', price: 65.00, stall: 'Active PNG', level: 2, rating: 4.4, reviews: 10, image: 'https://images.unsplash.com/photo-1580087444152-c2b6229f4434?w=400&auto=format' },
+      { id: 7, name: 'Shell Necklace Set', category: 'Accessories', price: 35.00, stall: 'Coastal Gems', level: 1, rating: 4.8, reviews: 22, image: 'https://images.unsplash.com/photo-1596944210918-28522799335d?w=400&auto=format' },
+      { id: 8, name: 'Leather Work Boots', category: 'Fashion', price: 280.00, stall: 'Rugged Wear', level: 2, rating: 4.7, reviews: 31, image: 'https://images.unsplash.com/photo-1520639889410-1df41d7b1868?w=400&auto=format' }
+    ];
+
+    let currentCategory = 'All';
+    let cart = JSON.parse(localStorage.getItem('um_cart') || '[]');
+
+    function init() {
+      renderCategories();
+      filterStalls();
+      updateCartUI();
     }
-    
-    let selectedCategory = 'All';
-    
-    // Initialize categories
-    function initCategories() {
-      const catDiv = document.getElementById('categories');
-      catDiv.innerHTML = '<button class="cat-btn active" onclick="selectCategory(\'All\')">All</button>';
-      categories.forEach(cat => {
-        catDiv.innerHTML += '<button class="cat-btn" onclick="selectCategory(\'' + cat + '\')">' + cat + '</button>';
-      });
+
+    function renderCategories() {
+      const container = document.getElementById('categories');
+      container.innerHTML = categories.map(cat => `
+        <button class="cat-btn ${cat === currentCategory ? 'active' : ''}" onclick="selectCategory('${cat}')">
+          ${cat}
+        </button>
+      `).join('');
     }
-    
-    // Select category
+
     function selectCategory(cat) {
-      selectedCategory = cat;
-      document.querySelectorAll('.cat-btn').forEach(btn => btn.classList.remove('active'));
-      event.target.classList.add('active');
+      currentCategory = cat;
+      renderCategories();
       filterStalls();
     }
-    
-    // Filter stalls
+
     function filterStalls() {
       const search = document.getElementById('searchInput').value.toLowerCase();
-      const filtered = stalls.filter(s => {
-        const matchSearch = s.name.toLowerCase().includes(search) || s.location.toLowerCase().includes(search);
-        const matchCat = selectedCategory === 'All' || s.category === selectedCategory;
-        return matchSearch && matchCat;
+      const filtered = products.filter(p => {
+        const matchesSearch = p.name.toLowerCase().includes(search) ||
+                              p.stall.toLowerCase().includes(search) ||
+                              p.category.toLowerCase().includes(search);
+        const matchesCat = currentCategory === 'All' || p.category === currentCategory;
+        return matchesSearch && matchesCat;
       });
+
+      const container = document.getElementById('stalls');
+      document.getElementById('results').textContent = `${filtered.length} items found`;
       
-      document.getElementById('results').textContent = filtered.length + ' stall' + (filtered.length !== 1 ? 's' : '') + ' found';
-      
-      const stallsDiv = document.getElementById('stalls');
-      stallsDiv.innerHTML = '';
-      
-      filtered.forEach(stall => {
-        stallsDiv.innerHTML += `
-          <div class="stall-card">
-            <div class="stall-name">${stall.name}</div>
-            <div class="stall-category">${stall.category}</div>
-            <div class="stall-location">${stall.location}</div>
-            <div class="contact-buttons">
-              <button class="contact-btn whatsapp-contact" onclick="openWhatsApp('${stall.phone}', '${stall.name}')">
+      if (filtered.length === 0) {
+        container.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 3rem; color: var(--text-muted);">No products found matching your search.</div>';
+        return;
+      }
+
+      container.innerHTML = filtered.map(p => `
+        <div class="card">
+          <div class="card-img-container">
+            <img src="${p.image}" class="card-img" alt="${p.name}" loading="lazy">
+            ${p.rating > 4.7 ? '<span class="card-badge">Top Rated</span>' : ''}
+          </div>
+          <div class="card-content">
+            <div class="card-category">${p.category} • ${p.stall}</div>
+            <h3 class="card-name">${p.name}</h3>
+            <div class="card-meta">
+              <span>⭐ ${p.rating}</span>
+              <span>(${p.reviews})</span>
+              <span>• L${p.level}</span>
+            </div>
+            <div class="card-price">K${p.price.toFixed(2)}</div>
+            <div class="card-actions">
+              <button class="btn-cart" onclick="addToCart(${p.id})">
+                <span>🛒</span> Add
+              </button>
+              <button class="btn-whatsapp" onclick="openWhatsApp('${p.stall}', '${p.name}')">
                 <span>💬</span>
-                <span>WhatsApp</span>
-              </button>
-              <button class="contact-btn facebook-contact" onclick="openFacebook('${stall.name}')">
-                <span>📘</span>
-                <span>Message</span>
-              </button>
-              <button class="contact-btn phone-contact" onclick="makeCall('${stall.phone}')">
-                <span>📞</span>
-                <span>Call</span>
               </button>
             </div>
           </div>
-        `;
-      });
+        </div>
+      `).join('');
     }
-    
-    // Open WhatsApp
-    function openWhatsApp(phone, name) {
-      const msg = encodeURIComponent('Hi ' + name + ', I found you on the Unity Mall eSME Directory!');
-      window.open('https://wa.me/' + phone.replace(/[^0-9]/g, '') + '?text=' + msg, '_blank');
+
+    function addToCart(productId) {
+      const product = products.find(p => p.id === productId);
+      if (product) {
+        const existing = cart.find(item => item.id === productId);
+        if (existing) {
+          existing.quantity++;
+        } else {
+          cart.push({ ...product, quantity: 1 });
+        }
+        saveCart();
+        updateCartUI();
+        showNotification(`Added ${product.name} to cart`);
+      }
     }
-    
-    // Open Facebook Messenger
-    function openFacebook(name) {
-      // In production, this would link to the vendor's actual Facebook page
-      alert('Opening Facebook Messenger for ' + name + '\n\nIn production, this will link to the vendor\'s Facebook page or Messenger.');
-      // Example: window.open('https://m.me/vendorpageid', '_blank');
+
+    function saveCart() {
+      localStorage.setItem('um_cart', JSON.stringify(cart));
     }
-    
-    // Make Phone Call
-    function makeCall(phone) {
-      window.location.href = 'tel:' + phone;
+
+    function updateCartUI() {
+      const count = cart.reduce((sum, item) => sum + item.quantity, 0);
+      document.getElementById('cartCount').textContent = count;
+
+      const cartItemsContainer = document.getElementById('cartItems');
+      if (cart.length === 0) {
+        cartItemsContainer.innerHTML = '<p style="text-align:center; color:var(--text-muted); padding: 2rem;">Your cart is empty.</p>';
+        document.getElementById('cartTotal').textContent = 'K0.00';
+        return;
+      }
+
+      cartItemsContainer.innerHTML = cart.map(item => `
+        <div class="cart-item">
+          <img src="${item.image}" class="cart-item-img">
+          <div class="cart-item-info">
+            <h4>${item.name}</h4>
+            <p>K${item.price.toFixed(2)} x ${item.quantity}</p>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:4px;">
+             <button onclick="removeFromCart(${item.id})" style="background:none; border:none; color:#ef4444; cursor:pointer;">Remove</button>
+          </div>
+        </div>
+      `).join('');
+
+      const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+      document.getElementById('cartTotal').textContent = `K${total.toFixed(2)}`;
     }
-    
-    // Switch screen
-    function switchScreen(screen) {
+
+    function removeFromCart(productId) {
+      cart = cart.filter(item => item.id !== productId);
+      saveCart();
+      updateCartUI();
+    }
+
+    function toggleCart() {
+      document.getElementById('cartModal').classList.toggle('show');
+    }
+
+    function openWhatsApp(stall, productName) {
+      const msg = encodeURIComponent(`Hi ${stall}, I'm interested in "${productName}" I saw on Unity Mall eSME!`);
+      window.open(`https://wa.me/67570000000?text=${msg}`, '_blank');
+    }
+
+    function switchScreen(screenId) {
       document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
-      document.getElementById(screen).classList.remove('hidden');
+      document.getElementById(screenId).classList.remove('hidden');
       
       document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
       event.target.closest('.nav-btn').classList.add('active');
     }
-    
-    // Preview image
+
+    function openAuthModal() { document.getElementById('authModal').classList.add('show'); }
+    function closeAuthModal() { document.getElementById('authModal').classList.remove('show'); }
+
+    function checkout() {
+      if (cart.length === 0) return;
+      alert('In a real app, this would lead to a payment gateway. Total: ' + document.getElementById('cartTotal').textContent);
+    }
+
+    function showNotification(msg) {
+      const toast = document.createElement('div');
+      toast.style.cssText = 'position:fixed; bottom:80px; left:50%; transform:translateX(-50%); background:var(--bg-card); border:1px solid var(--primary); padding:12px 24px; border-radius:30px; z-index:1000; font-size:14px; box-shadow:0 4px 12px rgba(0,0,0,0.5);';
+      toast.textContent = msg;
+      document.body.appendChild(toast);
+      setTimeout(() => toast.remove(), 2000);
+    }
+
+    // Vendor specific
     function previewImage(event) {
       const file = event.target.files[0];
       if (file) {
         const reader = new FileReader();
         reader.onload = function(e) {
           document.getElementById('uploadContent').innerHTML = `
-            <img src="${e.target.result}" class="preview-img">
-            <button type="button" class="remove-btn" onclick="removeImage()">Remove</button>
+            <img src="${e.target.result}" style="max-height:150px; border-radius:8px;">
+            <p style="color:var(--text-muted); font-size:12px; margin-top:8px;">Photo selected</p>
           `;
         };
         reader.readAsDataURL(file);
       }
     }
-    
-    // Remove image
-    function removeImage() {
-      document.getElementById('photoInput').value = '';
-      document.getElementById('uploadContent').innerHTML = `
-        <div style="color: #eab308; font-size: 24px; margin-bottom: 8px;">📷</div>
-        <div class="upload-text">Tap to upload photo</div>
-        <div style="color: #6b7280; font-size: 12px; margin-top: 4px;">JPG, PNG (max 5MB)</div>
-      `;
-    }
-    
-    // Submit product
+
     function submitProduct(event) {
       event.preventDefault();
       document.getElementById('vendorContent').innerHTML = `
-        <div class="success-msg">
-          <div class="success-icon">✓</div>
-          <div class="success-title">Product Uploaded!</div>
-          <div style="color: #6ee7b7; font-size: 14px; margin-top: 4px;">Your product has been added successfully.</div>
+        <div style="text-align:center; padding: 2rem; background:var(--bg-card); border-radius:12px;">
+          <div style="color:var(--whatsapp); font-size:3rem; margin-bottom:1rem;">✅</div>
+          <h3>Product Uploaded!</h3>
+          <p style="color:var(--text-muted); margin-top:0.5rem;">Your product has been sent for review and will be live shortly.</p>
+          <button class="auth-btn m-t-1" onclick="location.reload()">Upload Another</button>
         </div>
       `;
-      
-      setTimeout(() => {
-        location.reload();
-      }, 2000);
     }
-    
-    // Auth Modal Functions
-    let isSignUp = false;
-    
-    function openAuthModal() {
-      document.getElementById('authModal').classList.add('show');
-    }
-    
-    function closeAuthModal() {
-      document.getElementById('authModal').classList.remove('show');
-      document.getElementById('phoneInputSection').style.display = 'none';
-    }
-    
-    function toggleAuthMode() {
-      isSignUp = !isSignUp;
-      document.getElementById('modalTitle').textContent = isSignUp ? 'Sign Up' : 'Sign In';
-      document.getElementById('toggleText').innerHTML = isSignUp 
-        ? 'Already have an account? <span class="toggle-link" onclick="toggleAuthMode()">Sign In</span>'
-        : 'Don\'t have an account? <span class="toggle-link" onclick="toggleAuthMode()">Sign Up</span>';
-    }
-    
-    function togglePhoneInput() {
-      const phoneSection = document.getElementById('phoneInputSection');
-      phoneSection.style.display = phoneSection.style.display === 'none' ? 'block' : 'none';
-    }
-    
-    function socialLogin(provider) {
-      // In production, this would integrate with OAuth providers
-      alert('Logging in with ' + provider + '...\n\nThis feature will be connected to ' + provider + ' authentication in production.');
-      closeAuthModal();
-    }
-    
-    function phoneLogin() {
-      const phone = document.getElementById('phoneNumber').value;
-      if (!phone || phone.length < 10) {
-        alert('Please enter a valid phone number');
-        return;
-      }
-      
-      // In production, this would send an SMS verification code
-      alert('Verification code sent to ' + phone + '\n\nIn production, you will receive an SMS with a verification code.');
-      closeAuthModal();
-    }
-    
-    // Close modal when clicking outside
-    document.getElementById('authModal').addEventListener('click', function(e) {
-      if (e.target === this) {
-        closeAuthModal();
-      }
-    });
-    
-    // Initialize on load
-    initCategories();
-    filterStalls();
+
+    // Initialize
+    init();
   </script>
 </body>
 </html>
