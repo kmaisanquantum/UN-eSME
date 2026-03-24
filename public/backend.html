@@ -68,6 +68,7 @@
       border-radius: 8px;
       margin-bottom: 8px;
       transition: all 0.2s;
+      cursor: pointer;
     }
 
     .nav-link:hover, .nav-link.active {
@@ -141,6 +142,19 @@
       border: 1px solid var(--border); border-radius: 8px; color: #fff;
     }
 
+    .hidden { display: none !important; }
+
+    /* Auth screen */
+    .auth-overlay {
+      position: fixed; top:0; left:0; right:0; bottom:0;
+      background: var(--bg-dark); z-index: 1000;
+      display: flex; align-items: center; justify-content: center; padding: 20px;
+    }
+    .auth-card {
+      background: var(--bg-card); width: 100%; max-width: 400px;
+      padding: 2rem; border-radius: 16px; border: 1px solid var(--border);
+    }
+
     @media (max-width: 768px) {
       .sidebar { display: none; }
       .main-content { margin-left: 0; }
@@ -149,95 +163,373 @@
 </head>
 <body>
 
-  <aside class="sidebar">
-    <a href="#" class="logo">Unity SME centre Dashboard</a>
+  <div id="authScreen" class="auth-overlay">
+    <div class="auth-card">
+      <h2 style="color: var(--text-accent); margin-bottom: 1.5rem; text-align: center;">Vendor Login</h2>
+      <form id="loginForm">
+        <div class="form-group">
+          <label class="label">Email Address</label>
+          <input type="email" id="loginEmail" class="input" placeholder="vendor@example.com" required>
+        </div>
+        <div class="form-group">
+          <label class="label">Password</label>
+          <input type="password" id="loginPassword" class="input" placeholder="••••••••" required>
+        </div>
+        <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">Sign In</button>
+        <p style="text-align: center; margin-top: 1rem; font-size: 0.875rem; color: var(--text-muted);">
+          Don't have a store? <a href="#" onclick="toggleAuthMode()" style="color: var(--text-accent);">Register here</a>
+        </p>
+      </form>
+
+      <form id="registerForm" class="hidden">
+        <h2 style="color: var(--text-accent); margin-bottom: 1.5rem; text-align: center;">Register Store</h2>
+        <div class="form-group">
+          <label class="label">Store Name</label>
+          <input type="text" id="regName" class="input" placeholder="e.g. Sepik Crafts" required>
+        </div>
+        <div class="form-group">
+          <label class="label">Email Address</label>
+          <input type="email" id="regEmail" class="input" required>
+        </div>
+        <div class="form-group">
+          <label class="label">Password</label>
+          <input type="password" id="regPassword" class="input" required>
+        </div>
+        <div class="form-group">
+          <label class="label">Phone</label>
+          <input type="text" id="regPhone" class="input" required>
+        </div>
+        <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">Create Store</button>
+        <p style="text-align: center; margin-top: 1rem; font-size: 0.875rem; color: var(--text-muted);">
+          Already have a store? <a href="#" onclick="toggleAuthMode()" style="color: var(--text-accent);">Login here</a>
+        </p>
+      </form>
+    </div>
+  </div>
+
+  <aside class="sidebar hidden" id="sidebar">
+    <a href="/" class="logo">Unity SME centre</a>
     <nav>
-      <a href="#" class="nav-link active">📊 Overview</a>
-      <a href="#" class="nav-link">📦 Products</a>
-      <a href="#" class="nav-link">💬 Inquiries</a>
-      <a href="#" class="nav-link">⚙️ Settings</a>
+      <a onclick="switchTab('overview')" id="nav-overview" class="nav-link active">📊 Overview</a>
+      <a onclick="switchTab('products')" id="nav-products" class="nav-link">📦 Products</a>
+      <a onclick="switchTab('settings')" id="nav-settings" class="nav-link">⚙️ Settings</a>
+      <a onclick="logout()" class="nav-link" style="margin-top: 2rem; color: #ef4444;">🚪 Logout</a>
     </nav>
   </aside>
 
-  <main class="main-content">
+  <main class="main-content hidden" id="mainContent">
     <div class="header">
-      <h2>Welcome back, <span style="color: var(--text-accent);">Sepik Crafts</span></h2>
-      <button class="btn btn-primary">+ Add Product</button>
+      <h2>Welcome back, <span style="color: var(--text-accent);" id="vendorStoreName">Store Name</span></h2>
+      <button class="btn btn-primary" onclick="switchTab('products')">+ Add Product</button>
     </div>
 
-    <div class="stats-grid">
-      <div class="stat-card">
-        <div class="stat-label">Store Views</div>
-        <div class="stat-value">1,284</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">Active Products</div>
-        <div class="stat-value">12</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">Inquiries</div>
-        <div class="stat-value">45</div>
-      </div>
-    </div>
-
-    <div class="card">
-      <h3 class="card-title">Recent Products</h3>
-      <div class="table-container">
-        <table>
-          <thead>
-            <tr>
-              <th>Product</th>
-              <th>Category</th>
-              <th>Price</th>
-              <th>Status</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>Sepik Bilum (Medium)</td>
-              <td>Fashion</td>
-              <td>K120.00</td>
-              <td><span class="status-pill status-active">Active</span></td>
-              <td><button style="background:none; border:none; color:var(--text-accent); cursor:pointer;">Edit</button></td>
-            </tr>
-            <tr>
-              <td>Woven Wall Hanging</td>
-              <td>Home Decor</td>
-              <td>K85.00</td>
-              <td><span class="status-pill status-active">Active</span></td>
-              <td><button style="background:none; border:none; color:var(--text-accent); cursor:pointer;">Edit</button></td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <div class="card">
-      <h3 class="card-title">Add New Product</h3>
-      <form>
-        <div class="form-grid">
-          <div class="form-group">
-            <label class="label">Product Name</label>
-            <input type="text" class="input" placeholder="e.g., Carved Mask">
-          </div>
-          <div class="form-group">
-            <label class="label">Category</label>
-            <select class="input">
-              <option>Fashion</option>
-              <option>Art</option>
-              <option>Home</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label class="label">Price (PGK)</label>
-            <input type="number" class="input" placeholder="0.00">
-          </div>
+    <!-- Overview Tab -->
+    <div id="tab-overview" class="tab-content">
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-label">Store Views</div>
+          <div class="stat-value">--</div>
         </div>
-        <button type="submit" class="btn btn-primary" style="margin-top: 1rem;">Save Product</button>
-      </form>
+        <div class="stat-card">
+          <div class="stat-label">Active Products</div>
+          <div id="statProducts" class="stat-value">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Inquiries</div>
+          <div class="stat-value">--</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3 class="card-title">Recent Products</h3>
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Product</th>
+                <th>Category</th>
+                <th>Price</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="recentProductsTable">
+              <tr><td colspan="4" style="text-align:center; padding:2rem;">No products found.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Products Tab -->
+    <div id="tab-products" class="tab-content hidden">
+      <div class="card">
+        <h3 class="card-title">Add New Product</h3>
+        <form id="addProductForm">
+          <div class="form-grid">
+            <div class="form-group">
+              <label class="label">Product Name</label>
+              <input type="text" id="pName" class="input" placeholder="e.g., Carved Mask" required>
+            </div>
+            <div class="form-group">
+              <label class="label">Category</label>
+              <select id="pCategory" class="input">
+                <option>Fashion</option>
+                <option>Art</option>
+                <option>Home</option>
+                <option>Tech</option>
+                <option>Beauty</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="label">Price (PGK)</label>
+              <input type="number" id="pPrice" class="input" placeholder="0.00" step="0.01" required>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="label">Description</label>
+            <textarea id="pDesc" class="input" style="height: 100px;"></textarea>
+          </div>
+          <button type="submit" class="btn btn-primary">Save Product</button>
+        </form>
+      </div>
+
+      <div class="card">
+        <h3 class="card-title">Manage Products</h3>
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Product</th>
+                <th>Price</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="allProductsTable">
+              <!-- Rendered via JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Settings Tab -->
+    <div id="tab-settings" class="tab-content hidden">
+      <div class="card">
+        <h3 class="card-title">Store Settings</h3>
+        <form id="storeSettingsForm">
+          <div class="form-grid">
+            <div class="form-group">
+              <label class="label">Store Name</label>
+              <input type="text" id="sName" class="input" required>
+            </div>
+            <div class="form-group">
+              <label class="label">Category</label>
+              <input type="text" id="sCategory" class="input" required>
+            </div>
+            <div class="form-group">
+              <label class="label">Phone</label>
+              <input type="text" id="sPhone" class="input" required>
+            </div>
+            <div class="form-group">
+              <label class="label">Location</label>
+              <input type="text" id="sLocation" class="input">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="label">Description</label>
+            <textarea id="sDesc" class="input" style="height: 100px;"></textarea>
+          </div>
+          <button type="submit" class="btn btn-primary">Update Store Info</button>
+        </form>
+      </div>
     </div>
   </main>
 
+  <script>
+    let currentVendor = JSON.parse(localStorage.getItem('um_vendor'));
+    const API_URL = '/api';
+
+    function init() {
+      if (currentVendor) {
+        showDashboard();
+      }
+    }
+
+    function toggleAuthMode() {
+      document.getElementById('loginForm').classList.toggle('hidden');
+      document.getElementById('registerForm').classList.toggle('hidden');
+    }
+
+    // Login
+    document.getElementById('loginForm').onsubmit = async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('loginEmail').value;
+      const password = document.getElementById('loginPassword').value;
+
+      try {
+        const res = await fetch(`${API_URL}/auth/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password })
+        });
+        const data = await res.json();
+        if (data.error) throw new Error(data.error);
+
+        localStorage.setItem('um_vendor', JSON.stringify(data.vendor));
+        currentVendor = data.vendor;
+        showDashboard();
+      } catch (err) {
+        alert(err.message);
+      }
+    };
+
+    // Register
+    document.getElementById('registerForm').onsubmit = async (e) => {
+      e.preventDefault();
+      const payload = {
+        name: document.getElementById('regName').value,
+        email: document.getElementById('regEmail').value,
+        password: document.getElementById('regPassword').value,
+        phone: document.getElementById('regPhone').value,
+        category: 'General',
+        location: 'Unity Mall'
+      };
+
+      try {
+        const res = await fetch(`${API_URL}/auth/register`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (data.error) throw new Error(data.error);
+
+        alert('Registration successful! Please login.');
+        toggleAuthMode();
+      } catch (err) {
+        alert(err.message);
+      }
+    };
+
+    function showDashboard() {
+      document.getElementById('authScreen').classList.add('hidden');
+      document.getElementById('sidebar').classList.remove('hidden');
+      document.getElementById('mainContent').classList.remove('hidden');
+      document.getElementById('vendorStoreName').textContent = currentVendor.name;
+      loadStoreData();
+    }
+
+    function logout() {
+      localStorage.removeItem('um_vendor');
+      location.reload();
+    }
+
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-content').forEach(t => t.classList.add('hidden'));
+      document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+
+      document.getElementById(`tab-${tabId}`).classList.remove('hidden');
+      document.getElementById(`nav-${tabId}`).classList.add('active');
+    }
+
+    async function loadStoreData() {
+      try {
+        // Load products
+        const res = await fetch(`${API_URL}/vendors/${currentVendor.id}/products`);
+        const products = await res.json();
+
+        document.getElementById('statProducts').textContent = products.length;
+
+        const renderProduct = (p) => `
+          <tr>
+            <td>${p.name}</td>
+            <td>K${parseFloat(p.price).toFixed(2)}</td>
+            <td><span class="status-pill status-active">${p.status}</span></td>
+            <td>
+               <button onclick="deleteProduct(${p.id})" style="background:none; border:none; color:#ef4444; cursor:pointer;">Delete</button>
+            </td>
+          </tr>
+        `;
+
+        document.getElementById('recentProductsTable').innerHTML = products.slice(0, 5).map(renderProduct).join('') || '<tr><td colspan="4" style="text-align:center; padding:2rem;">No products found.</td></tr>';
+        document.getElementById('allProductsTable').innerHTML = products.map(renderProduct).join('') || '<tr><td colspan="4" style="text-align:center; padding:2rem;">No products found.</td></tr>';
+
+        // Fill settings
+        const vRes = await fetch(`${API_URL}/vendors/me/${currentVendor.id}`);
+        const vendor = await vRes.json();
+        document.getElementById('sName').value = vendor.name;
+        document.getElementById('sCategory').value = vendor.category;
+        document.getElementById('sPhone').value = vendor.phone;
+        document.getElementById('sLocation').value = vendor.location || '';
+        document.getElementById('sDesc').value = vendor.description || '';
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    // Add Product
+    document.getElementById('addProductForm').onsubmit = async (e) => {
+      e.preventDefault();
+      const payload = {
+        vendor_id: currentVendor.id,
+        name: document.getElementById('pName').value,
+        category: document.getElementById('pCategory').value,
+        price: document.getElementById('pPrice').value,
+        description: document.getElementById('pDesc').value,
+        status: 'active'
+      };
+
+      try {
+        const res = await fetch(`${API_URL}/products`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        await res.json();
+        alert('Product added!');
+        e.target.reset();
+        loadStoreData();
+      } catch (err) {
+        alert(err.message);
+      }
+    };
+
+    // Update Store
+    document.getElementById('storeSettingsForm').onsubmit = async (e) => {
+      e.preventDefault();
+      const payload = {
+        name: document.getElementById('sName').value,
+        category: document.getElementById('sCategory').value,
+        phone: document.getElementById('sPhone').value,
+        location: document.getElementById('sLocation').value,
+        description: document.getElementById('sDesc').value
+      };
+
+      try {
+        const res = await fetch(`${API_URL}/vendors/${currentVendor.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        await res.json();
+        alert('Store updated!');
+        currentVendor.name = payload.name;
+        document.getElementById('vendorStoreName').textContent = currentVendor.name;
+        localStorage.setItem('um_vendor', JSON.stringify(currentVendor));
+      } catch (err) {
+        alert(err.message);
+      }
+    };
+
+    async function deleteProduct(id) {
+      if (confirm('Delete this product?')) {
+        await fetch(`${API_URL}/products/${id}`, { method: 'DELETE' });
+        loadStoreData();
+      }
+    }
+
+    init();
+  </script>
 </body>
 </html>
