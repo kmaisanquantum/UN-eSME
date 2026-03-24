@@ -28,6 +28,7 @@ const db = new sqlite3.Database('./unity_mall.db', (err) => {
   } else {
     console.log('Connected to Unity Mall SQLite database');
     initDatabase();
+    updateDatabaseSchema();
   }
 });
 
@@ -43,6 +44,7 @@ function initDatabase() {
       location TEXT NOT NULL,
       description TEXT,
       facebook TEXT,
+      password TEXT,
       email TEXT,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
@@ -115,6 +117,74 @@ const upload = multer({
 });
 
 // ============== VENDOR ROUTES ==============
+// Update Database Schema for Authentication
+function updateDatabaseSchema() {
+  db.run(`ALTER TABLE vendors ADD COLUMN password TEXT`, (err) => {
+    if (err) {
+      if (!err.message.includes('duplicate column name')) {
+        console.error('Error adding password column:', err.message);
+      }
+    } else {
+      console.log('Added password column to vendors table');
+    }
+  });
+}
+
+// ============== AUTH ROUTES ==============
+
+// Vendor Registration
+app.post('/api/auth/register', (req, res) => {
+  const { name, category, phone, location, description, facebook, email, password } = req.body;
+
+  if (!email || !password || !name) {
+    return res.status(400).json({ error: 'Name, email and password are required' });
+  }
+
+  // Check if vendor already exists
+  db.get('SELECT id FROM vendors WHERE email = ?', [email], (err, row) => {
+    if (err) return res.status(500).json({ error: err.message });
+    if (row) return res.status(400).json({ error: 'Vendor with this email already exists' });
+
+    const sql = `INSERT INTO vendors (name, category, phone, location, description, facebook, email, password)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
+
+    db.run(sql, [name, category, phone, location, description, facebook, email, password], function(err) {
+      if (err) return res.status(500).json({ error: err.message });
+      res.json({ id: this.lastID, message: 'Vendor registered successfully' });
+    });
+  });
+});
+
+// Vendor Login
+app.post('/api/auth/login', (req, res) => {
+  const { email, password } = req.body;
+
+  if (!email || !password) {
+    return res.status(400).json({ error: 'Email and password are required' });
+  }
+
+  db.get('SELECT * FROM vendors WHERE email = ? AND password = ?', [email, password], (err, row) => {
+    if (err) return res.status(500).json({ error: err.message });
+    if (!row) return res.status(401).json({ error: 'Invalid email or password' });
+
+    // In a real app, we'd use JWT here
+    const vendorInfo = { ...row };
+    delete vendorInfo.password;
+    res.json({ vendor: vendorInfo, token: 'mock-jwt-token-' + row.id });
+  });
+});
+
+// Get Current Vendor Info
+app.get('/api/vendors/me/:id', (req, res) => {
+  db.get('SELECT * FROM vendors WHERE id = ?', [req.params.id], (err, row) => {
+    if (err) return res.status(500).json({ error: err.message });
+    if (!row) return res.status(404).json({ error: 'Vendor not found' });
+
+    const vendorInfo = { ...row };
+    delete vendorInfo.password;
+    res.json(vendorInfo);
+  });
+});
 
 // Create vendor
 app.post('/api/vendors', (req, res) => {
