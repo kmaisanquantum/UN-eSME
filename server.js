@@ -418,7 +418,7 @@ app.get('/api/stats', (req, res) => {
 
 // Start server
 app.listen(PORT, () => {
-  console.log(`Unity Mall eSME API running on http://localhost:${PORT}`);
+  console.log(`Unity Mall SME centre API running on http://localhost:${PORT}`);
   console.log(`API Documentation: http://localhost:${PORT}/api`);
 });
 

@@ -1,4 +1,4 @@
-# Unity Mall eSME - Fullstack Application
+# Unity Mall SME centre - Fullstack Application
 
 A complete e-commerce platform for Unity Mall Mall vendors to manage products, services, and customer engagement.
 
