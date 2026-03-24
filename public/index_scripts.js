@@ -141,7 +141,7 @@
     }
 
     function openWhatsApp(stall, productName) {
-      const msg = encodeURIComponent(`Hi ${stall}, I'm interested in "${productName}" I saw on Unity Mall eSME!`);
+      const msg = encodeURIComponent(`Hi ${stall}, I'm interested in "${productName}" I saw on Unity Mall SME centre!`);
       window.open(`https://wa.me/67570000000?text=${msg}`, '_blank');
     }
 

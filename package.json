@@ -1,7 +1,7 @@
 {
-  "name": "unity-mall-esme-backend",
+  "name": "unity-mall-sme-centre-backend",
   "version": "1.0.0",
-  "description": "Backend API for Unity Mall eSME platform",
+  "description": "Backend API for Unity Mall SME centre platform",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",

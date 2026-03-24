@@ -1,10 +1,10 @@
-# 🏪 Garden City & Unity Mall eSME - Complete Setup Guide
+# 🏪 Garden City & Unity Mall SME centre - Complete Setup Guide
 
 ## 📦 What You Have
 
 Two complete fullstack e-commerce platforms ready to deploy:
 1. **garden-city-fullstack.zip** - Garden City eSME
-2. **unity-mall-fullstack.zip** - Unity Mall eSME
+2. **unity-mall-fullstack.zip** - Unity Mall SME centre
 
 Each package includes:
 - ✅ Node.js/Express backend server
