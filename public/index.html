@@ -552,7 +552,8 @@
       <button class="cart-trigger" onclick="toggleCart()">
         🛒 <span class="cart-count" id="cartCount">0</span>
       </button>
-      <button class="auth-btn" onclick="openAuthModal()">Sign In</button>
+      <button class="auth-btn" onclick="openAuthModal('login')">Sign In</button>
+      <button class="auth-btn" onclick="openAuthModal('register')" style="background:transparent; border:1px solid var(--primary); color:var(--primary);">Sign Up</button>
     </div>
   </header>
 
@@ -739,22 +740,25 @@
         <button onclick="closeAuthModal()" style="background:none; border:none; color:var(--text-muted); font-size:1.5rem; cursor:pointer;">×</button>
       </div>
       <div class="modal-body">
-        <div class="social-btns">
-          <button class="social-btn google-btn" onclick="alert('Google Login coming soon')">
-            Continue with Google
-          </button>
-          <button class="social-btn facebook-btn" onclick="alert('Facebook Login coming soon')">
-            Continue with Facebook
-          </button>
-          <button class="social-btn phone-btn" onclick="alert('Phone Login coming soon')">
-            Continue with Phone
-          </button>
+        <div id="authContent">
+          <div class="social-btns">
+            <button class="social-btn google-btn" onclick="alert('Google Login coming soon')">
+              Continue with Google
+            </button>
+            <button class="social-btn facebook-btn" onclick="alert('Facebook Login coming soon')">
+              Continue with Facebook
+            </button>
+            <button class="social-btn phone-btn" onclick="alert('Phone Login coming soon')">
+              Continue with Phone
+            </button>
+          </div>
+          <p id="authToggleMsg" style="text-align: center; margin-top: 1.5rem; font-size: 0.875rem; color: var(--text-muted);">
+            Don't have an account? <a href="#" onclick="setAuthMode('register')" style="color: var(--text-accent);">Sign up here</a>
+          </p>
         </div>
       </div>
     </div>
   </div>
-
-  <!-- Bottom Nav -->
   <nav class="nav">
     <button class="nav-btn active" onclick="switchScreen('directory')">
       <div class="nav-icon">🏪</div>
@@ -1008,7 +1012,23 @@
       event.target.closest('.nav-btn').classList.add('active');
     }
 
-    function openAuthModal() { document.getElementById('authModal').classList.add('show'); }
+    function openAuthModal(mode = 'login') {
+      document.getElementById('authModal').classList.add('show');
+      setAuthMode(mode);
+    }
+
+    function setAuthMode(mode) {
+      const title = document.getElementById('modalTitle');
+      const toggleMsg = document.getElementById('authToggleMsg');
+
+      if (mode === 'register') {
+        title.textContent = 'Create Account';
+        toggleMsg.innerHTML = 'Already have an account? <a href="#" onclick="setAuthMode(\'login\')" style="color: var(--text-accent);">Sign in here</a>';
+      } else {
+        title.textContent = 'Sign In';
+        toggleMsg.innerHTML = 'Don\'t have an account? <a href="#" onclick="setAuthMode(\'register\')" style="color: var(--text-accent);">Sign up here</a>';
+      }
+    }
     function closeAuthModal() { document.getElementById('authModal').classList.remove('show'); }
 
     function checkout() {
