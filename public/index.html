@@ -518,6 +518,76 @@
       gap: 4px;
       transition: color 0.2s;
     }
+    /* Hero Slider Styles */
+    .hero-slider {
+      position: relative;
+      overflow: hidden;
+      border-radius: 12px;
+      margin-bottom: 2rem;
+      background: linear-gradient(135deg, #000, var(--bg-card));
+      border: 1px solid var(--border);
+    }
+    .slider-track {
+      display: flex;
+      transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .slide {
+      min-width: 100%;
+      padding: 3rem 1.5rem;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    .slide h2 {
+      font-size: 1.75rem;
+      font-weight: 800;
+      margin-bottom: 1rem;
+      background: linear-gradient(to right, #fff, var(--text-accent));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .slide p {
+      color: var(--text-muted);
+      max-width: 500px;
+      margin-bottom: 1.5rem;
+      font-size: 1rem;
+    }
+    .slider-dots {
+      position: absolute;
+      bottom: 12px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      <section class="hero-slider">
+        <div class="slider-track" id="heroSlider">
+          <div class="slide">
+            <h2>Local Shopping, Reimagined</h2>
+            <p>Discover unique products and services from talented local SMEs at Unity Mall.</p>
+            <button class="auth-btn" onclick="document.getElementById('searchInput').focus()">Shop Now</button>
+          </div>
+          <div class="slide" style="background: linear-gradient(135deg, var(--bg-card), #000);">
+            <h2>Grow Your Business</h2>
+            <p>Join our network of successful SMEs. Get your own digital storefront and dashboard.</p>
+            <button class="auth-btn" onclick="openAuthModal('register')" style="background: var(--text-accent); color: #000; border-color: var(--text-accent);">Join as Vendor</button>
+          </div>
+        </div>
+        <div class="slider-dots" id="sliderDots">
+          <span class="dot active" onclick="goToSlide(0)"></span>
+          <span class="dot" onclick="goToSlide(1)"></span>
+        </div>
+      </section>
+      border-radius: 50%;
+      background: var(--border);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .dot.active {
+      background: var(--primary);
+      width: 24px;
+      border-radius: 4px;
+    }
 
     .nav-btn.active { color: var(--text-accent); }
     .nav-icon { font-size: 20px; }
@@ -590,32 +660,45 @@
         <p>List your products and reach thousands of customers.</p>
       </div>
       <div style="padding: 1.5rem; max-width: 600px; margin: 0 auto;">
-        <div id="vendorContent">
-          <form onsubmit="submitProduct(event)">
-            <div class="form-group">
-              <label class="form-label">Product Photo</label>
-              <label class="upload-box" id="uploadBox">
-                <div id="uploadContent">
-                  <div style="color: var(--primary); font-size: 2rem; margin-bottom: 0.5rem;">📷</div>
-                  <div style="color: var(--text-muted);">Tap to upload photo</div>
+
+        <div style="display: grid; grid-template-columns: 1fr; gap: 1.5rem; margin-bottom: 2rem;">
+          <div class="card" style="padding: 1.5rem; text-align: center; border: 1px solid var(--primary);">
+            <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">🏢</div>
+            <h3 style="color: var(--text-accent); margin-bottom: 0.5rem;">Access Your Back Office</h3>
+            <p style="color: var(--text-muted); margin-bottom: 1rem; font-size: 0.875rem;">Manage your store, products, and analytics in our full vendor dashboard.</p>
+            <a href="backend.html" class="auth-btn" style="display: block; text-decoration: none; padding: 12px; font-weight: 700;">Login to Dashboard</a>
+          </div>
+
+          <div class="card" style="padding: 1.5rem;">
+            <h3 style="color: var(--text-accent); margin-bottom: 1rem; text-align: center;">Quick Product Listing</h3>
+            <div id="vendorContent">
+              <form onsubmit="submitProduct(event)">
+                <div class="form-group">
+                  <label class="form-label">Product Photo</label>
+                  <label class="upload-box" id="uploadBox">
+                    <div id="uploadContent">
+                      <div style="color: var(--primary); font-size: 2rem; margin-bottom: 0.5rem;">📷</div>
+                      <div style="color: var(--text-muted);">Tap to upload photo</div>
+                    </div>
+                    <input type="file" id="photoInput" accept="image/*" onchange="previewImage(event)" required style="display:none;">
+                  </label>
                 </div>
-                <input type="file" id="photoInput" accept="image/*" onchange="previewImage(event)" required style="display:none;">
-              </label>
+                <div class="form-group">
+                  <label class="form-label">Product Name</label>
+                  <input type="text" class="form-input" placeholder="e.g., Hand-woven Basket" required>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Price (PGK)</label>
+                  <input type="number" class="form-input" placeholder="0.00" step="0.01" required>
+                </div>
+                <button type="submit" class="auth-btn" style="width:100%; padding: 12px;">Post for Review</button>
+              </form>
             </div>
-            <div class="form-group">
-              <label class="form-label">Product Name</label>
-              <input type="text" class="form-input" placeholder="e.g., Hand-woven Basket" required>
-            </div>
-            <div class="form-group">
-              <label class="form-label">Price (PGK)</label>
-              <input type="number" class="form-input" placeholder="0.00" step="0.01" required>
-            </div>
-            <button type="submit" class="auth-btn" style="width:100%; padding: 12px;">Upload Product</button>
-          </form>
+          </div>
         </div>
+
       </div>
     </div>
-
     <!-- WiFi Screen -->
     <div id="wifi" class="screen hidden">
       <div class="hero">
@@ -636,6 +719,9 @@
         <h2>SME Accounting Suite</h2>
         <p>Record your daily transactions and track your business performance.</p>
       </div>
+        <div style="text-align: center; margin-bottom: 1rem;">
+          <a href="backend.html" class="auth-btn" style="display: inline-block; padding: 8px 16px; font-size: 0.875rem; text-decoration: none; background: transparent; border: 1px solid var(--primary);">Open Back Office</a>
+        </div>
 
       <div style="padding: 1rem; max-width: 800px; margin: 0 auto; display: grid; grid-template-columns: 1fr; gap: 1.5rem;">
 
@@ -780,6 +866,39 @@
 
   <script>
     // Sample product data
+    // Slider Logic
+    let currentSlide = 0;
+    const totalSlides = 2;
+    const sliderInterval = 5000;
+
+    function goToSlide(index) {
+      currentSlide = index;
+      const track = document.getElementById('heroSlider');
+      if (track) {
+        track.style.transform = `translateX(-${currentSlide * 100}%)`;
+        updateDots();
+      }
+    }
+
+    function updateDots() {
+      const dots = document.querySelectorAll('.dot');
+      dots.forEach((dot, index) => {
+        dot.classList.toggle('active', index === currentSlide);
+      });
+    }
+
+    function autoSlide() {
+      currentSlide = (currentSlide + 1) % totalSlides;
+      goToSlide(currentSlide);
+    }
+
+    let sliderTimer = setInterval(autoSlide, sliderInterval);
+
+    const sliderElement = document.getElementById('heroSlider');
+    if (sliderElement) {
+      sliderElement.addEventListener('mouseenter', () => clearInterval(sliderTimer));
+      sliderElement.addEventListener('mouseleave', () => sliderTimer = setInterval(autoSlide, sliderInterval));
+    }
     // Accounting Logic
     let accountingTransactions = JSON.parse(localStorage.getItem('um_accounting') || '[]');
 
