@@ -900,9 +900,11 @@
       sliderElement.addEventListener('mouseleave', () => sliderTimer = setInterval(autoSlide, sliderInterval));
     }
     // Accounting Logic
-    let accountingTransactions = JSON.parse(localStorage.getItem('um_accounting') || '[]');
+    function getVendorAccountingKey() { const v = JSON.parse(localStorage.getItem("um_vendor")); return v ? "um_accounting_vendor_" + v.id : "um_accounting"; }
+    let accountingTransactions = JSON.parse(localStorage.getItem(getVendorAccountingKey()) || "[]");
 
     function updateAccountingUI() {
+      accountingTransactions = JSON.parse(localStorage.getItem(getVendorAccountingKey()) || "[]");
       const tbody = document.getElementById('accTransactionBody');
       const salesEl = document.getElementById('accTotalSales');
       const expensesEl = document.getElementById('accTotalExpenses');
@@ -973,7 +975,7 @@
     }
 
     function saveAccounting() {
-      localStorage.setItem('um_accounting', JSON.stringify(accountingTransactions));
+      localStorage.setItem(getVendorAccountingKey(), JSON.stringify(accountingTransactions));
     }
     const categories = ['All', 'Fashion', 'Catering', 'Tech', 'Beauty', 'Home & Living', 'Sports', 'Accessories'];
     

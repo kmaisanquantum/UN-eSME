@@ -211,6 +211,7 @@
     <a href="/" class="logo">Unity SME centre</a>
     <nav>
       <a onclick="switchTab('overview')" id="nav-overview" class="nav-link active">📊 Overview</a>
+      <a onclick="switchTab('accounts')" id="nav-accounts" class="nav-link">📉 Accounts</a>
       <a onclick="switchTab('products')" id="nav-products" class="nav-link">📦 Products</a>
       <a onclick="switchTab('settings')" id="nav-settings" class="nav-link">⚙️ Settings</a>
       <a onclick="logout()" class="nav-link" style="margin-top: 2rem; color: #ef4444;">🚪 Logout</a>
@@ -224,6 +225,71 @@
     </div>
 
     <!-- Overview Tab -->
+    <!-- Accounts/Financials Tab -->
+    <div id="tab-accounts" class="tab-content hidden">
+      <div class="card" style="padding: 1.5rem; background: linear-gradient(135deg, var(--bg-card), #1e293b);">
+        <h3 style="color: var(--text-accent); margin-bottom: 1rem;">📈 SME Financial Summary</h3>
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; text-align: center;">
+          <div>
+            <div style="color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase;">Total Sales</div>
+            <div id="accTotalSales" style="color: var(--success); font-size: 1.25rem; font-weight: 700;">K0.00</div>
+          </div>
+          <div>
+            <div style="color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase;">Total Expenses</div>
+            <div id="accTotalExpenses" style="color: #ef4444; font-size: 1.25rem; font-weight: 700;">K0.00</div>
+          </div>
+          <div>
+            <div style="color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase;">Net Profit</div>
+            <div id="accNetProfit" style="color: var(--primary); font-size: 1.25rem; font-weight: 700;">K0.00</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3 class="card-title">➕ Record Transaction (Source Document)</h3>
+        <form id="accountingForm" onsubmit="addTransaction(event)" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem;">
+          <div>
+            <label class="label">Date</label>
+            <input type="date" id="accDate" class="input" required>
+          </div>
+          <div>
+            <label class="label">Type</label>
+            <select id="accType" class="input">
+              <option value="sale">Sale (Income)</option>
+              <option value="expense">Expense (Cost)</option>
+            </select>
+          </div>
+          <div>
+            <label class="label">Amount (K)</label>
+            <input type="number" id="accAmount" class="input" step="0.01" placeholder="0.00" required>
+          </div>
+          <div style="grid-column: 1 / -1;">
+            <label class="label">Description / Source Doc Ref</label>
+            <input type="text" id="accDesc" class="input" placeholder="e.g., Receipt #123, Cash Sale #001" required>
+          </div>
+          <button type="submit" class="btn btn-primary" style="grid-column: 1 / -1;">Record Transaction</button>
+        </form>
+      </div>
+
+      <div class="card">
+        <h3 class="card-title">📄 Transaction History</h3>
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr style="text-align: left;">
+                <th>Date</th>
+                <th>Description</th>
+                <th style="text-align: right;">Amount</th>
+                <th style="text-align: center;">Action</th>
+              </tr>
+            </thead>
+            <tbody id="accTransactionBody">
+              <!-- Transactions will be rendered here -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
     <div id="tab-overview" class="tab-content">
       <div class="stats-grid">
         <div class="stat-card">
@@ -352,6 +418,82 @@
 
     function init() {
       if (currentVendor) {
+    // Accounting Logic for Vendor
+    let accountingTransactions = JSON.parse(localStorage.getItem('um_accounting_vendor_' + currentVendor.id) || '[]');
+
+    function updateAccountingUI() {
+      const tbody = document.getElementById('accTransactionBody');
+      const salesEl = document.getElementById('accTotalSales');
+      const expensesEl = document.getElementById('accTotalExpenses');
+      const netProfitEl = document.getElementById('accNetProfit');
+
+      if (!tbody) return;
+
+      if (accountingTransactions.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding: 2rem; color:var(--text-muted);">No transactions recorded yet.</td></tr>';
+        salesEl.textContent = 'K0.00';
+        expensesEl.textContent = 'K0.00';
+        netProfitEl.textContent = 'K0.00';
+        return;
+      }
+
+      let totalSales = 0;
+      let totalExpenses = 0;
+
+      tbody.innerHTML = accountingTransactions
+        .sort((a, b) => new Date(b.date) - new Date(a.date))
+        .map((t, index) => {
+          const amount = parseFloat(t.amount);
+          if (t.type === 'sale') totalSales += amount;
+          else totalExpenses += amount;
+
+          return `
+            <tr style="border-bottom: 1px solid var(--border);">
+              <td style="padding: 12px;">${t.date}</td>
+              <td style="padding: 12px;">
+                <span style="font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; margin-right: 4px; background: ${t.type === 'sale' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)'}; color: ${t.type === 'sale' ? 'var(--success)' : '#ef4444'}; text-transform: uppercase;">${t.type}</span>
+                ${t.desc}
+              </td>
+              <td style="padding: 12px; text-align: right; font-weight: 600; color: ${t.type === 'sale' ? 'var(--success)' : '#ef4444'};">${t.type === 'sale' ? '' : '-'}${amount.toFixed(2)}</td>
+              <td style="padding: 12px; text-align: center;">
+                <button onclick="deleteTransaction(${index})" style="background:none; border:none; color:#ef4444; cursor:pointer; font-size: 1.25rem;">×</button>
+              </td>
+            </tr>
+          `;
+        }).join('');
+
+      const netProfit = totalSales - totalExpenses;
+      salesEl.textContent = `K${totalSales.toFixed(2)}`;
+      expensesEl.textContent = `K${totalExpenses.toFixed(2)}`;
+      netProfitEl.textContent = `K${netProfit.toFixed(2)}`;
+      netProfitEl.style.color = netProfit >= 0 ? 'var(--success)' : '#ef4444';
+    }
+
+    function addTransaction(e) {
+      e.preventDefault();
+      const date = document.getElementById('accDate').value;
+      const type = document.getElementById('accType').value;
+      const amount = document.getElementById('accAmount').value;
+      const desc = document.getElementById('accDesc').value;
+
+      accountingTransactions.push({ date, type, amount, desc });
+      saveAccounting();
+      updateAccountingUI();
+      e.target.reset();
+      alert('Transaction recorded successfully');
+    }
+
+    function deleteTransaction(index) {
+      if (confirm('Delete this transaction?')) {
+        accountingTransactions.splice(index, 1);
+        saveAccounting();
+        updateAccountingUI();
+      }
+    }
+
+    function saveAccounting() {
+      localStorage.setItem('um_accounting_vendor_' + currentVendor.id, JSON.stringify(accountingTransactions));
+    }
         showDashboard();
       }
     }
@@ -413,11 +555,14 @@
     };
 
     function showDashboard() {
+      accountingTransactions = JSON.parse(localStorage.getItem("um_accounting_vendor_" + currentVendor.id) || "[]");
+      updateAccountingUI();
       document.getElementById('authScreen').classList.add('hidden');
       document.getElementById('sidebar').classList.remove('hidden');
       document.getElementById('mainContent').classList.remove('hidden');
       document.getElementById('vendorStoreName').textContent = currentVendor.name;
       loadStoreData();
+        updateAccountingUI();
     }
 
     function logout() {
@@ -490,6 +635,7 @@
         alert('Product added!');
         e.target.reset();
         loadStoreData();
+        updateAccountingUI();
       } catch (err) {
         alert(err.message);
       }
@@ -526,6 +672,7 @@
       if (confirm('Delete this product?')) {
         await fetch(`${API_URL}/products/${id}`, { method: 'DELETE' });
         loadStoreData();
+        updateAccountingUI();
       }
     }
 
