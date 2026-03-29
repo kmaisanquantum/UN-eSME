@@ -2,6 +2,8 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <script async defer crossorigin="anonymous" src="https://connect.facebook.net/en_US/sdk.js"></script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Unity Mall SME centre | Local Shopping Reimagined</title>
   <style>
@@ -1205,23 +1207,51 @@
       }
     }
 
+    window.fbAsyncInit = function() {
+      FB.init({
+        appId      : 'your-facebook-app-id', // Replaced dynamically or from config
+        cookie     : true,
+        xfbml      : true,
+        version    : 'v18.0'
+      });
+    };
+
     async function socialLogin(provider) {
-      // Mock social data for demonstration
+      if (provider === 'google') {
+        // Real Google Login Flow would normally use the GSI library's renderButton or prompt
+        // For a manual click, we can use the credential helper if configured
+        console.log("Google login initiated. If CLIENT_ID is set, use GSI prompt.");
+      } else if (provider === 'facebook') {
+        FB.login(function(response) {
+          if (response.authResponse) {
+            FB.api('/me', {fields: 'name,email'}, function(userData) {
+              handleSocialAuth(provider, {
+                name: userData.name,
+                email: userData.email,
+                id: userData.id,
+                token: response.authResponse.accessToken
+              });
+            });
+          }
+        }, {scope: 'public_profile,email'});
+        return;
+      }
+
+      // Fallback/Mock data for demonstration
       const mockData = {
         google: { name: 'Google User', email: 'google@example.com', id: 'g123' },
         facebook: { name: 'Facebook User', email: 'fb@example.com', id: 'f456' }
       };
 
-      const payload = {
-        provider,
-        ...mockData[provider]
-      };
+      handleSocialAuth(provider, mockData[provider]);
+    }
 
+    async function handleSocialAuth(provider, userData) {
       try {
         const res = await fetch('/api/auth/social', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
+          body: JSON.stringify({ provider, ...userData })
         });
         const data = await res.json();
         if (data.error) throw new Error(data.error);

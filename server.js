@@ -183,14 +183,23 @@ app.post('/api/auth/login', (req, res) => {
   });
 });
 
-// Social Authentication (Mock)
+// Social Authentication
+// NOTE: For real production, verify tokens on server side using 'google-auth-library' or 'fb' Node.js SDK
 app.post("/api/auth/social", (req, res) => {
-  const { provider, name, email, id } = req.body;
+  const { provider, name, email, id, token } = req.body;
+
+  if (!id || !provider) {
+    return res.status(400).json({ error: "Missing required social auth parameters" });
+  }
+
+  // Placeholder for token verification
+  // if (token) { ... verify with provider ... }
 
   db.get("SELECT * FROM users WHERE social_provider = ? AND social_id = ?", [provider, id], (err, row) => {
     if (err) return res.status(500).json({ error: err.message });
 
     if (row) {
+      // Update email/name if changed?
       return res.json({ message: "Login successful", user: row });
     } else {
       const sql = "INSERT INTO users (name, email, social_provider, social_id) VALUES (?, ?, ?, ?)";
