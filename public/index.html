@@ -31,13 +31,11 @@
       line-height: 1.5;
     }
 
-    /* Scrollbar Styling */
     ::-webkit-scrollbar { width: 8px; height: 8px; }
     ::-webkit-scrollbar-track { background: var(--bg-dark); }
     ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
     ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
 
-    /* Header */
     .header {
       background: var(--bg-header);
       border-bottom: 2px solid var(--primary);
@@ -114,7 +112,6 @@
 
     .auth-btn:hover { background: var(--primary-hover); }
 
-    /* Info Bar */
     .info-bar {
       background: var(--bg-card);
       border-bottom: 1px solid var(--border);
@@ -129,31 +126,68 @@
       font-weight: 600;
     }
 
-    /* Hero Section */
-    .hero {
-      padding: 2.5rem 1rem;
-      background: linear-gradient(to bottom, #000, var(--bg-dark));
+    .hero-slider {
+      position: relative;
+      height: 200px;
+      overflow: hidden;
+      background: #000;
+    }
+
+    .slider-container {
+      display: flex;
+      height: 100%;
+      transition: transform 0.5s ease-in-out;
+    }
+
+    .slide {
+      min-width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 2rem;
       text-align: center;
     }
 
-    .hero h2 {
-      font-size: 2.25rem;
+    .slide h2 {
+      font-size: 1.5rem;
       font-weight: 800;
       margin-bottom: 0.5rem;
-      background: linear-gradient(to right, #fff, var(--text-accent));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
+      color: var(--text-accent);
     }
 
-    .hero p {
+    .slide p {
+      font-size: 0.9rem;
       color: var(--text-muted);
-      max-width: 600px;
-      margin: 0 auto 1.5rem;
+      max-width: 300px;
+      margin-bottom: 1rem;
     }
 
-    .m-t-1 { margin-top: 1rem; }
+    .slider-dots {
+      position: absolute;
+      bottom: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 8px;
+    }
 
-    /* Search Section */
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--border);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .dot.active {
+      background: var(--primary);
+      width: 24px;
+      border-radius: 4px;
+    }
+
     .search-container {
       padding: 1rem;
       position: sticky;
@@ -194,7 +228,6 @@
       color: var(--text-muted);
     }
 
-    /* Categories */
     .categories {
       padding: 1rem;
       display: flex;
@@ -225,7 +258,6 @@
       border-color: var(--primary);
     }
 
-    /* Grid Layout */
     .section-title {
       padding: 1rem 1rem 0.5rem;
       font-size: 1.1rem;
@@ -256,7 +288,6 @@
       }
     }
 
-    /* Product Card */
     .card {
       background: var(--bg-card);
       border: 1px solid var(--border);
@@ -378,7 +409,6 @@
       justify-content: center;
     }
 
-    /* Modal Styling Improvements */
     .modal {
       display: none;
       position: fixed;
@@ -416,7 +446,6 @@
 
     .modal-body { padding: 1.25rem; }
 
-    /* Cart Specific */
     .cart-item {
       display: grid;
       grid-template-columns: 60px 1fr auto;
@@ -446,7 +475,6 @@
       font-size: 1.2rem;
     }
 
-    /* Forms */
     .form-group { margin-bottom: 1.25rem; }
     .form-label { display: block; color: var(--text-muted); font-size: 0.875rem; margin-bottom: 0.5rem; }
     .form-input {
@@ -457,41 +485,7 @@
       border-radius: 8px;
       color: var(--text-main);
     }
-    .upload-box {
-      border: 2px dashed var(--border);
-      border-radius: 8px;
-      padding: 2rem;
-      text-align: center;
-      background: var(--bg-dark);
-      cursor: pointer;
-    }
 
-    /* Vouchers & Info */
-    .info-banner {
-      background: rgba(127, 29, 29, 0.3);
-      border: 1px solid #7f1d1d;
-      border-radius: 8px;
-      padding: 1rem;
-      margin-bottom: 1.5rem;
-    }
-    .voucher-card {
-      background: var(--bg-card);
-      border: 2px solid var(--primary);
-      border-radius: 12px;
-      padding: 1.25rem;
-      margin-bottom: 1rem;
-    }
-    .voucher-badge {
-      background: var(--primary);
-      color: #000;
-      padding: 4px 12px;
-      border-radius: 12px;
-      font-size: 10px;
-      font-weight: 800;
-      float: right;
-    }
-
-    /* Bottom Nav */
     .nav {
       position: fixed;
       bottom: 0; left: 0; right: 0;
@@ -499,94 +493,22 @@
       border-top: 2px solid var(--primary);
       display: flex;
       justify-content: space-around;
-      height: 64px;
+      padding: 8px 0;
       z-index: 100;
     }
 
     .nav-btn {
-      flex: 1;
       background: none;
       border: none;
       color: var(--text-muted);
-      font-size: 0.7rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      font-size: 10px;
       font-weight: 600;
       cursor: pointer;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 4px;
       transition: color 0.2s;
-    }
-    /* Hero Slider Styles */
-    .hero-slider {
-      position: relative;
-      overflow: hidden;
-      border-radius: 12px;
-      margin-bottom: 2rem;
-      background: linear-gradient(135deg, #000, var(--bg-card));
-      border: 1px solid var(--border);
-    }
-    .slider-track {
-      display: flex;
-      transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-    .slide {
-      min-width: 100%;
-      padding: 3rem 1.5rem;
-      text-align: center;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-    }
-    .slide h2 {
-      font-size: 1.75rem;
-      font-weight: 800;
-      margin-bottom: 1rem;
-      background: linear-gradient(to right, #fff, var(--text-accent));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
-    .slide p {
-      color: var(--text-muted);
-      max-width: 500px;
-      margin-bottom: 1.5rem;
-      font-size: 1rem;
-    }
-    .slider-dots {
-      position: absolute;
-      bottom: 12px;
-      left: 50%;
-      transform: translateX(-50%);
-      display: flex;
-      <section class="hero-slider">
-        <div class="slider-track" id="heroSlider">
-          <div class="slide">
-            <h2>Local Shopping, Reimagined</h2>
-            <p>Discover unique products and services from talented local SMEs at Unity Mall.</p>
-            <button class="auth-btn" onclick="document.getElementById('searchInput').focus()">Shop Now</button>
-          </div>
-          <div class="slide" style="background: linear-gradient(135deg, var(--bg-card), #000);">
-            <h2>Grow Your Business</h2>
-            <p>Join our network of successful SMEs. Get your own digital storefront and dashboard.</p>
-            <button class="auth-btn" onclick="openAuthModal('register')" style="background: var(--text-accent); color: #000; border-color: var(--text-accent);">Join as Vendor</button>
-          </div>
-        </div>
-        <div class="slider-dots" id="sliderDots">
-          <span class="dot active" onclick="goToSlide(0)"></span>
-          <span class="dot" onclick="goToSlide(1)"></span>
-        </div>
-      </section>
-      border-radius: 50%;
-      background: var(--border);
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-    .dot.active {
-      background: var(--primary);
-      width: 24px;
-      border-radius: 4px;
     }
 
     .nav-btn.active { color: var(--text-accent); }
@@ -594,7 +516,6 @@
 
     .hidden { display: none; }
 
-    /* Auth Modal Extras */
     .social-btns { display: flex; flex-direction: column; gap: 0.75rem; }
     .social-btn {
       width: 100%; padding: 12px; border: none; border-radius: 8px;
@@ -604,16 +525,25 @@
     .google-btn { background: var(--google); color: #000; }
     .facebook-btn { background: var(--facebook); color: #fff; }
     .phone-btn { background: var(--whatsapp); color: #fff; }
+
+    .acc-card {
+      background: var(--bg-card);
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 1rem;
+      border: 1px solid var(--border);
+    }
+    .acc-stat { text-align: center; padding: 1rem; }
+    .acc-val { font-size: 1.5rem; font-weight: 800; color: var(--text-accent); }
+    .acc-label { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; }
   </style>
 </head>
 <body>
 
-  <!-- Info Bar -->
   <div class="info-bar">
     A product of <a href="https://www.dspng.tech" target="_blank">Deeps Systems</a>. Supporting Local SMEs in PNG.
   </div>
 
-  <!-- Header -->
   <header class="header">
     <a href="#" class="logo-container" onclick="switchScreen('directory')">
       <h1>Unity Mall <span style="font-weight: 300;">SME centre</span></h1>
@@ -628,175 +558,108 @@
   </header>
 
   <main>
-    <!-- Directory Screen -->
     <div id="directory" class="screen">
-      <section class="hero">
-        <h2>Local Shopping, Reimagined</h2>
-        <p>Discover unique products and services from talented local SMEs at Unity Mall.</p>
-        <button class="auth-btn m-t-1" onclick="document.getElementById('searchInput').focus()">Shop Now</button>
+      <section class="hero-slider">
+        <div class="slider-container" id="sliderContainer">
+          <div class="slide" style="background: linear-gradient(135deg, #000, var(--bg-card));">
+            <h2>Unity Mall SME centre</h2>
+            <p>The digital marketplace for PNG's finest local vendors and artisans.</p>
+            <button class="auth-btn" onclick="document.getElementById('searchInput').focus()">Shop Now</button>
+          </div>
+          <div class="slide" style="background: linear-gradient(135deg, var(--bg-card), #000);">
+            <h2>Grow Your Business</h2>
+            <p>Join our network of successful SMEs. Get your own digital storefront and dashboard.</p>
+            <button class="auth-btn" onclick="openAuthModal('register')" style="background: var(--text-accent); color: #000; border-color: var(--text-accent);">Join as Vendor</button>
+          </div>
+        </div>
+        <div class="slider-dots" id="sliderDots">
+          <span class="dot active" onclick="goToSlide(0)"></span>
+          <span class="dot" onclick="goToSlide(1)"></span>
+        </div>
       </section>
 
       <div class="search-container">
         <div class="search-wrapper">
           <span class="search-icon">🔍</span>
-          <input type="text" id="searchInput" placeholder="Search products, services, or stalls..." onkeyup="filterStalls()">
+          <input type="text" id="searchInput" placeholder="Search products, vendors, categories..." oninput="filterStalls()">
         </div>
       </div>
 
       <div class="categories" id="categories"></div>
 
       <div class="section-title">
-        Featured Listings
-        <span class="results-count" id="results"></span>
+        <span>Product Directory</span>
+        <span class="results-count" id="results">Loading items...</span>
       </div>
 
       <div class="grid-container" id="stalls"></div>
     </div>
 
-    <!-- Vendor Screen -->
-    <div id="vendor" class="screen hidden">
-      <div class="hero">
-        <h2>Vendor Portal</h2>
-        <p>List your products and reach thousands of customers.</p>
+    <div id="vendor" class="screen hidden" style="padding: 2rem 1rem;">
+      <div style="text-align: center; margin-bottom: 2rem;">
+        <h2 style="font-size: 1.75rem; margin-bottom: 0.5rem; color: var(--text-accent);">Vendor Back Office</h2>
+        <p style="color: var(--text-muted);">Manage your products, orders, and business profiles.</p>
       </div>
-      <div style="padding: 1.5rem; max-width: 600px; margin: 0 auto;">
 
-        <div style="display: grid; grid-template-columns: 1fr; gap: 1.5rem; margin-bottom: 2rem;">
-          <div class="card" style="padding: 1.5rem; text-align: center; border: 1px solid var(--primary);">
-            <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">🏢</div>
-            <h3 style="color: var(--text-accent); margin-bottom: 0.5rem;">Access Your Back Office</h3>
-            <p style="color: var(--text-muted); margin-bottom: 1rem; font-size: 0.875rem;">Manage your store, products, and analytics in our full vendor dashboard.</p>
-            <a href="backend.html" class="auth-btn" style="display: block; text-decoration: none; padding: 12px; font-weight: 700;">Login to Dashboard</a>
-          </div>
-
-          <div class="card" style="padding: 1.5rem;">
-            <h3 style="color: var(--text-accent); margin-bottom: 1rem; text-align: center;">Quick Product Listing</h3>
-            <div id="vendorContent">
-              <form onsubmit="submitProduct(event)">
-                <div class="form-group">
-                  <label class="form-label">Product Photo</label>
-                  <label class="upload-box" id="uploadBox">
-                    <div id="uploadContent">
-                      <div style="color: var(--primary); font-size: 2rem; margin-bottom: 0.5rem;">📷</div>
-                      <div style="color: var(--text-muted);">Tap to upload photo</div>
-                    </div>
-                    <input type="file" id="photoInput" accept="image/*" onchange="previewImage(event)" required style="display:none;">
-                  </label>
-                </div>
-                <div class="form-group">
-                  <label class="form-label">Product Name</label>
-                  <input type="text" class="form-input" placeholder="e.g., Hand-woven Basket" required>
-                </div>
-                <div class="form-group">
-                  <label class="form-label">Price (PGK)</label>
-                  <input type="number" class="form-input" placeholder="0.00" step="0.01" required>
-                </div>
-                <button type="submit" class="auth-btn" style="width:100%; padding: 12px;">Post for Review</button>
-              </form>
-            </div>
-          </div>
-        </div>
-
+      <div class="acc-card" style="text-align: center; border-color: var(--primary);">
+         <h3>Ready to sell?</h3>
+         <p style="margin: 1rem 0; color: var(--text-muted);">Access your dedicated vendor dashboard to start listing products.</p>
+         <a href="backend.html" class="auth-btn" style="display: inline-block; text-decoration: none; padding: 12px 24px;">Go to Dashboard</a>
       </div>
-    </div>
-    <!-- WiFi Screen -->
-    <div id="wifi" class="screen hidden">
-      <div class="hero">
-        <h2>Wi-Fi Vouchers</h2>
-        <p>High-speed connectivity within Unity Mall.</p>
-      </div>
-      <div style="padding: 3rem 1.5rem; text-align: center; max-width: 600px; margin: 0 auto;">
-        <div style="background: var(--bg-card); border: 1px dashed var(--border); padding: 3rem; border-radius: 12px;">
-          <div style="font-size: 3rem; margin-bottom: 1rem;">⏳</div>
-          <h3 style="color: var(--text-accent); font-size: 1.5rem; margin-bottom: 0.5rem;">Coming Soon</h3>
-          <p style="color: var(--text-muted);">We are currently upgrading our Wi-Fi management system to provide you with better and more reliable connectivity. Please check back later.</p>
-        </div>
-      </div>
-    </div>
-    <!-- Accounts Screen -->
-    <div id="accounts" class="screen hidden">
-      <div class="hero">
-        <h2>SME Accounting Suite</h2>
-        <p>Record your daily transactions and track your business performance.</p>
-      </div>
-        <div style="text-align: center; margin-bottom: 1rem;">
-          <a href="backend.html" class="auth-btn" style="display: inline-block; padding: 8px 16px; font-size: 0.875rem; text-decoration: none; background: transparent; border: 1px solid var(--primary);">Open Back Office</a>
-        </div>
 
-      <div style="padding: 1rem; max-width: 800px; margin: 0 auto; display: grid; grid-template-columns: 1fr; gap: 1.5rem;">
-
-        <!-- Summary / Financial Statement -->
-        <div class="card" style="padding: 1.5rem; background: linear-gradient(135deg, var(--bg-card), #1e293b);">
-          <h3 style="color: var(--text-accent); margin-bottom: 1rem;">📈 Financial Summary</h3>
-          <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; text-align: center;">
-            <div>
-              <div style="color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em;">Total Sales</div>
-              <div id="accTotalSales" style="color: var(--success); font-size: 1.25rem; font-weight: 700;">K0.00</div>
-            </div>
-            <div>
-              <div style="color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em;">Total Expenses</div>
-              <div id="accTotalExpenses" style="color: #ef4444; font-size: 1.25rem; font-weight: 700;">K0.00</div>
-            </div>
-            <div>
-              <div style="color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em;">Net Profit</div>
-              <div id="accNetProfit" style="color: var(--primary); font-size: 1.25rem; font-weight: 700;">K0.00</div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Add Transaction Form -->
-        <div class="card" style="padding: 1.5rem;">
-          <h3 style="color: var(--text-accent); margin-bottom: 1rem;">➕ Record Transaction</h3>
-          <form id="accountingForm" onsubmit="addAccountingTransaction(event)" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem;">
-            <div>
-              <label style="display:block; font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.25rem;">Date</label>
-              <input type="date" id="accDate" class="input" required style="width:100%; padding: 8px;">
-            </div>
-            <div>
-              <label style="display:block; font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.25rem;">Type</label>
-              <select id="accType" class="input" style="width:100%; padding: 8px;">
-                <option value="sale">Sale (Income)</option>
-                <option value="expense">Expense (Cost)</option>
-              </select>
-            </div>
-            <div>
-              <label style="display:block; font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.25rem;">Amount (K)</label>
-              <input type="number" id="accAmount" class="input" step="0.01" placeholder="0.00" required style="width:100%; padding: 8px;">
-            </div>
-            <div style="grid-column: 1 / -1;">
-              <label style="display:block; font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.25rem;">Description / Source Document Ref</label>
-              <input type="text" id="accDesc" class="input" placeholder="e.g., Cash Sale #001 or Receipt #123" required style="width:100%; padding: 8px;">
-            </div>
-            <div style="grid-column: 1 / -1;">
-              <button type="submit" class="auth-btn" style="width:100%; padding: 10px;">Record Transaction</button>
-            </div>
-          </form>
-        </div>
-
-        <!-- Source Documents List -->
-        <div class="card" style="padding: 1.5rem;">
-          <h3 style="color: var(--text-accent); margin-bottom: 1rem;">📄 Transaction History</h3>
-          <div style="overflow-x: auto;">
-            <table style="width: 100%; border-collapse: collapse; font-size: 0.875rem;">
-              <thead>
-                <tr style="text-align: left; border-bottom: 1px solid var(--border);">
-                  <th style="padding: 8px;">Date</th>
-                  <th style="padding: 8px;">Description</th>
-                  <th style="padding: 8px; text-align: right;">Amount</th>
-                  <th style="padding: 8px; text-align: center;">Action</th>
-                </tr>
-              </thead>
-              <tbody id="accTransactionBody">
-                <!-- Transactions will be rendered here -->
-              </tbody>
-            </table>
-          </div>
-        </div>
-
+      <div class="acc-card">
+         <h4 style="margin-bottom: 1rem;">Platform Benefits</h4>
+         <ul style="text-align: left; color: var(--text-muted); font-size: 0.9rem; list-style: none;">
+           <li style="margin-bottom: 8px;">✅ Direct customer orders via WhatsApp</li>
+           <li style="margin-bottom: 8px;">✅ Built-in SME Accounting Suite</li>
+           <li style="margin-bottom: 8px;">✅ Professional digital storefront</li>
+           <li style="margin-bottom: 8px;">✅ Exposure to thousands of shoppers</li>
+         </ul>
       </div>
     </div>
 
-  <!-- Cart Modal -->
+    <div id="wifi" class="screen hidden" style="padding: 2rem 1rem; text-align: center;">
+      <div style="font-size: 4rem; margin-bottom: 1rem;">📶</div>
+      <h2 style="color: var(--text-accent);">Unity Mall Wi-Fi</h2>
+      <p style="color: var(--text-muted); margin: 1rem auto; max-width: 300px;">Unity Mall high-speed public Wi-Fi access point coming soon.</p>
+      <div class="acc-card" style="margin-top: 2rem;">
+        <p>Stay tuned for voucher-based internet access at the Unity Mall SME centre.</p>
+      </div>
+    </div>
+
+    <div id="accounts" class="screen hidden" style="padding: 2rem 1rem;">
+      <div style="text-align: center; margin-bottom: 2rem;">
+        <h2 style="font-size: 1.75rem; margin-bottom: 0.5rem; color: var(--text-accent);">Accounts Suite</h2>
+        <p style="color: var(--text-muted);">Integrated bookkeeping for small businesses.</p>
+      </div>
+
+      <div id="accAuthMsg" class="acc-card" style="text-align: center;">
+         <p style="margin-bottom: 1rem;">Please sign in to your vendor account to access your business financials.</p>
+         <button class="auth-btn" onclick="openAuthModal('login')">Sign In</button>
+      </div>
+
+      <div id="accDashboard" class="hidden">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 1rem;">
+          <div class="acc-card acc-stat">
+            <div class="acc-label">Revenue</div>
+            <div class="acc-val" id="accSales">K0.00</div>
+          </div>
+          <div class="acc-card acc-stat">
+            <div class="acc-label">Expenses</div>
+            <div class="acc-val" id="accExp">K0.00</div>
+          </div>
+        </div>
+        <div class="acc-card" style="text-align: center;">
+           <div class="acc-label">Estimated Profit</div>
+           <div class="acc-val" id="accProfit" style="font-size: 2rem;">K0.00</div>
+        </div>
+        <div style="text-align: center; margin-top: 1rem;">
+           <a href="backend.html" class="auth-btn" style="display: block; text-decoration: none; padding: 12px;">Manage Transactions</a>
+        </div>
+      </div>
+    </div>
+  </main>
+
   <div id="cartModal" class="modal">
     <div class="modal-content">
       <div class="modal-header">
@@ -811,14 +674,40 @@
           <span>Total:</span>
           <span id="cartTotal">K0.00</span>
         </div>
-        <button class="auth-btn" style="width:100%; margin-top:1.5rem; padding: 12px;" onclick="checkout()">
+        <button class="auth-btn" style="width:100%; margin-top:1.5rem; padding: 12px;" onclick="openCheckoutModal()">
           Proceed to Checkout
         </button>
       </div>
     </div>
   </div>
 
-  <!-- Auth Modal -->
+  <div id="checkoutModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 style="color: var(--text-accent);">Complete Your Order</h3>
+        <button onclick="closeCheckoutModal()" style="background:none; border:none; color:var(--text-muted); font-size:1.5rem; cursor:pointer;">×</button>
+      </div>
+      <div class="modal-body">
+        <form id="checkoutForm">
+          <div class="form-group">
+            <label class="form-label">Your Name</label>
+            <input type="text" id="custName" class="form-input" placeholder="Enter your full name" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Phone Number</label>
+            <input type="tel" id="custPhone" class="form-input" placeholder="e.g. 70000000" required>
+          </div>
+          <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 1.5rem;">
+            Your order will be sent to the vendors. They will contact you via WhatsApp or Phone to arrange payment and delivery.
+          </p>
+          <button type="submit" class="auth-btn" style="width:100%; padding: 12px;">
+            Place Order
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
   <div id="authModal" class="modal">
     <div class="modal-content">
       <div class="modal-header">
@@ -845,6 +734,7 @@
       </div>
     </div>
   </div>
+
   <nav class="nav">
     <button class="nav-btn active" onclick="switchScreen('directory')">
       <div class="nav-icon">🏪</div>
@@ -865,122 +755,11 @@
   </nav>
 
   <script>
-    // Sample product data
-    // Slider Logic
-    let currentSlide = 0;
-    const totalSlides = 2;
-    const sliderInterval = 5000;
-
-    function goToSlide(index) {
-      currentSlide = index;
-      const track = document.getElementById('heroSlider');
-      if (track) {
-        track.style.transform = `translateX(-${currentSlide * 100}%)`;
-        updateDots();
-      }
-    }
-
-    function updateDots() {
-      const dots = document.querySelectorAll('.dot');
-      dots.forEach((dot, index) => {
-        dot.classList.toggle('active', index === currentSlide);
-      });
-    }
-
-    function autoSlide() {
-      currentSlide = (currentSlide + 1) % totalSlides;
-      goToSlide(currentSlide);
-    }
-
-    let sliderTimer = setInterval(autoSlide, sliderInterval);
-
-    const sliderElement = document.getElementById('heroSlider');
-    if (sliderElement) {
-      sliderElement.addEventListener('mouseenter', () => clearInterval(sliderTimer));
-      sliderElement.addEventListener('mouseleave', () => sliderTimer = setInterval(autoSlide, sliderInterval));
-    }
-    // Accounting Logic
-    function getVendorAccountingKey() { const v = JSON.parse(localStorage.getItem("um_vendor")); return v ? "um_accounting_vendor_" + v.id : "um_accounting"; }
-    let accountingTransactions = JSON.parse(localStorage.getItem(getVendorAccountingKey()) || "[]");
-
-    function updateAccountingUI() {
-      accountingTransactions = JSON.parse(localStorage.getItem(getVendorAccountingKey()) || "[]");
-      const tbody = document.getElementById('accTransactionBody');
-      const salesEl = document.getElementById('accTotalSales');
-      const expensesEl = document.getElementById('accTotalExpenses');
-      const netProfitEl = document.getElementById('accNetProfit');
-
-      if (!tbody) return;
-
-      if (accountingTransactions.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding: 2rem; color:var(--text-muted);">No transactions recorded yet.</td></tr>';
-        salesEl.textContent = 'K0.00';
-        expensesEl.textContent = 'K0.00';
-        netProfitEl.textContent = 'K0.00';
-        return;
-      }
-
-      let totalSales = 0;
-      let totalExpenses = 0;
-
-      tbody.innerHTML = accountingTransactions
-        .sort((a, b) => new Date(b.date) - new Date(a.date))
-        .map((t, index) => {
-          const amount = parseFloat(t.amount);
-          if (t.type === 'sale') totalSales += amount;
-          else totalExpenses += amount;
-
-          return `
-            <tr style="border-bottom: 1px solid var(--border);">
-              <td style="padding: 8px;">${t.date}</td>
-              <td style="padding: 8px;">
-                <span style="font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; margin-right: 4px; background: ${t.type === 'sale' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)'}; color: ${t.type === 'sale' ? 'var(--success)' : '#ef4444'}; text-transform: uppercase;">${t.type}</span>
-                ${t.desc}
-              </td>
-              <td style="padding: 8px; text-align: right; font-weight: 600; color: ${t.type === 'sale' ? 'var(--success)' : '#ef4444'};">${t.type === 'sale' ? '' : '-'}${amount.toFixed(2)}</td>
-              <td style="padding: 8px; text-align: center;">
-                <button onclick="deleteTransaction(${index})" style="background:none; border:none; color:#ef4444; cursor:pointer;">×</button>
-              </td>
-            </tr>
-          `;
-        }).join('');
-
-      const netProfit = totalSales - totalExpenses;
-      salesEl.textContent = `K${totalSales.toFixed(2)}`;
-      expensesEl.textContent = `K${totalExpenses.toFixed(2)}`;
-      netProfitEl.textContent = `K${netProfit.toFixed(2)}`;
-      netProfitEl.style.color = netProfit >= 0 ? 'var(--success)' : '#ef4444';
-    }
-
-    function addAccountingTransaction(e) {
-      e.preventDefault();
-      const date = document.getElementById('accDate').value;
-      const type = document.getElementById('accType').value;
-      const amount = document.getElementById('accAmount').value;
-      const desc = document.getElementById('accDesc').value;
-
-      accountingTransactions.push({ date, type, amount, desc });
-      saveAccounting();
-      updateAccountingUI();
-      e.target.reset();
-      showNotification('Transaction recorded successfully');
-    }
-
-    function deleteTransaction(index) {
-      if (confirm('Are you sure you want to delete this transaction?')) {
-        accountingTransactions.splice(index, 1);
-        saveAccounting();
-        updateAccountingUI();
-      }
-    }
-
-    function saveAccounting() {
-      localStorage.setItem(getVendorAccountingKey(), JSON.stringify(accountingTransactions));
-    }
     const categories = ['All', 'Fashion', 'Catering', 'Tech', 'Beauty', 'Home & Living', 'Sports', 'Accessories'];
     let products = [];
     let currentCategory = 'All';
     let cart = JSON.parse(localStorage.getItem('um_cart') || '[]');
+    let currentSlide = 0;
 
     async function init() {
       await fetchProducts();
@@ -988,6 +767,7 @@
       filterStalls();
       updateCartUI();
       updateAccountingUI();
+      setInterval(autoSlide, 5000);
     }
 
     async function fetchProducts() {
@@ -1083,7 +863,7 @@
         }
         saveCart();
         updateCartUI();
-      updateAccountingUI();
+        updateAccountingUI();
         showNotification(`Added ${product.name} to cart`);
       }
     }
@@ -1141,7 +921,8 @@
       document.getElementById(screenId).classList.remove('hidden');
       
       document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
-      event.target.closest('.nav-btn').classList.add('active');
+      const activeBtn = Array.from(document.querySelectorAll('.nav-btn')).find(btn => btn.onclick.toString().includes(screenId));
+      if (activeBtn) activeBtn.classList.add('active');
     }
 
     function openAuthModal(mode = 'login') {
@@ -1152,7 +933,6 @@
     function setAuthMode(mode) {
       const title = document.getElementById('modalTitle');
       const toggleMsg = document.getElementById('authToggleMsg');
-
       if (mode === 'register') {
         title.textContent = 'Create Account';
         toggleMsg.innerHTML = 'Already have an account? <a href="#" onclick="setAuthMode(\'login\')" style="color: var(--text-accent);">Sign in here</a>';
@@ -1161,23 +941,27 @@
         toggleMsg.innerHTML = 'Don\'t have an account? <a href="#" onclick="setAuthMode(\'register\')" style="color: var(--text-accent);">Sign up here</a>';
       }
     }
+
     function closeAuthModal() { document.getElementById('authModal').classList.remove('show'); }
 
-    async function checkout() {
+    function openCheckoutModal() {
       if (cart.length === 0) return;
+      document.getElementById('checkoutModal').classList.add('show');
+    }
 
-      const name = prompt("Please enter your name:");
-      if (!name) return;
-      const phone = prompt("Please enter your phone number:");
-      if (!phone) return;
+    function closeCheckoutModal() {
+      document.getElementById('checkoutModal').classList.remove('show');
+    }
 
+    document.getElementById('checkoutForm').onsubmit = async (e) => {
+      e.preventDefault();
+      const name = document.getElementById('custName').value;
+      const phone = document.getElementById('custPhone').value;
       const vendorIds = [...new Set(cart.map(item => item.vendor_id))];
-
       try {
         for (const vId of vendorIds) {
           const vendorItems = cart.filter(item => item.vendor_id === vId);
           const total = vendorItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-
           await fetch('/api/orders', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -1190,16 +974,17 @@
             })
           });
         }
-
         alert('Order placed successfully! Vendors will contact you via WhatsApp.');
         cart = [];
         saveCart();
         updateCartUI();
-        toggleCart();
+        updateAccountingUI();
+        closeCheckoutModal();
+        if (document.getElementById('cartModal').classList.contains('show')) toggleCart();
       } catch (err) {
         alert('Failed to place order: ' + err.message);
       }
-    }
+    };
 
     function showNotification(msg) {
       const toast = document.createElement('div');
@@ -1209,34 +994,34 @@
       setTimeout(() => toast.remove(), 2000);
     }
 
-    // Vendor specific
-    function previewImage(event) {
-      const file = event.target.files[0];
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-          document.getElementById('uploadContent').innerHTML = `
-            <img src="${e.target.result}" style="max-height:150px; border-radius:8px;">
-            <p style="color:var(--text-muted); font-size:12px; margin-top:8px;">Photo selected</p>
-          `;
-        };
-        reader.readAsDataURL(file);
+    function goToSlide(n) {
+      currentSlide = n;
+      document.getElementById('sliderContainer').style.transform = `translateX(-${currentSlide * 100}%)`;
+      document.querySelectorAll('.dot').forEach((d, i) => d.classList.toggle('active', i === currentSlide));
+    }
+
+    function autoSlide() {
+      currentSlide = (currentSlide + 1) % 2;
+      goToSlide(currentSlide);
+    }
+
+    function updateAccountingUI() {
+      const vendor = JSON.parse(localStorage.getItem('um_vendor'));
+      if (!vendor) {
+        document.getElementById('accAuthMsg').classList.remove('hidden');
+        document.getElementById('accDashboard').classList.add('hidden');
+        return;
       }
+      document.getElementById('accAuthMsg').classList.add('hidden');
+      document.getElementById('accDashboard').classList.remove('hidden');
+      const transactions = JSON.parse(localStorage.getItem('um_accounting_vendor_' + vendor.id) || '[]');
+      const sales = transactions.filter(t => t.type === 'sale').reduce((sum, t) => sum + parseFloat(t.amount), 0);
+      const exp = transactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + parseFloat(t.amount), 0);
+      document.getElementById('accSales').textContent = `K${sales.toFixed(2)}`;
+      document.getElementById('accExp').textContent = `K${exp.toFixed(2)}`;
+      document.getElementById('accProfit').textContent = `K${(sales - exp).toFixed(2)}`;
     }
 
-    function submitProduct(event) {
-      event.preventDefault();
-      document.getElementById('vendorContent').innerHTML = `
-        <div style="text-align:center; padding: 2rem; background:var(--bg-card); border-radius:12px;">
-          <div style="color:var(--whatsapp); font-size:3rem; margin-bottom:1rem;">✅</div>
-          <h3>Product Uploaded!</h3>
-          <p style="color:var(--text-muted); margin-top:0.5rem;">Your product has been sent for review and will be live shortly.</p>
-          <button class="auth-btn m-t-1" onclick="location.reload()">Upload Another</button>
-        </div>
-      `;
-    }
-
-    // Initialize
     init();
   </script>
 </body>

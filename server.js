@@ -149,70 +149,32 @@ const upload = multer({ storage: storage });
 
 // Vendor Registration
 app.post('/api/auth/register', (req, res) => {
-  const { name, category, phone, location, description, facebook, email, password } = req.body;
-
-  if (!email || !password || !name) {
-    return res.status(400).json({ error: 'Name, email and password are required' });
-  }
-
-  db.get('SELECT id FROM vendors WHERE email = ?', [email], (err, row) => {
-    if (err) return res.status(500).json({ error: err.message });
-    if (row) return res.status(400).json({ error: 'Vendor with this email already exists' });
-
-    const sql = `INSERT INTO vendors (name, category, phone, location, description, facebook, email, password)
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
-
-    db.run(sql, [name, category, phone, location, description, facebook, email, password], function(err) {
-      if (err) return res.status(500).json({ error: err.message });
-      res.json({ id: this.lastID, message: 'Vendor registered successfully' });
-    });
+  const { name, category, phone, location, description, facebook, password, email } = req.body;
+  const sql = `INSERT INTO vendors (name, category, phone, location, description, facebook, password, email)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
+  db.run(sql, [name, category, phone, location, description, facebook, password, email], function(err) {
+    if (err) {
+      return res.status(500).json({ error: err.message });
+    }
+    res.json({ id: this.lastID, message: 'Vendor registered successfully' });
   });
 });
 
 // Vendor Login
 app.post('/api/auth/login', (req, res) => {
   const { email, password } = req.body;
-
-  if (!email || !password) {
-    return res.status(400).json({ error: 'Email and password are required' });
-  }
-
   db.get('SELECT * FROM vendors WHERE email = ? AND password = ?', [email, password], (err, row) => {
     if (err) return res.status(500).json({ error: err.message });
     if (!row) return res.status(401).json({ error: 'Invalid email or password' });
-
-    const vendorInfo = { ...row };
-    delete vendorInfo.password;
-    res.json({ vendor: vendorInfo, token: 'mock-jwt-token-' + row.id });
+    res.json({ message: 'Login successful', vendor: row });
   });
 });
 
-// Get Current Vendor Info
-app.get('/api/vendors/me/:id', (req, res) => {
-  db.get('SELECT * FROM vendors WHERE id = ?', [req.params.id], (err, row) => {
-    if (err) return res.status(500).json({ error: err.message });
-    if (!row) return res.status(404).json({ error: 'Vendor not found' });
-
-    const vendorInfo = { ...row };
-    delete vendorInfo.password;
-    res.json(vendorInfo);
-  });
-});
-
-// Create vendor
-app.post('/api/vendors', (req, res) => {
-  const { name, category, phone, location, description, facebook, email } = req.body;
-  const sql = `INSERT INTO vendors (name, category, phone, location, description, facebook, email) 
-               VALUES (?, ?, ?, ?, ?, ?, ?)`;
-  db.run(sql, [name, category, phone, location, description, facebook, email], function(err) {
-    if (err) return res.status(500).json({ error: err.message });
-    res.json({ id: this.lastID, message: 'Vendor created successfully' });
-  });
-});
+// ============== VENDOR ROUTES ==============
 
 // Get all vendors
 app.get('/api/vendors', (req, res) => {
-  db.all('SELECT * FROM vendors ORDER BY created_at DESC', [], (err, rows) => {
+  db.all('SELECT id, name, category, phone, location, description, facebook, email, created_at FROM vendors', [], (err, rows) => {
     if (err) return res.status(500).json({ error: err.message });
     res.json(rows);
   });
@@ -434,6 +396,20 @@ app.get('/api/admin/products', (req, res) => {
   });
 });
 
+// Admin Orders Management
+app.get('/api/admin/orders', (req, res) => {
+  const sql = `
+    SELECT o.*, v.name as vendor_name
+    FROM orders o
+    LEFT JOIN vendors v ON o.vendor_id = v.id
+    ORDER BY o.created_at DESC
+  `;
+  db.all(sql, [], (err, rows) => {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json(rows);
+  });
+});
+
 // Admin Delete Vendor
 app.delete('/api/admin/vendors/:id', (req, res) => {
   db.run('DELETE FROM vendors WHERE id = ?', [req.params.id], function(err) {
@@ -447,6 +423,14 @@ app.delete('/api/admin/products/:id', (req, res) => {
   db.run('DELETE FROM products WHERE id = ?', [req.params.id], function(err) {
     if (err) return res.status(500).json({ error: err.message });
     res.json({ message: 'Product deleted successfully' });
+  });
+});
+
+// Admin Delete Order
+app.delete('/api/admin/orders/:id', (req, res) => {
+  db.run('DELETE FROM orders WHERE id = ?', [req.params.id], function(err) {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json({ message: 'Order deleted successfully' });
   });
 });
 
