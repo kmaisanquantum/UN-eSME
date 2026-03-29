@@ -757,8 +757,8 @@
           </div>
 
           <div class="social-btns">
-            <button class="social-btn google-btn" onclick="alert('Google Login coming soon')">Continue with Google</button>
-            <button class="social-btn facebook-btn" onclick="alert('Facebook Login coming soon')">Continue with Facebook</button>
+            <button class="social-btn google-btn" onclick="socialLogin('google')">Continue with Google</button>
+            <button class="social-btn facebook-btn" onclick="socialLogin('facebook')">Continue with Facebook</button>
           </div>
 
           <p id="authToggleMsg" style="text-align: center; margin-top: 1.5rem; font-size: 0.875rem; color: var(--text-muted);">
@@ -810,8 +810,8 @@
           </div>
 
           <div class="social-btns">
-            <button class="social-btn google-btn" onclick="alert('Google Login coming soon')">Continue with Google</button>
-            <button class="social-btn facebook-btn" onclick="alert('Facebook Login coming soon')">Continue with Facebook</button>
+            <button class="social-btn google-btn" onclick="socialLogin('google')">Continue with Google</button>
+            <button class="social-btn facebook-btn" onclick="socialLogin('facebook')">Continue with Facebook</button>
           </div>
 
           <p id="authToggleMsg" style="text-align: center; margin-top: 1.5rem; font-size: 0.875rem; color: var(--text-muted);">
@@ -1093,6 +1093,11 @@
 
     function openCheckoutModal() {
       if (cart.length === 0) return;
+      const user = JSON.parse(localStorage.getItem('um_user'));
+      if (user) {
+        document.getElementById('custName').value = user.name || '';
+        document.getElementById('custPhone').value = user.phone || '';
+      }
       document.getElementById('checkoutModal').classList.add('show');
     }
 
@@ -1168,6 +1173,70 @@
       document.getElementById('accExp').textContent = `K${exp.toFixed(2)}`;
       document.getElementById('accProfit').textContent = `K${(sales - exp).toFixed(2)}`;
     }
+
+    checkUserSession();
+    // Customer Session Management
+    function checkUserSession() {
+      const user = JSON.parse(localStorage.getItem('um_user'));
+      const headerActions = document.querySelector('.header-actions');
+      const signInBtn = headerActions.querySelector('button[onclick="openAuthModal(\'login\')"]');
+      const signUpBtn = headerActions.querySelector('button[onclick="openAuthModal(\'register\')"]');
+
+      if (user) {
+        if (signInBtn) signInBtn.style.display = 'none';
+        if (signUpBtn) signUpBtn.style.display = 'none';
+
+        // Add User Profile button
+        if (!document.getElementById('userProfileBtn')) {
+           const profileBtn = document.createElement('button');
+           profileBtn.id = 'userProfileBtn';
+           profileBtn.className = 'auth-btn';
+           profileBtn.style.background = 'transparent';
+           profileBtn.style.border = '1px solid var(--text-accent)';
+           profileBtn.style.color = 'var(--text-accent)';
+           profileBtn.innerHTML = `👤 ${user.name.split(' ')[0]}`;
+           profileBtn.onclick = () => {
+             if (confirm('Sign out?')) {
+               localStorage.removeItem('um_user');
+               location.reload();
+             }
+           };
+           headerActions.appendChild(profileBtn);
+        }
+      }
+    }
+
+    async function socialLogin(provider) {
+      // Mock social data for demonstration
+      const mockData = {
+        google: { name: 'Google User', email: 'google@example.com', id: 'g123' },
+        facebook: { name: 'Facebook User', email: 'fb@example.com', id: 'f456' }
+      };
+
+      const payload = {
+        provider,
+        ...mockData[provider]
+      };
+
+      try {
+        const res = await fetch('/api/auth/social', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (data.error) throw new Error(data.error);
+
+        localStorage.setItem('um_user', JSON.stringify(data.user));
+        alert(`Logged in with ${provider.charAt(0).toUpperCase() + provider.slice(1)}!`);
+        closeAuthModal();
+        checkUserSession();
+      } catch (err) {
+        alert(err.message);
+      }
+    }
+
+    // Call checkUserSession on init
 
     init();
   </script>

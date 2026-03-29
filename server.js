@@ -122,6 +122,20 @@ function initDatabase() {
       )
     `);
 
+    // Users (Customers) table
+    db.run(`
+      CREATE TABLE IF NOT EXISTS users (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT,
+        email TEXT UNIQUE,
+        phone TEXT,
+        password TEXT,
+        social_provider TEXT,
+        social_id TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
     // Create default admin if not exists
     db.get('SELECT * FROM admins WHERE username = ?', ['admin'], (err, row) => {
       if (!row) {
@@ -150,8 +164,7 @@ const upload = multer({ storage: storage });
 // Vendor Registration
 app.post('/api/auth/register', (req, res) => {
   const { name, category, phone, location, description, facebook, password, email } = req.body;
-  const sql = `INSERT INTO vendors (name, category, phone, location, description, facebook, password, email)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
+  const sql = 'INSERT INTO vendors (name, category, phone, location, description, facebook, password, email) VALUES (?, ?, ?, ?, ?, ?, ?, ?)';
   db.run(sql, [name, category, phone, location, description, facebook, password, email], function(err) {
     if (err) {
       return res.status(500).json({ error: err.message });
@@ -167,6 +180,48 @@ app.post('/api/auth/login', (req, res) => {
     if (err) return res.status(500).json({ error: err.message });
     if (!row) return res.status(401).json({ error: 'Invalid email or password' });
     res.json({ message: 'Login successful', vendor: row });
+  });
+});
+
+// Social Authentication (Mock)
+app.post("/api/auth/social", (req, res) => {
+  const { provider, name, email, id } = req.body;
+
+  db.get("SELECT * FROM users WHERE social_provider = ? AND social_id = ?", [provider, id], (err, row) => {
+    if (err) return res.status(500).json({ error: err.message });
+
+    if (row) {
+      return res.json({ message: "Login successful", user: row });
+    } else {
+      const sql = "INSERT INTO users (name, email, social_provider, social_id) VALUES (?, ?, ?, ?)";
+      db.run(sql, [name, email, provider, id], function(err) {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json({
+          message: "Social account created",
+          user: { id: this.lastID, name, email, social_provider: provider, social_id: id }
+        });
+      });
+    }
+  });
+});
+
+// Customer Registration
+app.post("/api/auth/customer/register", (req, res) => {
+  const { name, email, phone, password } = req.body;
+  const sql = "INSERT INTO users (name, email, phone, password) VALUES (?, ?, ?, ?)";
+  db.run(sql, [name, email, phone, password], function(err) {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json({ id: this.lastID, message: "Customer registered successfully" });
+  });
+});
+
+// Customer Login
+app.post("/api/auth/customer/login", (req, res) => {
+  const { email, password } = req.body;
+  db.get("SELECT * FROM users WHERE email = ? AND password = ?", [email, password], (err, row) => {
+    if (err) return res.status(500).json({ error: err.message });
+    if (!row) return res.status(401).json({ error: "Invalid email or password" });
+    res.json({ message: "Login successful", user: row });
   });
 });
 
@@ -192,9 +247,7 @@ app.get('/api/vendors/:id', (req, res) => {
 // Update vendor
 app.put('/api/vendors/:id', (req, res) => {
   const { name, category, phone, location, description, facebook, email } = req.body;
-  const sql = `UPDATE vendors 
-               SET name=?, category=?, phone=?, location=?, description=?, facebook=?, email=?, updated_at=CURRENT_TIMESTAMP 
-               WHERE id=?`;
+  const sql = 'UPDATE vendors SET name=?, category=?, phone=?, location=?, description=?, facebook=?, email=?, updated_at=CURRENT_TIMESTAMP WHERE id=?';
   db.run(sql, [name, category, phone, location, description, facebook, email, req.params.id], function(err) {
     if (err) return res.status(500).json({ error: err.message });
     res.json({ message: 'Vendor updated successfully', changes: this.changes });
@@ -214,8 +267,7 @@ app.delete('/api/vendors/:id', (req, res) => {
 // Create product
 app.post('/api/products', (req, res) => {
   const { vendor_id, name, category, price, stock, description, status } = req.body;
-  const sql = `INSERT INTO products (vendor_id, name, category, price, stock, description, status) 
-               VALUES (?, ?, ?, ?, ?, ?, ?)`;
+  const sql = 'INSERT INTO products (vendor_id, name, category, price, stock, description, status) VALUES (?, ?, ?, ?, ?, ?, ?)';
   db.run(sql, [vendor_id, name, category, price, stock || 0, description, status || 'active'], function(err) {
     if (err) return res.status(500).json({ error: err.message });
     res.json({ id: this.lastID, message: 'Product created successfully' });
@@ -228,7 +280,7 @@ app.post('/api/products/:id/images', upload.array('images', 5), (req, res) => {
   const files = req.files;
   if (!files || files.length === 0) return res.status(400).json({ error: 'No files uploaded' });
   
-  const sql = `INSERT INTO product_images (product_id, image_url, is_primary) VALUES (?, ?, ?)`;
+  const sql = 'INSERT INTO product_images (product_id, image_url, is_primary) VALUES (?, ?, ?)';
   let completed = 0;
   files.forEach((file, index) => {
     const imageUrl = `/uploads/${file.filename}`;
@@ -242,14 +294,7 @@ app.post('/api/products/:id/images', upload.array('images', 5), (req, res) => {
 
 // Get all products
 app.get('/api/products', (req, res) => {
-  const sql = `
-    SELECT p.*, GROUP_CONCAT(pi.image_url) as images, v.name as vendor_name, v.phone as vendor_phone, v.location as vendor_location
-    FROM products p
-    LEFT JOIN product_images pi ON p.id = pi.product_id
-    LEFT JOIN vendors v ON p.vendor_id = v.id
-    GROUP BY p.id
-    ORDER BY p.created_at DESC
-  `;
+  const sql = 'SELECT p.*, GROUP_CONCAT(pi.image_url) as images, v.name as vendor_name, v.phone as vendor_phone, v.location as vendor_location FROM products p LEFT JOIN product_images pi ON p.id = pi.product_id LEFT JOIN vendors v ON p.vendor_id = v.id GROUP BY p.id ORDER BY p.created_at DESC';
   db.all(sql, [], (err, rows) => {
     if (err) return res.status(500).json({ error: err.message });
     const products = rows.map(row => ({ ...row, images: row.images ? row.images.split(',') : [] }));
@@ -259,14 +304,7 @@ app.get('/api/products', (req, res) => {
 
 // Get products by vendor
 app.get('/api/vendors/:vendorId/products', (req, res) => {
-  const sql = `
-    SELECT p.*, GROUP_CONCAT(pi.image_url) as images
-    FROM products p
-    LEFT JOIN product_images pi ON p.id = pi.product_id
-    WHERE p.vendor_id = ?
-    GROUP BY p.id
-    ORDER BY p.created_at DESC
-  `;
+  const sql = 'SELECT p.*, GROUP_CONCAT(pi.image_url) as images FROM products p LEFT JOIN product_images pi ON p.id = pi.product_id WHERE p.vendor_id = ? GROUP BY p.id ORDER BY p.created_at DESC';
   db.all(sql, [req.params.vendorId], (err, rows) => {
     if (err) return res.status(500).json({ error: err.message });
     const products = rows.map(row => ({ ...row, images: row.images ? row.images.split(',') : [] }));
@@ -288,8 +326,7 @@ app.delete('/api/products/:id', (req, res) => {
 app.post('/api/services', upload.single('image'), (req, res) => {
   const { vendor_id, name, category, price, duration, description } = req.body;
   const imageUrl = req.file ? `/uploads/${req.file.filename}` : null;
-  const sql = `INSERT INTO services (vendor_id, name, category, price, duration, description, image_url) 
-               VALUES (?, ?, ?, ?, ?, ?, ?)`;
+  const sql = 'INSERT INTO services (vendor_id, name, category, price, duration, description, image_url) VALUES (?, ?, ?, ?, ?, ?, ?)';
   db.run(sql, [vendor_id, name, category, price, duration || 0, description, imageUrl], function(err) {
     if (err) return res.status(500).json({ error: err.message });
     res.json({ id: this.lastID, message: 'Service created successfully' });
@@ -298,8 +335,7 @@ app.post('/api/services', upload.single('image'), (req, res) => {
 
 // Get all services
 app.get('/api/services', (req, res) => {
-  const sql = `SELECT s.*, v.name as vendor_name, v.phone as vendor_phone, v.location as vendor_location
-               FROM services s LEFT JOIN vendors v ON s.vendor_id = v.id ORDER BY s.created_at DESC`;
+  const sql = 'SELECT s.*, v.name as vendor_name, v.phone as vendor_phone, v.location as vendor_location FROM services s LEFT JOIN vendors v ON s.vendor_id = v.id ORDER BY s.created_at DESC';
   db.all(sql, [], (err, rows) => {
     if (err) return res.status(500).json({ error: err.message });
     res.json(rows);
@@ -319,8 +355,7 @@ app.delete('/api/services/:id', (req, res) => {
 // Create order
 app.post('/api/orders', (req, res) => {
   const { vendor_id, customer_name, customer_phone, items, total_price } = req.body;
-  const sql = `INSERT INTO orders (vendor_id, customer_name, customer_phone, items, total_price)
-               VALUES (?, ?, ?, ?, ?)`;
+  const sql = 'INSERT INTO orders (vendor_id, customer_name, customer_phone, items, total_price) VALUES (?, ?, ?, ?, ?)';
   db.run(sql, [vendor_id, customer_name, customer_phone, JSON.stringify(items), total_price], function(err) {
     if (err) return res.status(500).json({ error: err.message });
     res.json({ id: this.lastID, message: 'Order created successfully' });
@@ -384,12 +419,7 @@ app.get('/api/admin/vendors', (req, res) => {
 
 // Admin Products Management
 app.get('/api/admin/products', (req, res) => {
-  const sql = `
-    SELECT p.*, v.name as vendor_name
-    FROM products p
-    LEFT JOIN vendors v ON p.vendor_id = v.id
-    ORDER BY p.created_at DESC
-  `;
+  const sql = 'SELECT p.*, v.name as vendor_name FROM products p LEFT JOIN vendors v ON p.vendor_id = v.id ORDER BY p.created_at DESC';
   db.all(sql, [], (err, rows) => {
     if (err) return res.status(500).json({ error: err.message });
     res.json(rows);
@@ -398,12 +428,7 @@ app.get('/api/admin/products', (req, res) => {
 
 // Admin Orders Management
 app.get('/api/admin/orders', (req, res) => {
-  const sql = `
-    SELECT o.*, v.name as vendor_name
-    FROM orders o
-    LEFT JOIN vendors v ON o.vendor_id = v.id
-    ORDER BY o.created_at DESC
-  `;
+  const sql = 'SELECT o.*, v.name as vendor_name FROM orders o LEFT JOIN vendors v ON o.vendor_id = v.id ORDER BY o.created_at DESC';
   db.all(sql, [], (err, rows) => {
     if (err) return res.status(500).json({ error: err.message });
     res.json(rows);
