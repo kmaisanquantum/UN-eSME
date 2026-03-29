@@ -716,17 +716,108 @@
       </div>
       <div class="modal-body">
         <div id="authContent">
-          <div class="social-btns">
-            <button class="social-btn google-btn" onclick="alert('Google Login coming soon')">
-              Continue with Google
-            </button>
-            <button class="social-btn facebook-btn" onclick="alert('Facebook Login coming soon')">
-              Continue with Facebook
-            </button>
-            <button class="social-btn phone-btn" onclick="alert('Phone Login coming soon')">
-              Continue with Phone
-            </button>
+          <!-- Login Form -->
+          <form id="loginForm">
+            <div class="form-group">
+              <label class="form-label">Email Address</label>
+              <input type="email" id="loginEmail" class="form-input" placeholder="vendor@example.com" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Password</label>
+              <input type="password" id="loginPassword" class="form-input" placeholder="••••••••" required>
+            </div>
+            <button type="submit" class="auth-btn" style="width:100%; padding: 12px;">Sign In</button>
+          </form>
+
+          <!-- Register Form -->
+          <form id="registerForm" class="hidden">
+            <div class="form-group">
+              <label class="form-label">Business Name</label>
+              <input type="text" id="regName" class="form-input" placeholder="My Awesome Shop" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Email Address</label>
+              <input type="email" id="regEmail" class="form-input" placeholder="vendor@example.com" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Phone Number</label>
+              <input type="tel" id="regPhone" class="form-input" placeholder="70000000" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Password</label>
+              <input type="password" id="regPassword" class="form-input" placeholder="••••••••" required>
+            </div>
+            <button type="submit" class="auth-btn" style="width:100%; padding: 12px;">Create Account</button>
+          </form>
+
+          <div style="margin: 1.5rem 0; display: flex; align-items: center; gap: 1rem; color: var(--text-muted); font-size: 0.8rem;">
+            <div style="flex: 1; height: 1px; background: var(--border);"></div>
+            <span>OR</span>
+            <div style="flex: 1; height: 1px; background: var(--border);"></div>
           </div>
+
+          <div class="social-btns">
+            <button class="social-btn google-btn" onclick="alert('Google Login coming soon')">Continue with Google</button>
+            <button class="social-btn facebook-btn" onclick="alert('Facebook Login coming soon')">Continue with Facebook</button>
+          </div>
+
+          <p id="authToggleMsg" style="text-align: center; margin-top: 1.5rem; font-size: 0.875rem; color: var(--text-muted);">
+            Don't have an account? <a href="#" onclick="setAuthMode('register')" style="color: var(--text-accent);">Sign up here</a>
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+      <div class="modal-body">
+          <!-- Login Form -->
+          <form id="loginForm">
+            <div class="form-group">
+              <label class="form-label">Email Address</label>
+              <input type="email" id="loginEmail" class="form-input" placeholder="vendor@example.com" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Password</label>
+              <input type="password" id="loginPassword" class="form-input" placeholder="••••••••" required>
+            </div>
+            <button type="submit" class="auth-btn" style="width:100%; padding: 12px;">Sign In</button>
+          </form>
+
+          <!-- Register Form -->
+          <form id="registerForm" class="hidden">
+            <div class="form-group">
+              <label class="form-label">Business Name</label>
+              <input type="text" id="regName" class="form-input" placeholder="My Awesome Shop" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Email Address</label>
+              <input type="email" id="regEmail" class="form-input" placeholder="vendor@example.com" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Phone Number</label>
+              <input type="tel" id="regPhone" class="form-input" placeholder="70000000" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Password</label>
+              <input type="password" id="regPassword" class="form-input" placeholder="••••••••" required>
+            </div>
+            <button type="submit" class="auth-btn" style="width:100%; padding: 12px;">Create Account</button>
+          </form>
+
+          <div style="margin: 1.5rem 0; display: flex; align-items: center; gap: 1rem; color: var(--text-muted); font-size: 0.8rem;">
+            <div style="flex: 1; height: 1px; background: var(--border);"></div>
+            <span>OR</span>
+            <div style="flex: 1; height: 1px; background: var(--border);"></div>
+          </div>
+
+          <div class="social-btns">
+            <button class="social-btn google-btn" onclick="alert('Google Login coming soon')">Continue with Google</button>
+            <button class="social-btn facebook-btn" onclick="alert('Facebook Login coming soon')">Continue with Facebook</button>
+          </div>
+
+          <p id="authToggleMsg" style="text-align: center; margin-top: 1.5rem; font-size: 0.875rem; color: var(--text-muted);">
+            Don't have an account? <a href="#" onclick="setAuthMode('register')" style="color: var(--text-accent);">Sign up here</a>
+          </p>
+        </div>
           <p id="authToggleMsg" style="text-align: center; margin-top: 1.5rem; font-size: 0.875rem; color: var(--text-muted);">
             Don't have an account? <a href="#" onclick="setAuthMode('register')" style="color: var(--text-accent);">Sign up here</a>
           </p>
@@ -933,16 +1024,72 @@
     function setAuthMode(mode) {
       const title = document.getElementById('modalTitle');
       const toggleMsg = document.getElementById('authToggleMsg');
+      const loginForm = document.getElementById('loginForm');
+      const registerForm = document.getElementById('registerForm');
+
       if (mode === 'register') {
         title.textContent = 'Create Account';
         toggleMsg.innerHTML = 'Already have an account? <a href="#" onclick="setAuthMode(\'login\')" style="color: var(--text-accent);">Sign in here</a>';
+        loginForm.classList.add('hidden');
+        registerForm.classList.remove('hidden');
       } else {
         title.textContent = 'Sign In';
         toggleMsg.innerHTML = 'Don\'t have an account? <a href="#" onclick="setAuthMode(\'register\')" style="color: var(--text-accent);">Sign up here</a>';
+        loginForm.classList.remove('hidden');
+        registerForm.classList.add('hidden');
       }
     }
 
     function closeAuthModal() { document.getElementById('authModal').classList.remove('show'); }
+
+    document.getElementById('loginForm').onsubmit = async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('loginEmail').value;
+      const password = document.getElementById('loginPassword').value;
+
+      try {
+        const res = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password })
+        });
+        const data = await res.json();
+        if (data.error) throw new Error(data.error);
+
+        localStorage.setItem('um_vendor', JSON.stringify(data.vendor));
+        alert('Login successful!');
+        window.location.href = 'backend.html';
+      } catch (err) {
+        alert(err.message);
+      }
+    };
+
+    document.getElementById('registerForm').onsubmit = async (e) => {
+      e.preventDefault();
+      const payload = {
+        name: document.getElementById('regName').value,
+        email: document.getElementById('regEmail').value,
+        phone: document.getElementById('regPhone').value,
+        password: document.getElementById('regPassword').value,
+        category: 'General',
+        location: 'Unity Mall'
+      };
+
+      try {
+        const res = await fetch('/api/auth/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (data.error) throw new Error(data.error);
+
+        alert('Registration successful! Please sign in.');
+        setAuthMode('login');
+      } catch (err) {
+        alert(err.message);
+      }
+    };
 
     function openCheckoutModal() {
       if (cart.length === 0) return;
