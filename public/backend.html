@@ -273,6 +273,7 @@
   <main class="main-content hidden" id="mainContent">
     <div class="header">
       <h2>Welcome back, <span style="color: var(--text-accent);" id="vendorStoreName">Store Name</span></h2>
+      <a href="#" onclick="logout()" style="color: #ef4444; font-size: 0.8rem; text-decoration: none; font-weight: 600;">Sign Out</a>
       <button class="btn btn-primary" onclick="switchTab('products')">+ Add Product</button>
     </div>
 
@@ -502,6 +503,11 @@
           </div>
           <button type="submit" class="btn btn-primary">Update Store Info</button>
         </form>
+      </div>
+      <div class="card" style="margin-top: 1rem; background: rgba(239, 68, 68, 0.05); border: 1px solid rgba(239, 68, 68, 0.2);">
+        <h3 class="card-title" style="color: #ef4444;">Account Control</h3>
+        <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 1rem;">Sign out of your vendor account. Your data is automatically saved.</p>
+        <button onclick="logout()" class="btn" style="background: #ef4444; color: #fff;">Sign Out</button>
       </div>
     </div>
   </main>
