@@ -710,11 +710,12 @@
     </div>
   </div>
 
+
   <div id="authModal" class="modal">
     <div class="modal-content">
       <div class="modal-header">
         <h3 id="modalTitle" style="color: var(--text-accent);">Sign In</h3>
-        <button onclick="closeAuthModal()" style="background:none; border:none; color:var(--text-muted); font-size:1.5rem; cursor:pointer;">×</button>
+        <button onclick="closeAuthModal()" style="background:none; border:none; color:var(--text-muted); font-size:1.5rem; cursor:pointer;">&times;</button>
       </div>
       <div class="modal-body">
         <div id="authContent">
@@ -734,8 +735,8 @@
           <!-- Register Form -->
           <form id="registerForm" class="hidden">
             <div class="form-group">
-              <label class="form-label">Business Name</label>
-              <input type="text" id="regName" class="form-input" placeholder="My Awesome Shop" required>
+              <label class="form-label">Your Name</label>
+              <input type="text" id="regName" class="form-input" placeholder="John Doe" required>
             </div>
             <div class="form-group">
               <label class="form-label">Email Address</label>
@@ -759,67 +760,13 @@
           </div>
 
           <div class="social-btns">
-            <button class="social-btn google-btn" onclick="socialLogin('google')">Continue with Google</button>
-            <button class="social-btn facebook-btn" onclick="socialLogin('facebook')">Continue with Facebook</button>
+            <div id="g_id_signin"></div>
+            <button class="social-btn facebook-btn" onclick="socialLogin('facebook')">
+              <svg style="width:18px;height:18px" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2.04C6.5 2.04 2 6.53 2 12.06C2 17.06 5.66 21.21 10.44 21.96V14.96H7.9V12.06H10.44V9.85C10.44 7.34 11.93 5.96 14.22 5.96C15.31 5.96 16.45 6.15 16.45 6.15V8.62H15.19C13.95 8.62 13.56 9.39 13.56 10.18V12.06H16.34L15.89 14.96H13.56V21.96A10 10 0 0 0 22 12.06C22 6.53 17.5 2.04 12 2.04Z" /></svg>
+              Continue with Facebook
+            </button>
           </div>
 
-          <p id="authToggleMsg" style="text-align: center; margin-top: 1.5rem; font-size: 0.875rem; color: var(--text-muted);">
-            Don't have an account? <a href="#" onclick="setAuthMode('register')" style="color: var(--text-accent);">Sign up here</a>
-          </p>
-        </div>
-      </div>
-    </div>
-  </div>
-      <div class="modal-body">
-          <!-- Login Form -->
-          <form id="loginForm">
-            <div class="form-group">
-              <label class="form-label">Email Address</label>
-              <input type="email" id="loginEmail" class="form-input" placeholder="vendor@example.com" required>
-            </div>
-            <div class="form-group">
-              <label class="form-label">Password</label>
-              <input type="password" id="loginPassword" class="form-input" placeholder="••••••••" required>
-            </div>
-            <button type="submit" class="auth-btn" style="width:100%; padding: 12px;">Sign In</button>
-          </form>
-
-          <!-- Register Form -->
-          <form id="registerForm" class="hidden">
-            <div class="form-group">
-              <label class="form-label">Business Name</label>
-              <input type="text" id="regName" class="form-input" placeholder="My Awesome Shop" required>
-            </div>
-            <div class="form-group">
-              <label class="form-label">Email Address</label>
-              <input type="email" id="regEmail" class="form-input" placeholder="vendor@example.com" required>
-            </div>
-            <div class="form-group">
-              <label class="form-label">Phone Number</label>
-              <input type="tel" id="regPhone" class="form-input" placeholder="70000000" required>
-            </div>
-            <div class="form-group">
-              <label class="form-label">Password</label>
-              <input type="password" id="regPassword" class="form-input" placeholder="••••••••" required>
-            </div>
-            <button type="submit" class="auth-btn" style="width:100%; padding: 12px;">Create Account</button>
-          </form>
-
-          <div style="margin: 1.5rem 0; display: flex; align-items: center; gap: 1rem; color: var(--text-muted); font-size: 0.8rem;">
-            <div style="flex: 1; height: 1px; background: var(--border);"></div>
-            <span>OR</span>
-            <div style="flex: 1; height: 1px; background: var(--border);"></div>
-          </div>
-
-          <div class="social-btns">
-            <button class="social-btn google-btn" onclick="socialLogin('google')">Continue with Google</button>
-            <button class="social-btn facebook-btn" onclick="socialLogin('facebook')">Continue with Facebook</button>
-          </div>
-
-          <p id="authToggleMsg" style="text-align: center; margin-top: 1.5rem; font-size: 0.875rem; color: var(--text-muted);">
-            Don't have an account? <a href="#" onclick="setAuthMode('register')" style="color: var(--text-accent);">Sign up here</a>
-          </p>
-        </div>
           <p id="authToggleMsg" style="text-align: center; margin-top: 1.5rem; font-size: 0.875rem; color: var(--text-muted);">
             Don't have an account? <a href="#" onclick="setAuthMode('register')" style="color: var(--text-accent);">Sign up here</a>
           </p>
@@ -854,7 +801,23 @@
     let cart = JSON.parse(localStorage.getItem('um_cart') || '[]');
     let currentSlide = 0;
 
+
+    function initGSI() {
+      window.google.accounts.id.initialize({
+        client_id: 'your-google-client-id.apps.googleusercontent.com', // To be replaced by server-side injection if possible, or just leave as placeholder
+        callback: handleGoogleCallback
+      });
+      window.google.accounts.id.renderButton(
+        document.getElementById("g_id_signin"),
+        { theme: "outline", size: "large", width: "100%" }
+      );
+      window.google.accounts.id.prompt(); // also display the One Tap dialog
+    }
+
+    // Call initGSI after GSI library is loaded or in init
+
     async function init() {
+      initGSI();
       await fetchProducts();
       renderCategories();
       filterStalls();
@@ -1216,11 +1179,20 @@
       });
     };
 
+
+    function handleGoogleCallback(response) {
+      const payload = JSON.parse(atob(response.credential.split('.')[1]));
+      handleSocialAuth('google', {
+        name: payload.name,
+        email: payload.email,
+        id: payload.sub,
+        token: response.credential
+      });
+    }
+
     async function socialLogin(provider) {
       if (provider === 'google') {
-        // Real Google Login Flow would normally use the GSI library's renderButton or prompt
-        // For a manual click, we can use the credential helper if configured
-        console.log("Google login initiated. If CLIENT_ID is set, use GSI prompt.");
+        window.google.accounts.id.prompt();
       } else if (provider === 'facebook') {
         FB.login(function(response) {
           if (response.authResponse) {
@@ -1234,16 +1206,7 @@
             });
           }
         }, {scope: 'public_profile,email'});
-        return;
       }
-
-      // Fallback/Mock data for demonstration
-      const mockData = {
-        google: { name: 'Google User', email: 'google@example.com', id: 'g123' },
-        facebook: { name: 'Facebook User', email: 'fb@example.com', id: 'f456' }
-      };
-
-      handleSocialAuth(provider, mockData[provider]);
     }
 
     async function handleSocialAuth(provider, userData) {
@@ -1251,7 +1214,7 @@
         const res = await fetch('/api/auth/social', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ provider, ...userData })
+          body: JSON.stringify({ provider, role: 'customer', ...userData })
         });
         const data = await res.json();
         if (data.error) throw new Error(data.error);

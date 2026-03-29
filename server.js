@@ -46,6 +46,8 @@ function initDatabase() {
         facebook TEXT,
         password TEXT,
         email TEXT,
+        social_provider TEXT,
+        social_id TEXT,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
       )
@@ -186,35 +188,55 @@ app.post('/api/auth/login', (req, res) => {
 // Social Authentication
 // NOTE: For real production, verify tokens on server side using 'google-auth-library' or 'fb' Node.js SDK
 app.post("/api/auth/social", (req, res) => {
-  const { provider, name, email, id, token } = req.body;
+  const { provider, name, email, id, token, role } = req.body;
 
   if (!id || !provider) {
     return res.status(400).json({ error: "Missing required social auth parameters" });
   }
 
-  // Placeholder for token verification
-  // if (token) { ... verify with provider ... }
+  const table = role === 'vendor' ? 'vendors' : 'users';
 
-  db.get("SELECT * FROM users WHERE social_provider = ? AND social_id = ?", [provider, id], (err, row) => {
+  // Check if a social account already exists with this ID and provider
+  db.get(`SELECT * FROM ${table} WHERE social_provider = ? AND social_id = ?`, [provider, id], (err, row) => {
     if (err) return res.status(500).json({ error: err.message });
 
     if (row) {
-      // Update email/name if changed?
-      return res.json({ message: "Login successful", user: row });
+      return res.json({ message: "Login successful", [role === 'vendor' ? 'vendor' : 'user']: row });
     } else {
-      const sql = "INSERT INTO users (name, email, social_provider, social_id) VALUES (?, ?, ?, ?)";
-      db.run(sql, [name, email, provider, id], function(err) {
+      // Check if a user/vendor already exists with this email
+      db.get(`SELECT * FROM ${table} WHERE email = ?`, [email], (err, existingRow) => {
         if (err) return res.status(500).json({ error: err.message });
-        res.json({
-          message: "Social account created",
-          user: { id: this.lastID, name, email, social_provider: provider, social_id: id }
-        });
+
+        if (existingRow) {
+          // Link social account to existing email record
+          const updateSql = `UPDATE ${table} SET social_provider = ?, social_id = ? WHERE id = ?`;
+          db.run(updateSql, [provider, id, existingRow.id], function(err) {
+            if (err) return res.status(500).json({ error: err.message });
+            existingRow.social_provider = provider;
+            existingRow.social_id = id;
+            res.json({ message: "Social account linked", [role === 'vendor' ? 'vendor' : 'user']: existingRow });
+          });
+        } else {
+          // Create new record
+          if (role === 'vendor') {
+             const sql = "INSERT INTO vendors (name, email, social_provider, social_id, category, location, phone) VALUES (?, ?, ?, ?, ?, ?, ?)";
+             db.run(sql, [name, email, provider, id, 'General', 'Unity Mall', ''], function(err) {
+               if (err) return res.status(500).json({ error: err.message });
+               res.json({ message: "Social vendor account created", vendor: { id: this.lastID, name, email, social_provider: provider, social_id: id } });
+             });
+          } else {
+             const sql = "INSERT INTO users (name, email, social_provider, social_id) VALUES (?, ?, ?, ?)";
+             db.run(sql, [name, email, provider, id], function(err) {
+               if (err) return res.status(500).json({ error: err.message });
+               res.json({ message: "Social customer account created", user: { id: this.lastID, name, email, social_provider: provider, social_id: id } });
+             });
+          }
+        }
       });
     }
   });
 });
 
-// Customer Registration
 app.post("/api/auth/customer/register", (req, res) => {
   const { name, email, phone, password } = req.body;
   const sql = "INSERT INTO users (name, email, phone, password) VALUES (?, ?, ?, ?)";
