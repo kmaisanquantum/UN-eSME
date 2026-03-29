@@ -440,10 +440,8 @@
     let currentVendor = JSON.parse(localStorage.getItem('um_vendor'));
     const API_URL = '/api';
 
-    function init() {
-      if (currentVendor) {
     // Accounting Logic for Vendor
-    let accountingTransactions = JSON.parse(localStorage.getItem('um_accounting_vendor_' + currentVendor.id) || '[]');
+    let accountingTransactions = [];
 
     function updateAccountingUI() {
       const tbody = document.getElementById('accTransactionBody');
@@ -453,7 +451,7 @@
 
       if (!tbody) return;
 
-      if (accountingTransactions.length === 0) {
+      if (!accountingTransactions || accountingTransactions.length === 0) {
         tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding: 2rem; color:var(--text-muted);">No transactions recorded yet.</td></tr>';
         salesEl.textContent = 'K0.00';
         expensesEl.textContent = 'K0.00';
@@ -516,8 +514,13 @@
     }
 
     function saveAccounting() {
-      localStorage.setItem('um_accounting_vendor_' + currentVendor.id, JSON.stringify(accountingTransactions));
+      if (currentVendor) {
+        localStorage.setItem('um_accounting_vendor_' + currentVendor.id, JSON.stringify(accountingTransactions));
+      }
     }
+
+    function init() {
+      if (currentVendor) {
         showDashboard();
       }
     }
@@ -586,7 +589,6 @@
       document.getElementById('mainContent').classList.remove('hidden');
       document.getElementById('vendorStoreName').textContent = currentVendor.name;
       loadStoreData();
-        updateAccountingUI();
     }
 
     function logout() {
