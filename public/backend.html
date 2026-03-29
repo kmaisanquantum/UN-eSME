@@ -157,7 +157,23 @@
 
     @media (max-width: 768px) {
       .sidebar { display: none; }
-      .main-content { margin-left: 0; }
+      .main-content { margin-left: 0; padding: 1rem; padding-bottom: 5rem; }
+      .mobile-nav {
+        display: flex !important;
+        position: fixed; bottom: 0; left: 0; right: 0;
+        background: #000; border-top: 1px solid var(--border);
+        justify-content: space-around; padding: 12px; z-index: 900;
+      }
+      .mobile-nav .nav-link { margin-bottom: 0; padding: 8px; flex-direction: column; font-size: 0.65rem; gap: 4px; }
+      .mobile-nav .nav-link i { font-size: 1.25rem; }
+    }
+
+    .mobile-nav { display: none; }
+
+    .mall-link {
+      margin-top: auto;
+      border-top: 1px solid var(--border);
+      padding-top: 1.5rem;
     }
   </style>
 </head>
@@ -215,9 +231,20 @@
       <a onclick="switchTab('orders')" id="nav-orders" class="nav-link">📝 Orders</a>
       <a onclick="switchTab('products')" id="nav-products" class="nav-link">📦 Products</a>
       <a onclick="switchTab('settings')" id="nav-settings" class="nav-link">⚙️ Settings</a>
-      <a onclick="logout()" class="nav-link" style="margin-top: 2rem; color: #ef4444;">🚪 Logout</a>
+      <a onclick="logout()" class="nav-link" style="margin-top: 1rem; color: #ef4444;">🚪 Logout</a>
+      <div class="mall-link">
+        <a href="/" class="nav-link" style="color: var(--success);">🏠 View Mall</a>
+      </div>
     </nav>
   </aside>
+
+  <nav class="mobile-nav hidden" id="mobileNav">
+    <a onclick="switchTab('overview')" id="m-nav-overview" class="nav-link active">📊<br>Home</a>
+    <a onclick="switchTab('accounts')" id="m-nav-accounts" class="nav-link">📉<br>Accounts</a>
+    <a onclick="switchTab('orders')" id="m-nav-orders" class="nav-link">📝<br>Orders</a>
+    <a onclick="switchTab('products')" id="m-nav-products" class="nav-link">📦<br>Products</a>
+    <a href="/" class="nav-link" style="color: var(--success);">🏠<br>Mall</a>
+  </nav>
 
   <main class="main-content hidden" id="mainContent">
     <div class="header">
@@ -328,6 +355,25 @@
           <div class="stat-label">Inquiries</div>
           <div class="stat-value">--</div>
         </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
+        <button onclick="switchTab('orders')" class="btn" style="background: rgba(234, 179, 8, 0.1); color: var(--text-accent); border: 1px solid var(--border); display: flex; flex-direction: column; align-items: center; padding: 1.5rem; gap: 8px;">
+           <span style="font-size: 1.5rem;">📝</span>
+           <span>Manage Orders</span>
+        </button>
+        <button onclick="switchTab('products')" class="btn" style="background: rgba(16, 185, 129, 0.1); color: var(--success); border: 1px solid var(--border); display: flex; flex-direction: column; align-items: center; padding: 1.5rem; gap: 8px;">
+           <span style="font-size: 1.5rem;">📦</span>
+           <span>Add Products</span>
+        </button>
+        <button onclick="switchTab('accounts')" class="btn" style="background: rgba(59, 130, 246, 0.1); color: #3b82f6; border: 1px solid var(--border); display: flex; flex-direction: column; align-items: center; padding: 1.5rem; gap: 8px;">
+           <span style="font-size: 1.5rem;">📉</span>
+           <span>Accounting</span>
+        </button>
+        <button onclick="switchTab('settings')" class="btn" style="background: rgba(148, 163, 184, 0.1); color: var(--text-muted); border: 1px solid var(--border); display: flex; flex-direction: column; align-items: center; padding: 1.5rem; gap: 8px;">
+           <span style="font-size: 1.5rem;">⚙️</span>
+           <span>Store Profile</span>
+        </button>
       </div>
 
       <div class="card">
@@ -586,6 +632,7 @@
       updateAccountingUI();
       document.getElementById('authScreen').classList.add('hidden');
       document.getElementById('sidebar').classList.remove('hidden');
+      document.getElementById('mobileNav').classList.remove('hidden');
       document.getElementById('mainContent').classList.remove('hidden');
       document.getElementById('vendorStoreName').textContent = currentVendor.name;
       loadStoreData();
@@ -593,6 +640,10 @@
 
     function logout() {
       localStorage.removeItem('um_vendor');
+      document.getElementById('sidebar').classList.add('hidden');
+      document.getElementById('mobileNav').classList.add('hidden');
+      document.getElementById('mainContent').classList.add('hidden');
+      document.getElementById('authScreen').classList.remove('hidden');
       location.reload();
     }
 
@@ -601,7 +652,10 @@
       document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
 
       document.getElementById(`tab-${tabId}`).classList.remove('hidden');
-      document.getElementById(`nav-${tabId}`).classList.add('active');
+      const desktopNav = document.getElementById(`nav-${tabId}`);
+      const mobileNav = document.getElementById(`m-nav-${tabId}`);
+      if (desktopNav) desktopNav.classList.add('active');
+      if (mobileNav) mobileNav.classList.add('active');
     }
 
     async function loadStoreData() {
