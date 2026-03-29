@@ -28,7 +28,7 @@
     .stat-value { font-size: 1.5rem; font-weight: 800; color: var(--text-accent); }
     table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
     th { text-align: left; padding: 12px; color: var(--text-muted); border-bottom: 1px solid var(--border); }
-    td { padding: 12px; border-bottom: 1px solid var(--border); }
+    td { padding: 12px; border-bottom: 1px solid var(--border); font-size: 0.9rem; }
     .hidden { display: none; }
     .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
   </style>
@@ -71,35 +71,59 @@
     </div>
 
     <div class="card" style="max-width: 100%; margin-bottom: 2rem;">
-      <h2 style="color: var(--text-accent);">All Vendors</h2>
-      <table>
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Name</th>
-            <th>Email</th>
-            <th>Category</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody id="vendorsTable"></tbody>
-      </table>
+      <h2 style="color: var(--text-accent); margin-bottom: 1rem;">All Orders</h2>
+      <div style="overflow-x: auto;">
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Customer</th>
+              <th>Vendor</th>
+              <th>Items</th>
+              <th>Total</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="ordersTable"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card" style="max-width: 100%; margin-bottom: 2rem;">
+      <h2 style="color: var(--text-accent); margin-bottom: 1rem;">All Vendors</h2>
+      <div style="overflow-x: auto;">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Category</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="vendorsTable"></tbody>
+        </table>
+      </div>
     </div>
 
     <div class="card" style="max-width: 100%;">
-      <h2 style="color: var(--text-accent);">All Products</h2>
-      <table>
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Product</th>
-            <th>Vendor</th>
-            <th>Price</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody id="productsTable"></tbody>
-      </table>
+      <h2 style="color: var(--text-accent); margin-bottom: 1rem;">All Products</h2>
+      <div style="overflow-x: auto;">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Product</th>
+              <th>Vendor</th>
+              <th>Price</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="productsTable"></tbody>
+        </table>
+      </div>
     </div>
   </div>
 
@@ -128,6 +152,7 @@
       document.getElementById('authScreen').style.display = 'none';
       document.getElementById('dashboard').style.display = 'block';
       loadStats();
+      loadOrders();
       loadVendors();
       loadProducts();
     }
@@ -141,6 +166,26 @@
       document.getElementById('statRevenue').textContent = 'K' + parseFloat(stats.totalRevenue).toFixed(2);
     }
 
+    async function loadOrders() {
+      const res = await fetch(`${API_URL}/orders`);
+      const orders = await res.json();
+      document.getElementById('ordersTable').innerHTML = orders.map(o => {
+        const items = JSON.parse(o.items);
+        const itemList = items.map(i => `${i.name} (x${i.quantity})`).join(', ');
+        return `
+          <tr>
+            <td>${new Date(o.created_at).toLocaleDateString()}</td>
+            <td>${o.customer_name}<br><small>${o.customer_phone}</small></td>
+            <td>${o.vendor_name || 'N/A'}</td>
+            <td title="${itemList}">${itemList.length > 30 ? itemList.substring(0, 30) + '...' : itemList}</td>
+            <td>K${parseFloat(o.total_price).toFixed(2)}</td>
+            <td><span style="color: ${o.status === 'completed' ? 'var(--success)' : 'var(--text-accent)'}">${o.status}</span></td>
+            <td><button onclick="deleteOrder(${o.id})" style="color:#ef4444; background:none; border:none; cursor:pointer;">Delete</button></td>
+          </tr>
+        `;
+      }).join('') || '<tr><td colspan="7" style="text-align:center; padding:1rem;">No orders found.</td></tr>';
+    }
+
     async function loadVendors() {
       const res = await fetch(`${API_URL}/vendors`);
       const vendors = await res.json();
@@ -152,7 +197,7 @@
           <td>${v.category}</td>
           <td><button onclick="deleteVendor(${v.id})" style="color:#ef4444; background:none; border:none; cursor:pointer;">Delete</button></td>
         </tr>
-      `).join('');
+      `).join('') || '<tr><td colspan="5" style="text-align:center; padding:1rem;">No vendors found.</td></tr>';
     }
 
     async function loadProducts() {
@@ -166,7 +211,15 @@
           <td>K${parseFloat(p.price).toFixed(2)}</td>
           <td><button onclick="deleteProduct(${p.id})" style="color:#ef4444; background:none; border:none; cursor:pointer;">Delete</button></td>
         </tr>
-      `).join('');
+      `).join('') || '<tr><td colspan="5" style="text-align:center; padding:1rem;">No products found.</td></tr>';
+    }
+
+    async function deleteOrder(id) {
+      if (confirm('Delete this order record?')) {
+        await fetch(`${API_URL}/orders/${id}`, { method: 'DELETE' });
+        loadOrders();
+        loadStats();
+      }
     }
 
     async function deleteVendor(id) {
