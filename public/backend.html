@@ -185,9 +185,9 @@
 
   <div id="authScreen" class="auth-overlay">
     <div class="auth-card">
-      <h2 style="color: var(--text-accent); margin-bottom: 1.5rem; text-align: center;">Vendor Login</h2>
       <form id="loginForm">
         <div class="form-group">
+        <h2 style="color: var(--text-accent); margin-bottom: 1.5rem; text-align: center;">🏪 Vendor Sign In</h2>
           <label class="label">Email Address</label>
           <input type="email" id="loginEmail" class="input" placeholder="vendor@example.com" required>
         </div>
@@ -213,10 +213,13 @@
         <p style="text-align: center; margin-top: 1rem; font-size: 0.875rem; color: var(--text-muted);">
           Don't have a store? <a href="#" onclick="toggleAuthMode()" style="color: var(--text-accent);">Register here</a>
         </p>
+        <p style="text-align: center; margin-top: 1rem; font-size: 0.8rem; border-top: 1px solid var(--border); padding-top: 1rem;">
+          Are you a Customer? <a href="index.html" style="color: var(--text-accent); font-weight: 600;">Go to Mall</a>
+        </p>
       </form>
 
       <form id="registerForm" class="hidden">
-        <h2 style="color: var(--text-accent); margin-bottom: 1.5rem; text-align: center;">Register Store</h2>
+        <h2 style="color: var(--text-accent); margin-bottom: 1.5rem; text-align: center;">🏪 Create Vendor Account</h2>
         <div class="form-group">
           <label class="label">Store Name</label>
           <input type="text" id="regName" class="input" placeholder="e.g. Sepik Crafts" required>
@@ -236,6 +239,9 @@
         <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">Create Store</button>
         <p style="text-align: center; margin-top: 1rem; font-size: 0.875rem; color: var(--text-muted);">
           Already have a store? <a href="#" onclick="toggleAuthMode()" style="color: var(--text-accent);">Login here</a>
+        </p>
+        <p style="text-align: center; margin-top: 1rem; font-size: 0.8rem; border-top: 1px solid var(--border); padding-top: 1rem;">
+          Are you a Customer? <a href="index.html" style="color: var(--text-accent); font-weight: 600;">Go to Mall</a>
         </p>
       </form>
     </div>

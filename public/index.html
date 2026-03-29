@@ -770,6 +770,9 @@
           <p id="authToggleMsg" style="text-align: center; margin-top: 1.5rem; font-size: 0.875rem; color: var(--text-muted);">
             Don't have an account? <a href="#" onclick="setAuthMode('register')" style="color: var(--text-accent);">Sign up here</a>
           </p>
+          <p style="text-align: center; margin-top: 1rem; font-size: 0.8rem; border-top: 1px solid var(--border); padding-top: 1rem;">
+            Are you a Vendor? <a href="backend.html" style="color: var(--text-accent); font-weight: 600;">Go to Dashboard</a>
+          </p>
         </div>
       </div>
     </div>
@@ -993,12 +996,12 @@
       const registerForm = document.getElementById('registerForm');
 
       if (mode === 'register') {
-        title.textContent = 'Create Account';
+        title.innerHTML = '🛍️ Create Shopper Account';
         toggleMsg.innerHTML = 'Already have an account? <a href="#" onclick="setAuthMode(\'login\')" style="color: var(--text-accent);">Sign in here</a>';
         loginForm.classList.add('hidden');
         registerForm.classList.remove('hidden');
       } else {
-        title.textContent = 'Sign In';
+        title.innerHTML = '🛍️ Shopper Sign In';
         toggleMsg.innerHTML = 'Don\'t have an account? <a href="#" onclick="setAuthMode(\'register\')" style="color: var(--text-accent);">Sign up here</a>';
         loginForm.classList.remove('hidden');
         registerForm.classList.add('hidden');
