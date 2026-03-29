@@ -978,26 +978,37 @@
       localStorage.setItem(getVendorAccountingKey(), JSON.stringify(accountingTransactions));
     }
     const categories = ['All', 'Fashion', 'Catering', 'Tech', 'Beauty', 'Home & Living', 'Sports', 'Accessories'];
-    
-    const products = [
-      { id: 1, name: 'Traditional Sepik Bilum', category: 'Fashion', price: 150.00, stall: 'Sepik Crafts', level: 1, rating: 4.8, reviews: 12, image: 'https://images.unsplash.com/photo-1590739225287-bd31519780c3?w=400&auto=format' },
-      { id: 2, name: 'Local Coffee Beans (500g)', category: 'Catering', price: 45.00, stall: 'Goroka Brews', level: 1, rating: 4.9, reviews: 45, image: 'https://images.unsplash.com/photo-1559056199-641a0ac8b55e?w=400&auto=format' },
-      { id: 3, name: 'Smartphone Screen Repair', category: 'Tech', price: 120.00, stall: 'Phone Fixers', level: 2, rating: 4.5, reviews: 28, image: 'https://images.unsplash.com/photo-1581092160562-40aa08e78837?w=400&auto=format' },
-      { id: 4, name: 'Organic Coconut Oil', category: 'Beauty', price: 25.00, stall: 'Island Glow', level: 1, rating: 4.7, reviews: 19, image: 'https://images.unsplash.com/photo-1590439471364-192aa70c0b53?w=400&auto=format' },
-      { id: 5, name: 'Hand-woven Floor Mat', category: 'Home & Living', price: 85.00, stall: 'Village Weavers', level: 1, rating: 4.6, reviews: 15, image: 'https://images.unsplash.com/photo-1575410223196-9f6f21c824f1?w=400&auto=format' },
-      { id: 6, name: 'Custom Team Jersey', category: 'Sports', price: 65.00, stall: 'Active PNG', level: 2, rating: 4.4, reviews: 10, image: 'https://images.unsplash.com/photo-1580087444152-c2b6229f4434?w=400&auto=format' },
-      { id: 7, name: 'Shell Necklace Set', category: 'Accessories', price: 35.00, stall: 'Coastal Gems', level: 1, rating: 4.8, reviews: 22, image: 'https://images.unsplash.com/photo-1596944210918-28522799335d?w=400&auto=format' },
-      { id: 8, name: 'Leather Work Boots', category: 'Fashion', price: 280.00, stall: 'Rugged Wear', level: 2, rating: 4.7, reviews: 31, image: 'https://images.unsplash.com/photo-1520639889410-1df41d7b1868?w=400&auto=format' }
-    ];
-
+    let products = [];
     let currentCategory = 'All';
     let cart = JSON.parse(localStorage.getItem('um_cart') || '[]');
 
-    function init() {
+    async function init() {
+      await fetchProducts();
       renderCategories();
       filterStalls();
       updateCartUI();
       updateAccountingUI();
+    }
+
+    async function fetchProducts() {
+      try {
+        const res = await fetch('/api/products');
+        const data = await res.json();
+        products = data.map(p => ({
+          id: p.id,
+          vendor_id: p.vendor_id,
+          name: p.name,
+          category: p.category,
+          price: parseFloat(p.price),
+          stall: p.vendor_name || 'Unity Stall',
+          rating: 4.5,
+          reviews: Math.floor(Math.random() * 50),
+          image: p.images && p.images.length > 0 ? p.images[0] : 'https://images.unsplash.com/photo-1580915411954-282cb1b0d780?w=400&auto=format',
+          level: 1
+        }));
+      } catch (err) {
+        console.error('Failed to fetch products:', err);
+      }
     }
 
     function renderCategories() {
@@ -1152,9 +1163,42 @@
     }
     function closeAuthModal() { document.getElementById('authModal').classList.remove('show'); }
 
-    function checkout() {
+    async function checkout() {
       if (cart.length === 0) return;
-      alert('In a real app, this would lead to a payment gateway. Total: ' + document.getElementById('cartTotal').textContent);
+
+      const name = prompt("Please enter your name:");
+      if (!name) return;
+      const phone = prompt("Please enter your phone number:");
+      if (!phone) return;
+
+      const vendorIds = [...new Set(cart.map(item => item.vendor_id))];
+
+      try {
+        for (const vId of vendorIds) {
+          const vendorItems = cart.filter(item => item.vendor_id === vId);
+          const total = vendorItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+
+          await fetch('/api/orders', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              vendor_id: vId,
+              customer_name: name,
+              customer_phone: phone,
+              items: vendorItems,
+              total_price: total
+            })
+          });
+        }
+
+        alert('Order placed successfully! Vendors will contact you via WhatsApp.');
+        cart = [];
+        saveCart();
+        updateCartUI();
+        toggleCart();
+      } catch (err) {
+        alert('Failed to place order: ' + err.message);
+      }
     }
 
     function showNotification(msg) {

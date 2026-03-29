@@ -1,0 +1,47 @@
+<<<<<<< SEARCH
+// ============== STATS ROUTES ==============
+
+// Get dashboard stats
+=======
+// ============== ORDER ROUTES ==============
+
+// Create order
+app.post('/api/orders', (req, res) => {
+  const { vendor_id, customer_name, customer_phone, items, total_price } = req.body;
+
+  const sql = `INSERT INTO orders (vendor_id, customer_name, customer_phone, items, total_price)
+               VALUES (?, ?, ?, ?, ?)`;
+
+  db.run(sql, [vendor_id, customer_name, customer_phone, JSON.stringify(items), total_price], function(err) {
+    if (err) {
+      return res.status(500).json({ error: err.message });
+    }
+    res.json({ id: this.lastID, message: 'Order created successfully' });
+  });
+});
+
+// Get orders by vendor
+app.get('/api/vendors/:vendorId/orders', (req, res) => {
+  db.all('SELECT * FROM orders WHERE vendor_id = ? ORDER BY created_at DESC', [req.params.vendorId], (err, rows) => {
+    if (err) {
+      return res.status(500).json({ error: err.message });
+    }
+    res.json(rows);
+  });
+});
+
+// Update order status
+app.put('/api/orders/:id/status', (req, res) => {
+  const { status } = req.body;
+  db.run('UPDATE orders SET status = ? WHERE id = ?', [status, req.params.id], function(err) {
+    if (err) {
+      return res.status(500).json({ error: err.message });
+    }
+    res.json({ message: 'Order status updated successfully' });
+  });
+});
+
+// ============== STATS ROUTES ==============
+
+// Get dashboard stats
+>>>>>>> REPLACE
