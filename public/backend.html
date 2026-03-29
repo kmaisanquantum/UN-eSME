@@ -212,6 +212,7 @@
     <nav>
       <a onclick="switchTab('overview')" id="nav-overview" class="nav-link active">📊 Overview</a>
       <a onclick="switchTab('accounts')" id="nav-accounts" class="nav-link">📉 Accounts</a>
+      <a onclick="switchTab('orders')" id="nav-orders" class="nav-link">📝 Orders</a>
       <a onclick="switchTab('products')" id="nav-products" class="nav-link">📦 Products</a>
       <a onclick="switchTab('settings')" id="nav-settings" class="nav-link">⚙️ Settings</a>
       <a onclick="logout()" class="nav-link" style="margin-top: 2rem; color: #ef4444;">🚪 Logout</a>
@@ -224,8 +225,31 @@
       <button class="btn btn-primary" onclick="switchTab('products')">+ Add Product</button>
     </div>
 
+    <!-- Orders Tab -->
+    <div id="tab-orders" class="tab-content hidden">
+      <div class="card">
+        <h3 class="card-title">Customer Orders</h3>
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Customer</th>
+                <th>Items</th>
+                <th>Total</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="ordersTable">
+              <!-- Rendered via JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
     <!-- Overview Tab -->
-    <!-- Accounts/Financials Tab -->
     <div id="tab-accounts" class="tab-content hidden">
       <div class="card" style="padding: 1.5rem; background: linear-gradient(135deg, var(--bg-card), #1e293b);">
         <h3 style="color: var(--text-accent); margin-bottom: 1rem;">📈 SME Financial Summary</h3>
@@ -600,6 +624,28 @@
         document.getElementById('recentProductsTable').innerHTML = products.slice(0, 5).map(renderProduct).join('') || '<tr><td colspan="4" style="text-align:center; padding:2rem;">No products found.</td></tr>';
         document.getElementById('allProductsTable').innerHTML = products.map(renderProduct).join('') || '<tr><td colspan="4" style="text-align:center; padding:2rem;">No products found.</td></tr>';
 
+        // Load Orders
+        const oRes = await fetch(`${API_URL}/vendors/${currentVendor.id}/orders`);
+        const orders = await oRes.json();
+
+        const ordersBody = document.getElementById('ordersTable');
+        ordersBody.innerHTML = orders.map(o => {
+          const items = JSON.parse(o.items);
+          const itemsList = items.map(i => `${i.name} (x${i.quantity})`).join(', ');
+          return `
+            <tr>
+              <td>${new Date(o.created_at).toLocaleDateString()}</td>
+              <td>${o.customer_name}<br><small>${o.customer_phone}</small></td>
+              <td style="max-width:200px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${itemsList}</td>
+              <td>K${parseFloat(o.total_price).toFixed(2)}</td>
+              <td><span class="status-pill ${o.status === 'completed' ? 'status-active' : ''}" style="background: ${o.status === 'pending' ? 'rgba(234, 179, 8, 0.1)' : ''}; color: ${o.status === 'pending' ? '#eab308' : ''}">${o.status}</span></td>
+              <td>
+                ${o.status === 'pending' ? `<button onclick="updateOrderStatus(${o.id}, 'completed')" class="btn btn-primary" style="padding: 4px 8px; font-size: 0.75rem;">Complete</button>` : ''}
+              </td>
+            </tr>
+          `;
+        }).join('') || '<tr><td colspan="6" style="text-align:center; padding:2rem;">No orders yet.</td></tr>';
+
         // Fill settings
         const vRes = await fetch(`${API_URL}/vendors/me/${currentVendor.id}`);
         const vendor = await vRes.json();
@@ -673,6 +719,19 @@
         await fetch(`${API_URL}/products/${id}`, { method: 'DELETE' });
         loadStoreData();
         updateAccountingUI();
+      }
+    }
+
+    async function updateOrderStatus(id, status) {
+      try {
+        await fetch(`${API_URL}/orders/${id}/status`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status })
+        });
+        loadStoreData();
+      } catch (err) {
+        alert('Failed to update status');
       }
     }
 
