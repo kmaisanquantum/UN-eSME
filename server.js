@@ -61,7 +61,7 @@ function initDatabase() {
         name TEXT NOT NULL,
         category TEXT NOT NULL,
         price REAL NOT NULL,
-        stock INTEGER DEFAULT 0,
+        stock INTEGER DEFAULT 0, stock_threshold INTEGER DEFAULT 5,
         description TEXT,
         status TEXT DEFAULT 'active',
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -491,6 +491,29 @@ app.delete('/api/admin/orders/:id', (req, res) => {
 });
 
 // ============== STATS ROUTES (Legacy/Common) ==============
+
+// simulated WhatsApp bot webhook for logging sales via text
+app.post("/api/bot/webhook", (req, res) => {
+  const { message } = req.body;
+  if (!message) return res.status(400).json({ error: "No message provided" });
+  const text = message.toLowerCase();
+  if (text.includes("sale")) {
+    const amountMatch = text.match(/\d+/);
+    const amount = amountMatch ? parseFloat(amountMatch[0]) : 0;
+    return res.json({
+      reply: `✅ Recorded sale of K${amount.toFixed(2)}. Your balance is updated.`,
+      action: "record_sale",
+      amount
+    });
+  }
+  if (text.includes("balance")) {
+    return res.json({
+      reply: "📊 Your current daily balance is K250.00. Use \"Sale [amount]\" to record more.",
+      action: "view_balance"
+    });
+  }
+  return res.json({ reply: "👋 Welcome to Garden City SME Bot. Send \"Sale [amount]\" to log a sale." });
+});
 
 app.get('/api/stats', (req, res) => {
   const stats = {};
