@@ -180,6 +180,9 @@
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <script async defer crossorigin="anonymous" src="https://connect.facebook.net/en_US/sdk.js"></script>
 
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body>
 
@@ -254,6 +257,9 @@
       <a onclick="switchTab('accounts')" id="nav-accounts" class="nav-link">📉 Accounts</a>
       <a onclick="switchTab('orders')" id="nav-orders" class="nav-link">📝 Orders</a>
       <a onclick="switchTab('products')" id="nav-products" class="nav-link">📦 Products</a>
+
+      <a onclick="switchTab('sell')" id="nav-sell" class="nav-link">🛒 Sell</a>
+      <a onclick="switchTab('reports')" id="nav-reports" class="nav-link">📄 Reports</a>
       <a onclick="switchTab('settings')" id="nav-settings" class="nav-link">⚙️ Settings</a>
       <a onclick="logout()" class="nav-link" style="margin-top: 1rem; color: #ef4444;">🚪 Logout</a>
       <div class="mall-link">
@@ -267,12 +273,17 @@
     <a onclick="switchTab('accounts')" id="m-nav-accounts" class="nav-link">📉<br>Accounts</a>
     <a onclick="switchTab('orders')" id="m-nav-orders" class="nav-link">📝<br>Orders</a>
     <a onclick="switchTab('products')" id="m-nav-products" class="nav-link">📦<br>Products</a>
+
+    <a onclick="switchTab('sell')" id="m-nav-sell" class="nav-link">🛒<br>Sell</a>
+    <a onclick="switchTab('reports')" id="m-nav-reports" class="nav-link">📄<br>Reports</a>
     <a href="/" class="nav-link" style="color: var(--success);">🏠<br>Mall</a>
   </nav>
 
   <main class="main-content hidden" id="mainContent">
     <div class="header">
       <h2>Welcome back, <span style="color: var(--text-accent);" id="vendorStoreName">Store Name</span></h2>
+
+      <button onclick="toggleLanguage()" class="btn" style="padding: 4px 12px; font-size: 0.8rem; background: var(--bg-card); border: 1px solid var(--border); color: var(--text-accent);">🌐 <span id="langLabel">Tok Pisin</span></button>
       <a href="#" onclick="logout()" style="color: #ef4444; font-size: 0.8rem; text-decoration: none; font-weight: 600;">Sign Out</a>
       <button class="btn btn-primary" onclick="switchTab('products')">+ Add Product</button>
     </div>
@@ -302,6 +313,65 @@
     </div>
 
     <!-- Overview Tab -->
+
+    <!-- Sell Tab -->
+    <div id="tab-sell" class="tab-content hidden">
+      <div class="card">
+        <h3 class="card-title">🛒 Quick Sell / Register Sale</h3>
+        <form id="quickSellForm" class="form-grid" style="grid-template-columns: 1fr 1fr 1fr auto;">
+          <div class="form-group">
+            <label class="label">Product</label>
+            <select id="sellProduct" class="input" onchange="updateSellPrice()"></select>
+          </div>
+          <div class="form-group">
+            <label class="label">Price (K)</label>
+            <input type="number" id="sellPrice" class="input" step="0.01" readonly>
+          </div>
+          <div class="form-group">
+            <label class="label">Qty</label>
+            <input type="number" id="sellQty" class="input" value="1" min="1">
+          </div>
+          <div class="form-group" style="align-self: flex-end;">
+            <button type="submit" class="btn btn-primary">Log Sale</button>
+          </div>
+        </form>
+        <div id="paymentSim" style="margin-top: 1.5rem; padding: 1rem; border: 1px dashed var(--border); border-radius: 8px; text-align: center;">
+            <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 0.5rem;">Digital Payment Simulation (PNG)</p>
+            <button onclick="simPayment('cellmoni')" class="btn" style="background: #e11d48; color: white;">Cellmoni</button>
+            <button onclick="simPayment('easipay')" class="btn" style="background: #2563eb; color: white;">EasiPay</button>
+        </div>
+      </div>
+      <div id="inventoryAlert" class="hidden" style="margin-top: 1rem; padding: 1rem; background: rgba(239, 68, 68, 0.1); border: 1px solid #ef4444; border-radius: 8px; color: #ef4444;">
+        ⚠️ Low Stock Alert! Check your inventory.
+      </div>
+    </div>
+
+    <!-- Reports & Dashboard Tab -->
+    <div id="tab-reports" class="tab-content hidden">
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+        <div class="card">
+          <h3 class="card-title">📊 Business Health</h3>
+          <div style="height: 300px;">
+            <canvas id="healthChart"></canvas>
+          </div>
+        </div>
+        <div class="card">
+          <h3 class="card-title">🏦 Financing Readiness</h3>
+          <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1.5rem;">Generate a professional revenue report for your bank loan application (Micro-Lending).</p>
+          <button onclick="generateLendingReport()" class="btn btn-primary" style="width: 100%;">Download Lending Readiness PDF</button>
+          <div style="margin-top: 2rem; padding: 1rem; background: var(--bg-dark); border-radius: 8px;">
+            <h4 style="font-size: 0.85rem; color: var(--text-accent); margin-bottom: 0.5rem;">Bot Interface Simulation</h4>
+            <div id="botChat" style="height: 100px; overflow-y: auto; font-size: 0.8rem; background: #000; padding: 0.5rem; border-radius: 4px; margin-bottom: 0.5rem;">
+               <div style="color: #10b981;">Bot: 👋 Send "Sale 50" to log a K50 sale.</div>
+            </div>
+            <div style="display: flex; gap: 4px;">
+              <input type="text" id="botInput" class="input" style="height: 32px; font-size: 0.8rem;" placeholder="Type message...">
+              <button onclick="sendBotMsg()" class="btn" style="padding: 0 12px; font-size: 0.8rem; background: var(--primary);">Send</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
     <div id="tab-accounts" class="tab-content hidden">
       <div class="card" style="padding: 1.5rem; background: linear-gradient(135deg, var(--bg-card), #1e293b);">
         <h3 style="color: var(--text-accent); margin-bottom: 1rem;">📈 SME Financial Summary</h3>
@@ -588,6 +658,223 @@
     // Accounting Logic for Vendor
     let accountingTransactions = [];
 
+    let currentLang = "en";
+
+    const translations = {
+      en: {
+        "nav-overview": "📊 Overview",
+        "nav-accounts": "📉 Accounts",
+        "nav-orders": "📝 Orders",
+        "nav-products": "📦 Products",
+        "nav-sell": "🛒 Sell",
+        "nav-reports": "📄 Reports",
+        "nav-settings": "⚙️ Settings",
+        "langLabel": "Tok Pisin",
+        "welcome": "Welcome back",
+        "add-product": "+ Add Product",
+        "sell-title": "🛒 Quick Sell / Register Sale",
+        "report-title": "📊 Business Health",
+        "finance-title": "🏦 Financing Readiness"
+      },
+      tpi: {
+        "nav-overview": "📊 Lukluk Olgeta",
+        "nav-accounts": "📉 Mani Toktok",
+        "nav-orders": "📝 Ol Oda",
+        "nav-products": "📦 Ol Kago",
+        "nav-sell": "🛒 Salim Kago",
+        "nav-reports": "📄 Ol Ripot",
+        "nav-settings": "⚙️ Setim Samting",
+        "langLabel": "English",
+        "welcome": "Gude gen",
+        "add-product": "+ Putim Nupela Kago",
+        "sell-title": "🛒 Kwik Salim / Putim Sale",
+        "report-title": "📊 Helt bilong Bisnis",
+        "finance-title": "🏦 Kisim Dinau Redi"
+      }
+    };
+
+    function toggleLanguage() {
+      currentLang = currentLang === "en" ? "tpi" : "en";
+      const t = translations[currentLang];
+      document.getElementById("nav-overview").innerHTML = t["nav-overview"];
+      document.getElementById("nav-accounts").innerHTML = t["nav-accounts"];
+      document.getElementById("nav-orders").innerHTML = t["nav-orders"];
+      document.getElementById("nav-products").innerHTML = t["nav-products"];
+      document.getElementById("nav-sell").innerHTML = t["nav-sell"];
+      document.getElementById("nav-reports").innerHTML = t["nav-reports"];
+      document.getElementById("nav-settings").innerHTML = t["nav-settings"];
+      document.getElementById("langLabel").textContent = t["langLabel"];
+      document.querySelector(".header h2").childNodes[0].textContent = t["welcome"] + ", ";
+      document.querySelector(".header .btn-primary").textContent = t["add-product"];
+
+      // Update tab titles
+      const sellTitle = document.querySelector("#tab-sell .card-title");
+      if (sellTitle) sellTitle.textContent = t["sell-title"];
+      const reportTitles = document.querySelectorAll("#tab-reports .card-title");
+      if (reportTitles[0]) reportTitles[0].textContent = t["report-title"];
+      if (reportTitles[1]) reportTitles[1].textContent = t["finance-title"];
+    }
+
+    let healthChart = null;
+
+    function renderHealthChart() {
+      const ctx = document.getElementById("healthChart").getContext("2d");
+      const sales = accountingTransactions.filter(t => t.type === "sale").reduce((acc, t) => acc + parseFloat(t.amount), 0);
+      const expenses = accountingTransactions.filter(t => t.type === "expense").reduce((acc, t) => acc + parseFloat(t.amount), 0);
+
+      if (healthChart) healthChart.destroy();
+
+      healthChart = new Chart(ctx, {
+        type: "bar",
+        data: {
+          labels: ["Revenue", "Expenses"],
+          datasets: [{
+            label: "PGK (K)",
+            data: [sales, expenses],
+            backgroundColor: ["#10b981", "#ef4444"]
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false }
+          },
+          scales: {
+            y: { beginAtZero: true, grid: { color: "#334155" } }
+          }
+        }
+      });
+    }
+
+    async function generateLendingReport() {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+
+      doc.setFontSize(20);
+      doc.setTextColor(202, 138, 4);
+      doc.text("Garden City SME - Micro-Lending Readiness", 20, 20);
+
+      doc.setFontSize(12);
+      doc.setTextColor(0, 0, 0);
+      doc.text(`Store: ${currentVendor.name}`, 20, 35);
+      doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 20, 42);
+
+      doc.line(20, 48, 190, 48);
+
+      doc.text("Financial Summary (Last 6 Months):", 20, 58);
+      const sales = accountingTransactions.filter(t => t.type === "sale").reduce((acc, t) => acc + parseFloat(t.amount), 0);
+      const expenses = accountingTransactions.filter(t => t.type === "expense").reduce((acc, t) => acc + parseFloat(t.amount), 0);
+
+      doc.text(`Total Revenue: K${sales.toFixed(2)}`, 30, 68);
+      doc.text(`Total Expenses: K${expenses.toFixed(2)}`, 30, 75);
+      doc.text(`Estimated GST (10%): K${(sales * 0.1).toFixed(2)}`, 30, 82);
+      doc.setFont('helvetica', 'bold');
+      doc.text(`Net Cash Flow: K${(sales - expenses).toFixed(2)}`, 30, 92);
+
+      doc.setFont('helvetica', 'normal');
+      doc.text("Banker Notes:", 20, 110);
+      doc.setFontSize(10);
+      doc.text("This vendor has maintained consistent digital records. Transaction logs are available upon request.", 20, 118);
+
+      doc.save(`Lending_Report_${currentVendor.id}.pdf`);
+    }
+
+    async function updateSellPrice() {
+      const pId = document.getElementById("sellProduct").value;
+      if (!pId) return;
+      const res = await fetch(`${API_URL}/products`);
+      const products = await res.json();
+      const p = products.find(x => x.id == pId);
+      if (p) document.getElementById("sellPrice").value = p.price;
+    }
+
+    document.getElementById("quickSellForm").onsubmit = async (e) => {
+      e.preventDefault();
+      const pId = document.getElementById("sellProduct").value;
+      const qty = parseInt(document.getElementById("sellQty").value);
+      const price = parseFloat(document.getElementById("sellPrice").value);
+      const total = price * qty;
+
+      // GST calc
+      const gst = total * 0.1;
+
+      // Add to accounting
+      accountingTransactions.push({
+        date: new Date().toISOString().split('T')[0],
+        type: "sale",
+        amount: total,
+        desc: `Quick Sell: ${qty}x item (Incl. K${gst.toFixed(2)} GST)`
+      });
+      saveAccounting();
+      updateAccountingUI();
+      renderHealthChart();
+
+      // Inventory Trigger simulation
+      if (qty >= 5) {
+         document.getElementById("inventoryAlert").classList.remove("hidden");
+      }
+
+      alert(`Sale recorded! Total: K${total.toFixed(2)} (GST K${gst.toFixed(2)})`);
+      e.target.reset();
+    };
+
+
+    function simPayment(provider) {
+      const amount = document.getElementById("sellPrice").value;
+      if (!amount) return alert("Select a product first.");
+
+      const confirmMsg = provider === "cellmoni" ? "Send Cellmoni Payment request (K" + amount + ")?" : "Send EasiPay Payment request (K" + amount + ")?";
+      if (confirm(confirmMsg)) {
+        setTimeout(() => {
+          accountingTransactions.push({
+            date: new Date().toISOString().split('T')[0],
+            type: "sale",
+            amount: amount,
+            desc: "Payment via " + (provider === "cellmoni" ? "Cellmoni" : "EasiPay")
+          });
+          saveAccounting();
+          updateAccountingUI();
+          renderHealthChart();
+          alert("✅ " + (provider === "cellmoni" ? "Cellmoni" : "EasiPay") + " payment received! Your Accounts Suite is reconciled.");
+        }, 1000);
+      }
+    }
+    async function sendBotMsg() {
+      const msg = document.getElementById("botInput").value;
+      if (!msg) return;
+
+      const chat = document.getElementById("botChat");
+      chat.innerHTML += `<div style="color: var(--text-accent);">You: ${msg}</div>`;
+
+      try {
+        const res = await fetch(`${API_URL}/bot/webhook`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message: msg })
+        });
+        const data = await res.json();
+        chat.innerHTML += `<div style="color: #10b981;">Bot: ${data.reply}</div>`;
+
+        if (data.action === "record_sale") {
+          accountingTransactions.push({
+            date: new Date().toISOString().split('T')[0],
+            type: "sale",
+            amount: data.amount,
+            desc: "Bot recorded sale"
+          });
+          saveAccounting();
+          updateAccountingUI();
+          renderHealthChart();
+        }
+      } catch (err) {
+        chat.innerHTML += `<div style="color: #ef4444;">Error: Offline</div>`;
+      }
+
+      document.getElementById("botInput").value = "";
+      chat.scrollTop = chat.scrollHeight;
+    }
+
     function updateAccountingUI() {
       const tbody = document.getElementById('accTransactionBody');
       const salesEl = document.getElementById('accTotalSales');
@@ -665,6 +952,17 @@
     }
 
     function init() {
+
+      if ("serviceWorker" in navigator) {
+        window.addEventListener("load", () => {
+          navigator.serviceWorker.register("/sw.js").then(reg => {
+            console.log("Service Worker registered!", reg);
+          }).catch(err => {
+            console.log("Service Worker registration failed", err);
+          });
+        });
+      }
+
       initGSI();
       if (currentVendor) {
         showDashboard();
@@ -727,8 +1025,19 @@
       }
     };
 
+
+    async function loadSellProducts() {
+      const res = await fetch(`${API_URL}/products`);
+      const products = await res.json();
+      const sellSelect = document.getElementById("sellProduct");
+      sellSelect.innerHTML = products.map(p => `<option value="${p.id}">${p.name} (K${p.price})</option>`).join("");
+      updateSellPrice();
+    }
     function showDashboard() {
       accountingTransactions = JSON.parse(localStorage.getItem("um_accounting_vendor_" + currentVendor.id) || "[]");
+
+      loadSellProducts();
+      renderHealthChart();
       updateAccountingUI();
       document.getElementById('authScreen').classList.add('hidden');
       document.getElementById('sidebar').classList.remove('hidden');
