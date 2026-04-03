@@ -512,7 +512,7 @@ app.post("/api/bot/webhook", (req, res) => {
       action: "view_balance"
     });
   }
-  return res.json({ reply: "👋 Welcome to Garden City SME Bot. Send \"Sale [amount]\" to log a sale." });
+  return res.json({ reply: "👋 Welcome to Unity Mall SME centre Bot. Send \"Sale [amount]\" to log a sale." });
 });
 
 app.get('/api/stats', (req, res) => {
