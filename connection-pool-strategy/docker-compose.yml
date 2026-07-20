@@ -1,0 +1,83 @@
+version: '3.8'
+
+services:
+  # --------------------------------------------------------------------
+  # PostgreSQL Production Database Service
+  # --------------------------------------------------------------------
+  postgres-db:
+    image: postgres:15-alpine
+    container_name: production-postgres
+    restart: always
+    environment:
+      POSTGRES_DB: production_db
+      POSTGRES_USER: postgres_app_user
+      POSTGRES_PASSWORD: SuperSecurePassw0rd!
+    # Isolated on private internal network. DB is not exposed directly to the public web.
+    networks:
+      - db-tier
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      # Mount TLS / SSL certificates for server verification
+      - ./certs/postgres:/etc/postgresql/certs:ro
+    # Run postgres with strict production configuration overrides
+    command: >
+      postgres
+      -c ssl=on
+      -c ssl_cert_file=/etc/postgresql/certs/server.crt
+      -c ssl_key_file=/etc/postgresql/certs/server.key
+      -c ssl_ca_file=/etc/postgresql/certs/ca.crt
+      -c max_connections=100
+      -c shared_buffers=256MB
+      -c work_mem=16MB
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres_app_user -d production_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # --------------------------------------------------------------------
+  # PgBouncer Lightweight Connection Proxy Service
+  # --------------------------------------------------------------------
+  pgbouncer:
+    image: edoburu/pgbouncer:latest
+    container_name: production-pgbouncer
+    restart: always
+    ports:
+      # Expose only the secure pgbouncer proxy port to Coolify application containers
+      - "6432:6432"
+    networks:
+      - db-tier
+    volumes:
+      # Mount our customized pgbouncer configuration and user authentication lists
+      - ./pgbouncer.ini:/etc/pgbouncer/pgbouncer.ini:ro
+      - ./userlist.txt:/etc/pgbouncer/userlist.txt:ro
+      # Mount TLS certificates for client and server-side encryption
+      - ./certs/pgbouncer:/etc/pgbouncer/certs:ro
+    environment:
+      # Pass DB credentials through environment variable references to protect secret safety
+      - DATABASE_URL=postgres://postgres_app_user:SuperSecurePassw0rd!@postgres-db:5432/production_db
+    depends_on:
+      postgres-db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h localhost -p 6432 -U postgres_app_user -d app_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
+# --------------------------------------------------------------------
+# Private Network Subsystem
+# Ensures complete communication isolation between PgBouncer and PostgreSQL
+# --------------------------------------------------------------------
+networks:
+  db-tier:
+    driver: bridge
+
+# --------------------------------------------------------------------
+# Persistent Volumes Subsystem
+# --------------------------------------------------------------------
+volumes:
+  postgres-data:
+    driver: local

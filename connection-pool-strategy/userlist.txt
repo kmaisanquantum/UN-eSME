@@ -1,0 +1,8 @@
+# ====================================================================
+# PgBouncer Authentication User List
+# Location: /etc/pgbouncer/userlist.txt
+# Format: "username" "password" (plaintext, md5, or scram-sha-256)
+# ====================================================================
+
+"postgres_app_user" "SCRAM-SHA-256$4096:G3u+K6j8vX7HlW9w==$tYVj8e9p1h2b3o4n5m6s7t8u9v0w1x2y3z4a5b6c7d8=:U3VwZXJTZWN1cmVQYXNzdzByZCE="
+"postgres_admin_user" "SCRAM-SHA-256$4096:M2t+X5p8yZ3VnW7q==$a9s8d7f6g5h4j3k2l1m0n9b8v7c6x5z4q3w2e1r0t9y=:QWRtaW5TZWN1cmVQYXNzd29yZDIwMjYh"
