@@ -114,6 +114,7 @@ function initDatabase() {
         subdomain TEXT UNIQUE NOT NULL,
         branding TEXT NOT NULL,
         status TEXT DEFAULT 'active',
+        subscription_tier TEXT DEFAULT 'free',
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
       )
     `, (err) => {
@@ -380,7 +381,8 @@ function initDatabase() {
       { name: 'sales', col: 'customer_id', type: 'INTEGER' },
       { name: 'admins', col: 'role', type: 'TEXT' },
       { name: 'tenants', col: 'status', type: 'TEXT' },
-      { name: 'admins', col: 'tenant_id', type: 'INTEGER' }
+      { name: 'admins', col: 'tenant_id', type: 'INTEGER' },
+      { name: 'tenants', col: 'subscription_tier', type: "TEXT DEFAULT 'free'" }
     ];
 
     let alterCount = 0;
@@ -400,6 +402,7 @@ function initDatabase() {
         db.run('UPDATE services SET tenant_id = 1 WHERE tenant_id IS NULL');
         db.run("UPDATE admins SET role = 'super_admin' WHERE role IS NULL");
         db.run("UPDATE tenants SET status = 'active' WHERE status IS NULL");
+        db.run("UPDATE tenants SET subscription_tier = 'free' WHERE subscription_tier IS NULL");
         db.run("UPDATE admins SET tenant_id = 1 WHERE tenant_id IS NULL");
 
         // Seed admin from env vars, falling back to 'admin' / 'admin123' if not set
@@ -642,7 +645,7 @@ app.post("/api/admin/login", (req, res) => {
 
 // List all tenants
 app.get('/api/admin/tenants', authenticateToken(['platform_admin', 'super_admin']), (req, res) => {
-  db.all('SELECT id, name, subdomain, branding, status, created_at FROM tenants ORDER BY id ASC', [], (err, rows) => {
+  db.all('SELECT id, name, subdomain, branding, status, subscription_tier, created_at FROM tenants ORDER BY id ASC', [], (err, rows) => {
     if (err) return res.status(500).json({ error: err.message });
     const tenants = rows.map(row => {
       try {
@@ -657,9 +660,14 @@ app.get('/api/admin/tenants', authenticateToken(['platform_admin', 'super_admin'
 
 // Create a tenant
 app.post('/api/admin/tenants', authenticateToken(['platform_admin', 'super_admin']), (req, res) => {
-  const { name, subdomain, branding } = req.body;
+  let { name, subdomain, branding, subscription_tier } = req.body;
   if (!name || !subdomain || !branding) {
     return res.status(400).json({ error: 'Missing required tenant fields: name, subdomain, branding' });
+  }
+
+  if (!subscription_tier) subscription_tier = 'free';
+  if (!['free', 'standard', 'institutional'].includes(subscription_tier)) {
+    return res.status(400).json({ error: 'Invalid subscription_tier value' });
   }
 
   // Check unique subdomain
@@ -670,8 +678,8 @@ app.post('/api/admin/tenants', authenticateToken(['platform_admin', 'super_admin
     }
 
     const brandingStr = typeof branding === 'object' ? JSON.stringify(branding) : branding;
-    const sql = 'INSERT INTO tenants (name, subdomain, branding, status) VALUES (?, ?, ?, ?)';
-    db.run(sql, [name, subdomain, brandingStr, 'active'], function(err2) {
+    const sql = 'INSERT INTO tenants (name, subdomain, branding, status, subscription_tier) VALUES (?, ?, ?, ?, ?)';
+    db.run(sql, [name, subdomain, brandingStr, 'active', subscription_tier], function(err2) {
       if (err2) return res.status(500).json({ error: err2.message });
       res.status(201).json({ id: this.lastID, message: 'Tenant created successfully' });
     });
@@ -680,14 +688,19 @@ app.post('/api/admin/tenants', authenticateToken(['platform_admin', 'super_admin
 
 // Update a tenant
 app.put('/api/admin/tenants/:id', authenticateToken(['platform_admin', 'super_admin']), (req, res) => {
-  const { name, branding } = req.body;
+  let { name, branding, subscription_tier } = req.body;
   if (!name || !branding) {
     return res.status(400).json({ error: 'Missing required tenant fields: name, branding' });
   }
 
+  if (!subscription_tier) subscription_tier = 'free';
+  if (!['free', 'standard', 'institutional'].includes(subscription_tier)) {
+    return res.status(400).json({ error: 'Invalid subscription_tier value' });
+  }
+
   const brandingStr = typeof branding === 'object' ? JSON.stringify(branding) : branding;
-  const sql = 'UPDATE tenants SET name = ?, branding = ? WHERE id = ?';
-  db.run(sql, [name, brandingStr, req.params.id], function(err) {
+  const sql = 'UPDATE tenants SET name = ?, branding = ?, subscription_tier = ? WHERE id = ?';
+  db.run(sql, [name, brandingStr, subscription_tier, req.params.id], function(err) {
     if (err) return res.status(500).json({ error: err.message });
     res.json({ message: 'Tenant updated successfully', changes: this.changes });
   });
@@ -699,6 +712,78 @@ app.delete('/api/admin/tenants/:id', authenticateToken(['platform_admin', 'super
   db.run(sql, [req.params.id], function(err) {
     if (err) return res.status(500).json({ error: err.message });
     res.json({ message: 'Tenant deactivated successfully', changes: this.changes });
+  });
+});
+
+// GET per-tenant usage metrics
+app.get('/api/admin/tenants/usage', authenticateToken(['platform_admin', 'super_admin']), (req, res) => {
+  db.all('SELECT id, name, subdomain, subscription_tier, status FROM tenants ORDER BY id ASC', [], async (err, tenants) => {
+    if (err) return res.status(500).json({ error: err.message });
+
+    const usageData = [];
+
+    try {
+      for (const tenant of tenants) {
+        const counts = await new Promise((resolve, reject) => {
+          let vendorsCount = 0;
+          let productsCount = 0;
+          let ordersCount = 0;
+          let usersCount = 0;
+
+          let pending = 4;
+          const checkDone = (errQuery) => {
+            if (errQuery) {
+              reject(errQuery);
+              return;
+            }
+            pending--;
+            if (pending === 0) {
+              resolve({ vendorsCount, productsCount, ordersCount, usersCount });
+            }
+          };
+
+          db.get('SELECT COUNT(*) as cnt FROM vendors WHERE tenant_id = ?', [tenant.id], (errVal, r) => {
+            if (errVal) return checkDone(errVal);
+            vendorsCount = r ? (r.cnt || r['COUNT(*)'] || 0) : 0;
+            checkDone();
+          });
+
+          db.get('SELECT COUNT(*) as cnt FROM products WHERE tenant_id = ?', [tenant.id], (errVal, r) => {
+            if (errVal) return checkDone(errVal);
+            productsCount = r ? (r.cnt || r['COUNT(*)'] || 0) : 0;
+            checkDone();
+          });
+
+          db.get('SELECT COUNT(*) as cnt FROM orders WHERE tenant_id = ?', [tenant.id], (errVal, r) => {
+            if (errVal) return checkDone(errVal);
+            ordersCount = r ? (r.cnt || r['COUNT(*)'] || 0) : 0;
+            checkDone();
+          });
+
+          db.get('SELECT COUNT(*) as cnt FROM users WHERE tenant_id = ?', [tenant.id], (errVal, r) => {
+            if (errVal) return checkDone(errVal);
+            usersCount = r ? (r.cnt || r['COUNT(*)'] || 0) : 0;
+            checkDone();
+          });
+        });
+
+        usageData.push({
+          id: tenant.id,
+          name: tenant.name,
+          subdomain: tenant.subdomain,
+          subscription_tier: tenant.subscription_tier || 'free',
+          status: tenant.status || 'active',
+          vendors: counts.vendorsCount,
+          products: counts.productsCount,
+          orders: counts.ordersCount,
+          users: counts.usersCount
+        });
+      }
+
+      res.json(usageData);
+    } catch (errLoop) {
+      res.status(500).json({ error: errLoop.message });
+    }
   });
 });
 
