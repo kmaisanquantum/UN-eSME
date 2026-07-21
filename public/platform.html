@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Platform Admin Console | Unity Mall eSME</title>
+  <style>
+    :root {
+      --bg-dark: #0f172a;
+      --bg-card: #1e293b;
+      --primary: #ca8a04; /* gold accent */
+      --primary-hover: #a16a03;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --text-accent: #facc15;
+      --border: #334155;
+      --success: #22c55e;
+      --danger: #ef4444;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+    body { background: var(--bg-dark); color: var(--text); padding: 0; min-height: 100vh; }
+
+    .auth-screen { display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 1rem; }
+    .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 2rem; width: 100%; max-width: 500px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06); }
+    .input { width: 100%; padding: 10px; margin-bottom: 1rem; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 8px; color: #fff; font-size: 0.95rem; }
+    .input:focus { border-color: var(--primary); outline: none; }
+    .btn { display: inline-block; width: 100%; padding: 12px; background: var(--primary); color: #000; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; text-align: center; text-decoration: none; font-size: 1rem; transition: background 0.2s; }
+    .btn:hover { background: var(--primary-hover); }
+    .btn-secondary { background: var(--bg-card); color: var(--text); border: 1px solid var(--border); margin-top: 0.5rem; }
+    .btn-secondary:hover { background: #334155; }
+    .btn-sm { padding: 6px 12px; font-size: 0.8rem; width: auto; border-radius: 6px; margin: 2px; }
+    .btn-danger { background: var(--danger); color: #fff; }
+    .btn-danger:hover { background: #b91c1c; }
+    .btn-success { background: var(--success); color: #fff; }
+    .btn-success:hover { background: #15803d; }
+
+    .dashboard { display: none; padding: 2rem; max-width: 1200px; margin: 0 auto; }
+    .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; border-bottom: 1px solid var(--border); padding-bottom: 1rem; }
+    .header h1 { color: var(--text-accent); font-size: 1.8rem; }
+    .header-actions { display: flex; align-items: center; gap: 1rem; }
+
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
+    .stat-card { background: var(--bg-card); padding: 1.5rem; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+    .stat-label { color: var(--text-muted); font-size: 0.8rem; text-transform: uppercase; margin-bottom: 0.5rem; font-weight: 600; }
+    .stat-value { font-size: 1.8rem; font-weight: 800; color: var(--text-accent); }
+
+    .grid-2 { display: grid; grid-template-columns: 1fr; gap: 2rem; }
+    @media (min-width: 768px) {
+      .grid-2 { grid-template-columns: 2fr 1fr; }
+    }
+
+    .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; }
+
+    table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+    th { text-align: left; padding: 12px; color: var(--text-muted); border-bottom: 1px solid var(--border); font-size: 0.85rem; text-transform: uppercase; font-weight: 700; }
+    td { padding: 12px; border-bottom: 1px solid var(--border); font-size: 0.9rem; }
+
+    .status-badge { display: inline-block; padding: 4px 8px; border-radius: 9999px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; }
+    .status-active { background: rgba(34, 197, 94, 0.2); color: var(--success); }
+    .status-inactive { background: rgba(239, 68, 68, 0.2); color: var(--danger); }
+
+    .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); justify-content: center; align-items: center; padding: 1rem; z-index: 1000; }
+    .modal-content { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 2rem; width: 100%; max-width: 500px; position: relative; }
+    .modal-close { position: absolute; top: 1rem; right: 1.5rem; background: none; border: none; color: var(--text-muted); font-size: 1.5rem; cursor: pointer; }
+
+    .error-msg { background: rgba(239, 68, 68, 0.1); border: 1px solid var(--danger); color: #fca5a5; padding: 10px; border-radius: 8px; margin-bottom: 1rem; font-size: 0.85rem; display: none; }
+    .success-box { background: rgba(34, 197, 94, 0.1); border: 1px solid var(--success); color: #86efac; padding: 15px; border-radius: 8px; margin-bottom: 1rem; font-size: 0.9rem; }
+  </style>
+</head>
+<body>
+
+  <!-- Language Switcher and Banner -->
+  <div id="authScreen" class="auth-screen">
+    <div class="card">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+        <h2 id="loginTitle" style="color: var(--text-accent);">Platform Login</h2>
+        <button onclick="toggleLanguage()" class="btn btn-sm btn-secondary" style="width: auto; margin: 0;">🌐 <span id="langLabel">Tok Pisin</span></button>
+      </div>
+      <div id="authError" class="error-msg"></div>
+      <form id="loginForm">
+        <input type="text" id="username" class="input" placeholder="Username" required>
+        <input type="password" id="password" class="input" placeholder="Password" required>
+        <button type="submit" class="btn" id="loginBtn">Login</button>
+      </form>
+    </div>
+  </div>
+
+  <div id="dashboard" class="dashboard">
+    <div class="header">
+      <div>
+        <h1 id="headerTitle">Platform Operations</h1>
+        <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 4px;" id="headerSub">Super Administrator Control Center</p>
+      </div>
+      <div class="header-actions">
+        <button onclick="toggleLanguage()" class="btn btn-sm btn-secondary">🌐 <span id="langLabelDash">Tok Pisin</span></button>
+        <button onclick="logout()" class="btn btn-sm btn-danger" id="logoutBtn" style="font-weight: 700;">Logout</button>
+      </div>
+    </div>
+
+    <!-- Summary Stats Card Grid -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-label" id="lblStatVendors">Total Vendors (Global)</div>
+        <div id="statVendors" class="stat-value">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label" id="lblStatProducts">Total Products (Global)</div>
+        <div id="statProducts" class="stat-value">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label" id="lblStatOrders">Total Orders (Global)</div>
+        <div id="statOrders" class="stat-value">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label" id="lblStatRevenue">Total Revenue (Global)</div>
+        <div id="statRevenue" class="stat-value">K0.00</div>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <!-- SME Centres Table -->
+      <div class="card" style="max-width: 100%;">
+        <h2 style="color: var(--text-accent); margin-bottom: 1rem;" id="lblCentresList">SME Centres / Tenants</h2>
+        <div style="overflow-x: auto;">
+          <table>
+            <thead>
+              <tr>
+                <th id="thId">ID</th>
+                <th id="thName">Centre Name</th>
+                <th id="thSubdomain">Subdomain</th>
+                <th id="thStatus">Status</th>
+                <th id="thActions">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="tenantsTable"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Create / Edit Form -->
+      <div class="card" id="formCard">
+        <h2 style="color: var(--text-accent); margin-bottom: 1.5rem;" id="formTitle">Register SME Centre</h2>
+        <div id="formError" class="error-msg"></div>
+        <form id="tenantForm">
+          <input type="hidden" id="tenantId">
+          <label id="lblCentreName" style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600;">Centre Name</label>
+          <input type="text" id="tenantName" class="input" placeholder="e.g. Garden City eSME" required>
+
+          <label id="lblSubdomain" style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600;">Subdomain (Unique)</label>
+          <input type="text" id="tenantSubdomain" class="input" placeholder="e.g. gc" required>
+
+          <h4 style="margin-top: 0.5rem; margin-bottom: 1rem; color: var(--text-accent); font-size: 0.9rem;" id="brandingTitle">Centre Branding & Support</h4>
+
+          <label id="lblBrandingName" style="font-size: 0.8rem; color: var(--text-muted);">Branding Name</label>
+          <input type="text" id="brandingName" class="input" placeholder="Branding Name" required>
+
+          <label id="lblEmail" style="font-size: 0.8rem; color: var(--text-muted);">Support Email</label>
+          <input type="email" id="brandingEmail" class="input" placeholder="support@domain.tech" required>
+
+          <div class="form-grid">
+            <div>
+              <label id="lblPhone" style="font-size: 0.8rem; color: var(--text-muted);">Support Phone</label>
+              <input type="text" id="brandingPhone" class="input" placeholder="Phone" required>
+            </div>
+            <div>
+              <label id="lblWhatsapp" style="font-size: 0.8rem; color: var(--text-muted);">WhatsApp</label>
+              <input type="text" id="brandingWhatsapp" class="input" placeholder="WhatsApp" required>
+            </div>
+          </div>
+
+          <label id="lblText" style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.5rem; display: block;">SMS Text Line</label>
+          <input type="text" id="brandingText" class="input" placeholder="Text Phone" required>
+
+          <label id="lblGoogleId" style="font-size: 0.8rem; color: var(--text-muted);">Google Client ID</label>
+          <input type="text" id="brandingGoogle" class="input" placeholder="Optional Google Auth ID">
+
+          <label id="lblFacebookId" style="font-size: 0.8rem; color: var(--text-muted);">Facebook App ID</label>
+          <input type="text" id="brandingFacebook" class="input" placeholder="Optional Facebook Auth ID">
+
+          <button type="submit" class="btn" id="btnSubmit">Create Centre</button>
+          <button type="button" class="btn btn-secondary" id="btnCancelEdit" style="display: none;" onclick="cancelEdit()">Cancel Update</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Provision Modal -->
+  <div id="provisionModal" class="modal">
+    <div class="modal-content">
+      <button class="modal-close" onclick="closeProvisionModal()">×</button>
+      <h3 style="color: var(--text-accent); margin-bottom: 1.5rem;" id="provTitle">Provision Centre Administrator</h3>
+      <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1rem;" id="provSub">Set up the initial administrator for this SME centre</p>
+
+      <div id="provisionError" class="error-msg"></div>
+      <div id="provisionSuccess" class="success-box" style="display: none;"></div>
+
+      <form id="provisionForm">
+        <input type="hidden" id="provTenantId">
+        <input type="text" id="provUsername" class="input" placeholder="Administrator Username" required>
+        <input type="password" id="provPassword" class="input" placeholder="Password" required>
+        <button type="submit" class="btn" id="btnProvSubmit">Create Administrator</button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const API_URL = '/api/admin';
+    let currentLang = "en";
+
+    const translations = {
+      en: {
+        "loginTitle": "Platform Login",
+        "langLabel": "Tok Pisin",
+        "username": "Username",
+        "password": "Password",
+        "loginBtn": "Login",
+        "headerTitle": "Platform Operations",
+        "headerSub": "Super Administrator Control Center",
+        "logoutBtn": "Logout",
+        "lblStatVendors": "Total Vendors (Global)",
+        "lblStatProducts": "Total Products (Global)",
+        "lblStatOrders": "Total Orders (Global)",
+        "lblStatRevenue": "Total Revenue (Global)",
+        "lblCentresList": "SME Centres / Tenants",
+        "thId": "ID",
+        "thName": "Centre Name",
+        "thSubdomain": "Subdomain",
+        "thStatus": "Status",
+        "thActions": "Actions",
+        "formTitle": "Register SME Centre",
+        "lblCentreName": "Centre Name",
+        "lblSubdomain": "Subdomain (Unique)",
+        "brandingTitle": "Centre Branding & Support",
+        "lblBrandingName": "Branding Name",
+        "lblEmail": "Support Email",
+        "lblPhone": "Support Phone",
+        "lblWhatsapp": "WhatsApp",
+        "lblText": "SMS Text Line",
+        "lblGoogleId": "Google Client ID",
+        "lblFacebookId": "Facebook App ID",
+        "btnSubmit": "Create Centre",
+        "btnCancelEdit": "Cancel Update",
+        "provTitle": "Provision Centre Administrator",
+        "provSub": "Set up the initial administrator for this SME centre",
+        "btnProvSubmit": "Create Administrator"
+      },
+      tpi: {
+        "loginTitle": "Platform Opas Login",
+        "langLabel": "English",
+        "username": "Nem",
+        "password": "Paswot",
+        "loginBtn": "Go In",
+        "headerTitle": "Ol Opas bilong Platform",
+        "headerSub": "Nambawan Opas Kontrol Senta",
+        "logoutBtn": "Gaut",
+        "lblStatVendors": "Olgeta Vendor (Ol Senta)",
+        "lblStatProducts": "Olgeta Kago (Ol Senta)",
+        "lblStatOrders": "Olgeta Oda (Ol Senta)",
+        "lblStatRevenue": "Olgeta Mani i Kam (Ol Senta)",
+        "lblCentresList": "SME Senta / Ol Tenants",
+        "thId": "Id",
+        "thName": "Nem bilong Senta",
+        "thSubdomain": "Subdomain",
+        "thStatus": "Status",
+        "thActions": "Eksen",
+        "formTitle": "Givim Nem long Senta",
+        "lblCentreName": "Nem bilong Senta",
+        "lblSubdomain": "Subdomain (Igat Wanpela)",
+        "brandingTitle": "Stail & Liklik Kontakt bilong Senta",
+        "lblBrandingName": "Stail Nem",
+        "lblEmail": "Sapot Email",
+        "lblPhone": "Sapot Phone",
+        "lblWhatsapp": "WhatsApp",
+        "lblText": "Sapot Text Line",
+        "lblGoogleId": "Google Client ID",
+        "lblFacebookId": "Facebook App ID",
+        "btnSubmit": "Wokim Senta",
+        "btnCancelEdit": "Cancel",
+        "provTitle": "Wokim Nupela Senta Admin",
+        "provSub": "Putim nambawan bikman long Senta bilong ol",
+        "btnProvSubmit": "Wokim Admin"
+      }
+    };
+
+    function toggleLanguage() {
+      currentLang = currentLang === "en" ? "tpi" : "en";
+      const t = translations[currentLang];
+
+      document.getElementById("loginTitle").textContent = t.loginTitle;
+      document.getElementById("langLabel").textContent = t.langLabel;
+      document.getElementById("langLabelDash").textContent = t.langLabel;
+      document.getElementById("username").placeholder = t.username;
+      document.getElementById("password").placeholder = t.password;
+      document.getElementById("loginBtn").textContent = t.loginBtn;
+      document.getElementById("headerTitle").textContent = t.headerTitle;
+      document.getElementById("headerSub").textContent = t.headerSub;
+      document.getElementById("logoutBtn").textContent = t.logoutBtn;
+      document.getElementById("lblStatVendors").textContent = t.lblStatVendors;
+      document.getElementById("lblStatProducts").textContent = t.lblStatProducts;
+      document.getElementById("lblStatOrders").textContent = t.lblStatOrders;
+      document.getElementById("lblStatRevenue").textContent = t.lblStatRevenue;
+      document.getElementById("lblCentresList").textContent = t.lblCentresList;
+      document.getElementById("thId").textContent = t.thId;
+      document.getElementById("thName").textContent = t.thName;
+      document.getElementById("thSubdomain").textContent = t.thSubdomain;
+      document.getElementById("thStatus").textContent = t.thStatus;
+      document.getElementById("thActions").textContent = t.thActions;
+
+      if (document.getElementById("tenantId").value) {
+        document.getElementById("formTitle").textContent = currentLang === "en" ? "Update SME Centre" : "Update Nem long Senta";
+        document.getElementById("btnSubmit").textContent = currentLang === "en" ? "Update Centre" : "Updeitim Senta";
+      } else {
+        document.getElementById("formTitle").textContent = t.formTitle;
+        document.getElementById("btnSubmit").textContent = t.btnSubmit;
+      }
+
+      document.getElementById("lblCentreName").textContent = t.lblCentreName;
+      document.getElementById("lblSubdomain").textContent = t.lblSubdomain;
+      document.getElementById("brandingTitle").textContent = t.brandingTitle;
+      document.getElementById("lblBrandingName").textContent = t.lblBrandingName;
+      document.getElementById("lblEmail").textContent = t.lblEmail;
+      document.getElementById("lblPhone").textContent = t.lblPhone;
+      document.getElementById("lblWhatsapp").textContent = t.lblWhatsapp;
+      document.getElementById("lblText").textContent = t.lblText;
+      document.getElementById("lblGoogleId").textContent = t.lblGoogleId;
+      document.getElementById("lblFacebookId").textContent = t.lblFacebookId;
+      document.getElementById("btnCancelEdit").textContent = t.btnCancelEdit;
+
+      document.getElementById("provTitle").textContent = t.provTitle;
+      document.getElementById("provSub").textContent = t.provSub;
+      document.getElementById("btnProvSubmit").textContent = t.btnProvSubmit;
+    }
+
+    // Helper for authenticated fetch
+    async function apiFetch(url, options = {}) {
+      const token = localStorage.getItem('um_platform_admin_token');
+      if (token) {
+        options.headers = {
+          ...options.headers,
+          'Authorization': `Bearer ${token}`
+        };
+      }
+      return fetch(url, options);
+    }
+
+    // Login Form Submit
+    document.getElementById('loginForm').onsubmit = async (e) => {
+      e.preventDefault();
+      document.getElementById('authError').style.display = 'none';
+
+      try {
+        const res = await fetch(`${API_URL}/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            username: document.getElementById('username').value,
+            password: document.getElementById('password').value
+          })
+        });
+
+        const data = await res.json();
+        if (data.error) {
+          document.getElementById('authError').textContent = data.error;
+          document.getElementById('authError').style.display = 'block';
+          return;
+        }
+
+        const role = data.admin.role;
+        if (role !== 'platform_admin' && role !== 'super_admin') {
+          document.getElementById('authError').textContent = 'Access Denied: Platform operation only.';
+          document.getElementById('authError').style.display = 'block';
+          return;
+        }
+
+        localStorage.setItem('um_platform_admin', JSON.stringify(data.admin));
+        localStorage.setItem('um_platform_admin_token', data.token);
+        showDashboard();
+      } catch (err) {
+        document.getElementById('authError').textContent = 'Connection error: ' + err.message;
+        document.getElementById('authError').style.display = 'block';
+      }
+    };
+
+    function showDashboard() {
+      document.getElementById('authScreen').style.display = 'none';
+      document.getElementById('dashboard').style.display = 'block';
+      loadStats();
+      loadTenants();
+    }
+
+    async function loadStats() {
+      try {
+        const res = await apiFetch(`${API_URL}/stats`);
+        const stats = await res.json();
+        document.getElementById('statVendors').textContent = stats.totalVendors || 0;
+        document.getElementById('statProducts').textContent = stats.totalProducts || 0;
+        document.getElementById('statOrders').textContent = stats.totalOrders || 0;
+        document.getElementById('statRevenue').textContent = 'K' + parseFloat(stats.totalRevenue || 0).toFixed(2);
+      } catch (err) {
+        console.error('Failed to load global metrics:', err);
+      }
+    }
+
+    async function loadTenants() {
+      try {
+        const res = await apiFetch(`${API_URL}/tenants`);
+        const tenants = await res.json();
+
+        document.getElementById('tenantsTable').innerHTML = tenants.map(t => {
+          const badgeClass = t.status === 'inactive' ? 'status-inactive' : 'status-active';
+          const badgeText = t.status === 'inactive' ? 'Inactive' : 'Active';
+
+          let actionButtons = `
+            <button onclick="editTenant(${t.id}, '${t.name}', '${t.subdomain}', ${escapeBranding(t.branding)})" class="btn btn-sm btn-secondary">Edit</button>
+          `;
+
+          if (t.status !== 'inactive') {
+            actionButtons += `
+              <button onclick="openProvisionModal(${t.id})" class="btn btn-sm btn-secondary">Provision</button>
+              <button onclick="deactivateTenant(${t.id})" class="btn btn-sm btn-danger">Deactivate</button>
+            `;
+          }
+
+          return `
+            <tr>
+              <td>${t.id}</td>
+              <td style="font-weight:700; color:var(--text-accent);">${t.name}</td>
+              <td><code>${t.subdomain}</code></td>
+              <td><span class="status-badge ${badgeClass}">${badgeText}</span></td>
+              <td>${actionButtons}</td>
+            </tr>
+          `;
+        }).join('') || '<tr><td colspan="5" style="text-align:center; padding:1rem;">No SME Centres found.</td></tr>';
+
+      } catch (err) {
+        console.error('Failed to load tenants list:', err);
+      }
+    }
+
+    function escapeBranding(branding) {
+      return JSON.stringify(branding).replace(/'/g, "\\'");
+    }
+
+    // Create or Edit Submit
+    document.getElementById('tenantForm').onsubmit = async (e) => {
+      e.preventDefault();
+      document.getElementById('formError').style.display = 'none';
+
+      const tenantId = document.getElementById('tenantId').value;
+      const name = document.getElementById('tenantName').value;
+      const subdomain = document.getElementById('tenantSubdomain').value;
+
+      const branding = {
+        name: document.getElementById('brandingName').value,
+        email: document.getElementById('brandingEmail').value,
+        phone: document.getElementById('brandingPhone').value,
+        whatsapp: document.getElementById('brandingWhatsapp').value,
+        text: document.getElementById('brandingText').value,
+        googleClientId: document.getElementById('brandingGoogle').value || '',
+        facebookAppId: document.getElementById('brandingFacebook').value || ''
+      };
+
+      const path = tenantId ? `${API_URL}/tenants/${tenantId}` : `${API_URL}/tenants`;
+      const method = tenantId ? 'PUT' : 'POST';
+
+      try {
+        const res = await apiFetch(path, {
+          method: method,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, subdomain, branding })
+        });
+
+        if (res.status === 409) {
+          const errData = await res.json();
+          document.getElementById('formError').textContent = errData.error || 'Subdomain already exists!';
+          document.getElementById('formError').style.display = 'block';
+          return;
+        }
+
+        if (!res.ok) {
+          const errData = await res.json();
+          throw new Error(errData.error || 'Request failed');
+        }
+
+        // Reset and reload
+        cancelEdit();
+        loadTenants();
+      } catch (err) {
+        document.getElementById('formError').textContent = err.message;
+        document.getElementById('formError').style.display = 'block';
+      }
+    };
+
+    function editTenant(id, name, subdomain, branding) {
+      document.getElementById('tenantId').value = id;
+      document.getElementById('tenantName').value = name;
+
+      document.getElementById('tenantSubdomain').value = subdomain;
+      document.getElementById('tenantSubdomain').disabled = true; // Subdomain immutable on edit
+
+      document.getElementById('brandingName').value = branding.name || '';
+      document.getElementById('brandingEmail').value = branding.email || '';
+      document.getElementById('brandingPhone').value = branding.phone || '';
+      document.getElementById('brandingWhatsapp').value = branding.whatsapp || '';
+      document.getElementById('brandingText').value = branding.text || '';
+      document.getElementById('brandingGoogle').value = branding.googleClientId || '';
+      document.getElementById('brandingFacebook').value = branding.facebookAppId || '';
+
+      document.getElementById('formTitle').textContent = currentLang === "en" ? "Update SME Centre" : "Update Nem long Senta";
+      document.getElementById('btnSubmit').textContent = currentLang === "en" ? "Update Centre" : "Updeitim Senta";
+      document.getElementById('btnCancelEdit').style.display = 'inline-block';
+    }
+
+    function cancelEdit() {
+      document.getElementById('tenantId').value = '';
+      document.getElementById('tenantName').value = '';
+      document.getElementById('tenantSubdomain').value = '';
+      document.getElementById('tenantSubdomain').disabled = false;
+
+      document.getElementById('brandingName').value = '';
+      document.getElementById('brandingEmail').value = '';
+      document.getElementById('brandingPhone').value = '';
+      document.getElementById('brandingWhatsapp').value = '';
+      document.getElementById('brandingText').value = '';
+      document.getElementById('brandingGoogle').value = '';
+      document.getElementById('brandingFacebook').value = '';
+
+      document.getElementById('formTitle').textContent = currentLang === "en" ? "Register SME Centre" : "Givim Nem long Senta";
+      document.getElementById('btnSubmit').textContent = currentLang === "en" ? "Create Centre" : "Wokim Senta";
+      document.getElementById('btnCancelEdit').style.display = 'none';
+      document.getElementById('formError').style.display = 'none';
+    }
+
+    async function deactivateTenant(id) {
+      if (confirm(currentLang === 'en' ? 'Deactivate this SME centre?' : 'Deactivitim dispela senta?')) {
+        try {
+          const res = await apiFetch(`${API_URL}/tenants/${id}`, { method: 'DELETE' });
+          if (!res.ok) throw new Error('Deactivation failed');
+          loadTenants();
+        } catch (err) {
+          alert(err.message);
+        }
+      }
+    }
+
+    // Provision Modal Handling
+    function openProvisionModal(tenantId) {
+      document.getElementById('provTenantId').value = tenantId;
+      document.getElementById('provUsername').value = '';
+      document.getElementById('provPassword').value = '';
+      document.getElementById('provisionError').style.display = 'none';
+      document.getElementById('provisionSuccess').style.display = 'none';
+      document.getElementById('provisionForm').style.display = 'block';
+      document.getElementById('provisionModal').style.display = 'flex';
+    }
+
+    function closeProvisionModal() {
+      document.getElementById('provisionModal').style.display = 'none';
+    }
+
+    document.getElementById('provisionForm').onsubmit = async (e) => {
+      e.preventDefault();
+      document.getElementById('provisionError').style.display = 'none';
+
+      const tenantId = document.getElementById('provTenantId').value;
+      const username = document.getElementById('provUsername').value;
+      const password = document.getElementById('provPassword').value;
+
+      try {
+        const res = await apiFetch(`${API_URL}/tenants/${tenantId}/provision`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password })
+        });
+
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.error || 'Provisioning failed');
+        }
+
+        // Show Success Info
+        document.getElementById('provisionForm').style.display = 'none';
+
+        const successBox = document.getElementById('provisionSuccess');
+        successBox.innerHTML = `
+          <h4 style="margin-bottom: 0.5rem;">🎉 Success / Winim!</h4>
+          <p><strong>Username:</strong> <code>${data.centre_admin.username}</code></p>
+          <p><strong>Role:</strong> <code>${data.centre_admin.role}</code></p>
+          <p><strong>Tenant ID:</strong> <code>${data.centre_admin.tenant_id}</code></p>
+          <p style="margin-top: 0.5rem; font-size: 0.8rem; opacity: 0.9;">${data.centre_admin.note}</p>
+        `;
+        successBox.style.display = 'block';
+
+      } catch (err) {
+        document.getElementById('provisionError').textContent = err.message;
+        document.getElementById('provisionError').style.display = 'block';
+      }
+    };
+
+    function logout() {
+      localStorage.removeItem('um_platform_admin');
+      localStorage.removeItem('um_platform_admin_token');
+      location.reload();
+    }
+
+    // Auto load dashboard if token exists
+    if (localStorage.getItem('um_platform_admin')) showDashboard();
+  </script>
+</body>
+</html>
