@@ -47,7 +47,7 @@
 
   <div id="dashboard" class="dashboard">
     <div class="header">
-      <h1>Unity Mall Admin</h1>
+      <h1 id="adminHeaderTitle">Unity Mall Admin</h1>
       <button onclick="logout()" style="background: none; border: none; color: #ef4444; cursor: pointer; font-weight: 600;">Logout</button>
     </div>
 
@@ -78,7 +78,6 @@
             <tr>
               <th>Date</th>
               <th>Customer</th>
-              <th>Vendor</th>
               <th>Items</th>
               <th>Total</th>
               <th>Status</th>
@@ -128,12 +127,43 @@
 
     <div class="card" style="max-width: 100%; text-align: center; margin-top: 2rem;">
       <h3 style="color: var(--text-accent); margin-bottom: 1rem;">System Support</h3>
-      <p style="color: var(--text-muted); font-size: 0.9rem;">Email: wokman@dspng.tech | Phone: (675) 8300 99881 | WhatsApp: (675) 8300 99881 | Text: (675) 8300 9881</p>
+      <p id="supportMsg" style="color: var(--text-muted); font-size: 0.9rem;">Email: wokman@dspng.tech | Phone: (675) 8300 99881 | WhatsApp: (675) 8300 99881 | Text: (675) 8300 9881</p>
     </div>
   </div>
 
   <script>
     const API_URL = '/api/admin';
+
+    // Helper for authenticated fetch
+    async function apiFetch(url, options = {}) {
+      const token = localStorage.getItem('um_admin_token');
+      if (token) {
+        options.headers = {
+          ...options.headers,
+          'Authorization': `Bearer ${token}`
+        };
+      }
+      return fetch(url, options);
+    }
+
+    async function loadTenantConfig() {
+      try {
+        const res = await fetch('/api/config');
+        const data = await res.json();
+        const b = data.branding;
+
+        document.title = `Admin Portal | ${b.name}`;
+        const header = document.getElementById('adminHeaderTitle');
+        if (header) header.textContent = `${b.name.split(' ')[0]} Admin`;
+
+        const supportMsg = document.getElementById('supportMsg');
+        if (supportMsg) {
+          supportMsg.textContent = `Email: ${b.email} | Phone: ${b.phone} | WhatsApp: ${b.phone} | Text: ${b.text}`;
+        }
+      } catch (err) {
+        console.error('Failed to load tenant configuration', err);
+      }
+    }
 
     document.getElementById('loginForm').onsubmit = async (e) => {
       e.preventDefault();
@@ -149,11 +179,13 @@
       if (data.error) alert(data.error);
       else {
         localStorage.setItem('um_admin', JSON.stringify(data.admin));
+        localStorage.setItem('um_admin_token', data.token); // Save admin JWT token
         showDashboard();
       }
     };
 
-    function showDashboard() {
+    async function showDashboard() {
+      await loadTenantConfig();
       document.getElementById('authScreen').style.display = 'none';
       document.getElementById('dashboard').style.display = 'block';
       loadStats();
@@ -163,7 +195,7 @@
     }
 
     async function loadStats() {
-      const res = await fetch(`${API_URL}/stats`);
+      const res = await apiFetch(`${API_URL}/stats`);
       const stats = await res.json();
       document.getElementById('statVendors').textContent = stats.totalVendors;
       document.getElementById('statProducts').textContent = stats.totalProducts;
@@ -172,7 +204,7 @@
     }
 
     async function loadOrders() {
-      const res = await fetch(`${API_URL}/orders`);
+      const res = await apiFetch(`${API_URL}/orders`);
       const orders = await res.json();
       document.getElementById('ordersTable').innerHTML = orders.map(o => {
         const items = JSON.parse(o.items);
@@ -192,7 +224,7 @@
     }
 
     async function loadVendors() {
-      const res = await fetch(`${API_URL}/vendors`);
+      const res = await apiFetch(`${API_URL}/vendors`);
       const vendors = await res.json();
       document.getElementById('vendorsTable').innerHTML = vendors.map(v => `
         <tr>
@@ -206,7 +238,7 @@
     }
 
     async function loadProducts() {
-      const res = await fetch(`${API_URL}/products`);
+      const res = await apiFetch(`${API_URL}/products`);
       const products = await res.json();
       document.getElementById('productsTable').innerHTML = products.map(p => `
         <tr>
@@ -221,7 +253,7 @@
 
     async function deleteOrder(id) {
       if (confirm('Delete this order record?')) {
-        await fetch(`${API_URL}/orders/${id}`, { method: 'DELETE' });
+        await apiFetch(`${API_URL}/orders/${id}`, { method: 'DELETE' });
         loadOrders();
         loadStats();
       }
@@ -229,7 +261,7 @@
 
     async function deleteVendor(id) {
       if (confirm('Are you sure you want to delete this vendor? This action is permanent.')) {
-        await fetch(`${API_URL}/vendors/${id}`, { method: 'DELETE' });
+        await apiFetch(`${API_URL}/vendors/${id}`, { method: 'DELETE' });
         loadVendors();
         loadStats();
       }
@@ -237,7 +269,7 @@
 
     async function deleteProduct(id) {
       if (confirm('Are you sure you want to delete this product?')) {
-        await fetch(`${API_URL}/products/${id}`, { method: 'DELETE' });
+        await apiFetch(`${API_URL}/products/${id}`, { method: 'DELETE' });
         loadProducts();
         loadStats();
       }
@@ -245,6 +277,7 @@
 
     function logout() {
       localStorage.removeItem('um_admin');
+      localStorage.removeItem('um_admin_token');
       location.reload();
     }
 

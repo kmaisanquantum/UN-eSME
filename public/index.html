@@ -565,8 +565,8 @@
       <button class="cart-trigger" onclick="toggleCart()">
         🛒 <span class="cart-count" id="cartCount">0</span>
       </button>
-      <button class="auth-btn" onclick="openAuthModal('login')">Sign In</button>
-      <button class="auth-btn" onclick="openAuthModal('register')" style="background:transparent; border:1px solid var(--primary); color:var(--primary);">Sign Up</button>
+      <button class="auth-btn" id="signInBtn" onclick="openAuthModal('login')">Sign In</button>
+      <button class="auth-btn" id="signUpBtn" onclick="openAuthModal('register')" style="background:transparent; border:1px solid var(--primary); color:var(--primary);">Sign Up</button>
     </div>
   </header>
 
@@ -575,7 +575,7 @@
       <section class="hero-slider">
         <div class="slider-container" id="sliderContainer">
           <div class="slide" style="background: linear-gradient(135deg, #000, var(--bg-card));">
-            <h2>Unity Mall SME centre</h2>
+            <h2 id="heroTitle">Unity Mall SME centre</h2>
             <p>The digital marketplace for PNG's finest local vendors and artisans.</p>
             <button class="auth-btn" onclick="document.getElementById('searchInput').focus()">Shop Now</button>
           </div>
@@ -633,9 +633,9 @@
 
     <div id="wifi" class="screen hidden" style="padding: 2rem 1rem; text-align: center;">
       <div style="font-size: 4rem; margin-bottom: 1rem;">📶</div>
-      <h2 style="color: var(--text-accent);">Unity Mall Wi-Fi</h2>
-      <p style="color: var(--text-muted); margin: 1rem auto; max-width: 300px;">Unity Mall high-speed public Wi-Fi access point coming soon.</p>
-      <div class="acc-card" style="margin-top: 2rem;">
+      <h2 style="color: var(--text-accent);" id="wifiTitle">Unity Mall Wi-Fi</h2>
+      <p style="color: var(--text-muted); margin: 1rem auto; max-width: 300px;" id="wifiText1">Unity Mall high-speed public Wi-Fi access point coming soon.</p>
+      <div class="acc-card" style="margin-top: 2rem;" id="wifiText2">
         <p>Stay tuned for voucher-based internet access at the Unity Mall SME centre.</p>
       </div>
     </div>
@@ -823,24 +823,84 @@
     let currentCategory = 'All';
     let cart = JSON.parse(localStorage.getItem('um_cart') || '[]');
     let currentSlide = 0;
+    let tenantConfig = null;
 
-
-    function initGSI() {
-      window.google.accounts.id.initialize({
-        client_id: 'your-google-client-id.apps.googleusercontent.com', // To be replaced by server-side injection if possible, or just leave as placeholder
-        callback: handleGoogleCallback
-      });
-      window.google.accounts.id.renderButton(
-        document.getElementById("g_id_signin"),
-        { theme: "outline", size: "large", width: "100%" }
-      );
-      window.google.accounts.id.prompt(); // also display the One Tap dialog
+    // Helper for authenticated fetch
+    async function apiFetch(url, options = {}) {
+      const token = localStorage.getItem('um_token');
+      if (token) {
+        options.headers = {
+          ...options.headers,
+          'Authorization': `Bearer ${token}`
+        };
+      }
+      return fetch(url, options);
     }
 
-    // Call initGSI after GSI library is loaded or in init
+    async function loadTenantConfig() {
+      try {
+        const res = await fetch('/api/config');
+        const data = await res.json();
+        tenantConfig = data;
+        const b = data.branding;
+
+        document.title = `${data.name} | Local Shopping Reimagined`;
+
+        const logoText = document.querySelector('.logo-container h1');
+        if (logoText) {
+          logoText.innerHTML = `${b.name.split(' ')[0]} <span style="font-weight: 300;">${b.name.split(' ').slice(1).join(' ')}</span>`;
+        }
+
+        const heroTitle = document.getElementById('heroTitle');
+        if (heroTitle) heroTitle.textContent = b.name;
+
+        const wifiTitle = document.getElementById('wifiTitle');
+        if (wifiTitle) wifiTitle.textContent = `${b.name.split(' ')[0]} Wi-Fi`;
+        const wifiText1 = document.getElementById('wifiText1');
+        if (wifiText1) wifiText1.textContent = `${b.name} high-speed public Wi-Fi access point coming soon.`;
+        const wifiText2 = document.getElementById('wifiText2');
+        if (wifiText2) wifiText2.innerHTML = `<p>Stay tuned for voucher-based internet access at the ${b.name}.</p>`;
+
+        const footer = document.querySelector('.footer');
+        if (footer) {
+          footer.innerHTML = `
+            <h4>Contact Support</h4>
+            <p>Email: <a href="mailto:${b.email}">${b.email}</a></p>
+            <p>Phone: ${b.phone}</p>
+            <p>WhatsApp: <a href="https://wa.me/${b.whatsapp}">${b.phone}</a></p>
+            <p>Text: ${b.text}</p>
+            <p style="margin-top: 1rem; font-size: 0.75rem;">&copy; 2024 ${b.name}. All rights reserved.</p>
+          `;
+        }
+
+        // GSI initialization
+        if (window.google && window.google.accounts) {
+          window.google.accounts.id.initialize({
+            client_id: b.googleClientId || 'your-google-client-id.apps.googleusercontent.com',
+            callback: handleGoogleCallback
+          });
+          window.google.accounts.id.renderButton(
+            document.getElementById("g_id_signin"),
+            { theme: "outline", size: "large", width: "100%" }
+          );
+        }
+
+        // FB initialization
+        if (window.FB) {
+          window.FB.init({
+            appId      : b.facebookAppId || 'your-facebook-app-id',
+            cookie     : true,
+            xfbml      : true,
+            version    : 'v18.0'
+          });
+        }
+      } catch (err) {
+        console.error('Failed to load tenant configuration', err);
+      }
+    }
 
     async function init() {
-      initGSI();
+      await loadTenantConfig();
       await fetchProducts();
       renderCategories();
       filterStalls();
@@ -851,7 +911,7 @@
 
     async function fetchProducts() {
       try {
-        const res = await fetch('/api/products');
+        const res = await apiFetch('/api/products');
         const data = await res.json();
         products = data.map(p => ({
           id: p.id,
@@ -991,8 +1051,9 @@
     }
 
     function openWhatsApp(stall, productName) {
-      const msg = encodeURIComponent(`Hi ${stall}, I'm interested in "${productName}" I saw on Unity Mall SME centre!`);
-      window.open(`https://wa.me/67570000000?text=${msg}`, '_blank');
+      const waNumber = tenantConfig && tenantConfig.branding && tenantConfig.branding.whatsapp ? tenantConfig.branding.whatsapp : '67570000000';
+      const msg = encodeURIComponent(`Hi ${stall}, I'm interested in "${productName}" I saw on ${tenantConfig ? tenantConfig.branding.name : "Unity Mall SME centre"}!`);
+      window.open(`https://wa.me/${waNumber}?text=${msg}`, '_blank');
     }
 
     function switchScreen(screenId) {
@@ -1036,7 +1097,7 @@
       const password = document.getElementById('loginPassword').value;
 
       try {
-        const res = await fetch('/api/auth/customer/login', {
+        const res = await apiFetch('/api/auth/customer/login', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email, password })
@@ -1045,6 +1106,7 @@
         if (data.error) throw new Error(data.error);
 
         localStorage.setItem('um_user', JSON.stringify(data.user));
+        localStorage.setItem('um_token', data.token); // Save customer JWT token
         alert('Login successful!');
         closeAuthModal();
         checkUserSession();
@@ -1063,7 +1125,7 @@
       };
 
       try {
-        const res = await fetch('/api/auth/customer/register', {
+        const res = await apiFetch('/api/auth/customer/register', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
@@ -1081,10 +1143,13 @@
     function openCheckoutModal() {
       if (cart.length === 0) return;
       const user = JSON.parse(localStorage.getItem('um_user'));
-      if (user) {
-        document.getElementById('custName').value = user.name || '';
-        document.getElementById('custPhone').value = user.phone || '';
+      if (!user) {
+        alert('Please sign in to complete your order.');
+        openAuthModal('login');
+        return;
       }
+      document.getElementById('custName').value = user.name || '';
+      document.getElementById('custPhone').value = user.phone || '';
       document.getElementById('checkoutModal').classList.add('show');
     }
 
@@ -1101,7 +1166,7 @@
         for (const vId of vendorIds) {
           const vendorItems = cart.filter(item => item.vendor_id === vId);
           const total = vendorItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-          await fetch('/api/orders', {
+          await apiFetch('/api/orders', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -1166,8 +1231,8 @@
     function checkUserSession() {
       const user = JSON.parse(localStorage.getItem('um_user'));
       const headerActions = document.querySelector('.header-actions');
-      const signInBtn = headerActions.querySelector('button[onclick="openAuthModal(\'login\')"]');
-      const signUpBtn = headerActions.querySelector('button[onclick="openAuthModal(\'register\')"]');
+      const signInBtn = document.getElementById('signInBtn');
+      const signUpBtn = document.getElementById('signUpBtn');
 
       if (user) {
         if (signInBtn) signInBtn.style.display = 'none';
@@ -1185,6 +1250,7 @@
            profileBtn.onclick = () => {
              if (confirm('Sign out?')) {
                localStorage.removeItem('um_user');
+               localStorage.removeItem('um_token');
                location.reload();
              }
            };
@@ -1192,16 +1258,6 @@
         }
       }
     }
-
-    window.fbAsyncInit = function() {
-      FB.init({
-        appId      : 'your-facebook-app-id', // Replaced dynamically or from config
-        cookie     : true,
-        xfbml      : true,
-        version    : 'v18.0'
-      });
-    };
-
 
     function handleGoogleCallback(response) {
       const payload = JSON.parse(atob(response.credential.split('.')[1]));
@@ -1234,7 +1290,7 @@
 
     async function handleSocialAuth(provider, userData) {
       try {
-        const res = await fetch('/api/auth/social', {
+        const res = await apiFetch('/api/auth/social', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ provider, role: 'customer', ...userData })
@@ -1243,6 +1299,7 @@
         if (data.error) throw new Error(data.error);
 
         localStorage.setItem('um_user', JSON.stringify(data.user));
+        localStorage.setItem('um_token', data.token); // Save token
         alert(`Logged in with ${provider.charAt(0).toUpperCase() + provider.slice(1)}!`);
         closeAuthModal();
         checkUserSession();
@@ -1250,8 +1307,6 @@
         alert(err.message);
       }
     }
-
-    // Call checkUserSession on init
 
     init();
   </script>
