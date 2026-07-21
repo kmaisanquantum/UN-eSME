@@ -765,13 +765,28 @@ app.post('/api/admin/tenants/:id/provision', authenticateToken(['platform_admin'
 // Admin Stats
 app.get('/api/admin/stats', authenticateToken(['centre_admin', 'platform_admin', 'super_admin']), (req, res) => {
   const stats = {};
-  db.get('SELECT COUNT(*) as count FROM vendors', [], (err, row) => {
-    stats.totalVendors = row ? (row.count || row['COUNT(*)'] || 0) : 0;
-    db.get('SELECT COUNT(*) as count FROM products', [], (err, row) => {
-      stats.totalProducts = row ? (row.count || row['COUNT(*)'] || 0) : 0;
-      db.get('SELECT COUNT(*) as count FROM orders', [], (err, row) => {
-        stats.totalOrders = row ? (row.count || row['COUNT(*)'] || 0) : 0;
-        db.get('SELECT SUM(total_price) as total FROM orders WHERE status = "completed"', [], (err, row) => {
+  const { role, tenant_id } = req.user;
+  const isCentreAdmin = role === 'centre_admin';
+
+  const vendorSql = isCentreAdmin ? 'SELECT COUNT(*) as count FROM vendors WHERE tenant_id = ?' : 'SELECT COUNT(*) as count FROM vendors';
+  const vendorParams = isCentreAdmin ? [tenant_id] : [];
+
+  const productSql = isCentreAdmin ? 'SELECT COUNT(*) as count FROM products WHERE tenant_id = ?' : 'SELECT COUNT(*) as count FROM products';
+  const productParams = isCentreAdmin ? [tenant_id] : [];
+
+  const orderSql = isCentreAdmin ? 'SELECT COUNT(*) as count FROM orders WHERE tenant_id = ?' : 'SELECT COUNT(*) as count FROM orders';
+  const orderParams = isCentreAdmin ? [tenant_id] : [];
+
+  const revSql = isCentreAdmin ? 'SELECT SUM(total_price) as total FROM orders WHERE status = "completed" AND tenant_id = ?' : 'SELECT SUM(total_price) as total FROM orders WHERE status = "completed"';
+  const revParams = isCentreAdmin ? [tenant_id] : [];
+
+  db.get(vendorSql, vendorParams, (err, row) => {
+    stats.totalVendors = row ? (row.count || row['count(*)'] || row['COUNT(*)'] || 0) : 0;
+    db.get(productSql, productParams, (err, row) => {
+      stats.totalProducts = row ? (row.count || row['count(*)'] || row['COUNT(*)'] || 0) : 0;
+      db.get(orderSql, orderParams, (err, row) => {
+        stats.totalOrders = row ? (row.count || row['count(*)'] || row['COUNT(*)'] || 0) : 0;
+        db.get(revSql, revParams, (err, row) => {
           stats.totalRevenue = row ? (row.total || 0) : 0;
           res.json(stats);
         });
@@ -782,51 +797,101 @@ app.get('/api/admin/stats', authenticateToken(['centre_admin', 'platform_admin',
 
 // Admin Vendors Management
 app.get('/api/admin/vendors', authenticateToken(['centre_admin', 'platform_admin', 'super_admin']), (req, res) => {
-  db.all('SELECT * FROM vendors ORDER BY created_at DESC', [], (err, rows) => {
-    if (err) return res.status(500).json({ error: err.message });
-    res.json(rows);
-  });
+  const { role, tenant_id } = req.user;
+  if (role === 'centre_admin') {
+    db.all('SELECT * FROM vendors WHERE tenant_id = ? ORDER BY created_at DESC', [tenant_id], (err, rows) => {
+      if (err) return res.status(500).json({ error: err.message });
+      res.json(rows);
+    });
+  } else {
+    db.all('SELECT * FROM vendors ORDER BY created_at DESC', [], (err, rows) => {
+      if (err) return res.status(500).json({ error: err.message });
+      res.json(rows);
+    });
+  }
 });
 
 // Admin Products Management
 app.get('/api/admin/products', authenticateToken(['centre_admin', 'platform_admin', 'super_admin']), (req, res) => {
-  const sql = 'SELECT p.*, v.name as vendor_name FROM products p LEFT JOIN vendors v ON p.vendor_id = v.id ORDER BY p.created_at DESC';
-  db.all(sql, [], (err, rows) => {
-    if (err) return res.status(500).json({ error: err.message });
-    res.json(rows);
-  });
+  const { role, tenant_id } = req.user;
+  if (role === 'centre_admin') {
+    const sql = 'SELECT p.*, v.name as vendor_name FROM products p LEFT JOIN vendors v ON p.vendor_id = v.id WHERE p.tenant_id = ? ORDER BY p.created_at DESC';
+    db.all(sql, [tenant_id], (err, rows) => {
+      if (err) return res.status(500).json({ error: err.message });
+      res.json(rows);
+    });
+  } else {
+    const sql = 'SELECT p.*, v.name as vendor_name FROM products p LEFT JOIN vendors v ON p.vendor_id = v.id ORDER BY p.created_at DESC';
+    db.all(sql, [], (err, rows) => {
+      if (err) return res.status(500).json({ error: err.message });
+      res.json(rows);
+    });
+  }
 });
 
 // Admin Orders Management
 app.get('/api/admin/orders', authenticateToken(['centre_admin', 'platform_admin', 'super_admin']), (req, res) => {
-  const sql = 'SELECT o.*, v.name as vendor_name FROM orders o LEFT JOIN vendors v ON o.vendor_id = v.id ORDER BY o.created_at DESC';
-  db.all(sql, [], (err, rows) => {
-    if (err) return res.status(500).json({ error: err.message });
-    res.json(rows);
-  });
+  const { role, tenant_id } = req.user;
+  if (role === 'centre_admin') {
+    const sql = 'SELECT o.*, v.name as vendor_name FROM orders o LEFT JOIN vendors v ON o.vendor_id = v.id WHERE o.tenant_id = ? ORDER BY o.created_at DESC';
+    db.all(sql, [tenant_id], (err, rows) => {
+      if (err) return res.status(500).json({ error: err.message });
+      res.json(rows);
+    });
+  } else {
+    const sql = 'SELECT o.*, v.name as vendor_name FROM orders o LEFT JOIN vendors v ON o.vendor_id = v.id ORDER BY o.created_at DESC';
+    db.all(sql, [], (err, rows) => {
+      if (err) return res.status(500).json({ error: err.message });
+      res.json(rows);
+    });
+  }
 });
 
 // Admin Delete Vendor
 app.delete('/api/admin/vendors/:id', authenticateToken(['centre_admin', 'platform_admin', 'super_admin']), (req, res) => {
-  db.run('DELETE FROM vendors WHERE id = ?', [req.params.id], function(err) {
+  const { role, tenant_id } = req.user;
+  db.get('SELECT * FROM vendors WHERE id = ?', [req.params.id], (err, row) => {
     if (err) return res.status(500).json({ error: err.message });
-    res.json({ message: 'Vendor deleted successfully' });
+    if (!row) return res.status(404).json({ error: 'Vendor not found' });
+    if (role === 'centre_admin' && row.tenant_id !== tenant_id) {
+      return res.status(403).json({ error: 'Access forbidden: unauthorized tenant' });
+    }
+    db.run('DELETE FROM vendors WHERE id = ?', [req.params.id], function(err2) {
+      if (err2) return res.status(500).json({ error: err2.message });
+      res.json({ message: 'Vendor deleted successfully' });
+    });
   });
 });
 
 // Admin Delete Product
 app.delete('/api/admin/products/:id', authenticateToken(['centre_admin', 'platform_admin', 'super_admin']), (req, res) => {
-  db.run('DELETE FROM products WHERE id = ?', [req.params.id], function(err) {
+  const { role, tenant_id } = req.user;
+  db.get('SELECT * FROM products WHERE id = ?', [req.params.id], (err, row) => {
     if (err) return res.status(500).json({ error: err.message });
-    res.json({ message: 'Product deleted successfully' });
+    if (!row) return res.status(404).json({ error: 'Product not found' });
+    if (role === 'centre_admin' && row.tenant_id !== tenant_id) {
+      return res.status(403).json({ error: 'Access forbidden: unauthorized tenant' });
+    }
+    db.run('DELETE FROM products WHERE id = ?', [req.params.id], function(err2) {
+      if (err2) return res.status(500).json({ error: err2.message });
+      res.json({ message: 'Product deleted successfully' });
+    });
   });
 });
 
 // Admin Delete Order
 app.delete('/api/admin/orders/:id', authenticateToken(['centre_admin', 'platform_admin', 'super_admin']), (req, res) => {
-  db.run('DELETE FROM orders WHERE id = ?', [req.params.id], function(err) {
+  const { role, tenant_id } = req.user;
+  db.get('SELECT * FROM orders WHERE id = ?', [req.params.id], (err, row) => {
     if (err) return res.status(500).json({ error: err.message });
-    res.json({ message: 'Order deleted successfully' });
+    if (!row) return res.status(404).json({ error: 'Order not found' });
+    if (role === 'centre_admin' && row.tenant_id !== tenant_id) {
+      return res.status(403).json({ error: 'Access forbidden: unauthorized tenant' });
+    }
+    db.run('DELETE FROM orders WHERE id = ?', [req.params.id], function(err2) {
+      if (err2) return res.status(500).json({ error: err2.message });
+      res.json({ message: 'Order deleted successfully' });
+    });
   });
 });
 
