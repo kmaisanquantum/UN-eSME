@@ -268,13 +268,7 @@
       <div class="mall-link">
         <a href="/" class="nav-link" style="color: var(--success);">🏠 View Mall</a>
       </div>
-      <div id="supportSection" style="margin-top: 2rem; padding: 1rem; border-top: 1px solid var(--border); font-size: 0.75rem; color: var(--text-muted);">
-        <p style="color: var(--text-accent); font-weight: 700; margin-bottom: 0.5rem;">Support</p>
-        <p>Email: wokman@dspng.tech</p>
-        <p>Phone: (675) 8300 99881</p>
-        <p>WhatsApp: (675) 8300 99881</p>
-        <p>Text: (675) 8300 9881</p>
-      </div>
+
     </nav>
   </aside>
 
@@ -929,16 +923,7 @@
         const sidebarLogo = document.querySelector('.logo');
         if (sidebarLogo) sidebarLogo.textContent = b.name;
 
-        const supportSection = document.getElementById('supportSection');
-        if (supportSection) {
-          supportSection.innerHTML = `
-            <p style="color: var(--text-accent); font-weight: 700; margin-bottom: 0.5rem;">Support</p>
-            <p>Email: ${b.email}</p>
-            <p>Phone: ${b.phone}</p>
-            <p>WhatsApp: ${b.phone}</p>
-            <p>Text: ${b.text}</p>
-          `;
-        }
+
 
         // GSI initialization
         if (window.google && window.google.accounts) {
