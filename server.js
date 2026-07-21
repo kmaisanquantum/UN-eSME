@@ -44,11 +44,17 @@ function tenantResolver(req, res, next) {
     if (err) {
       return res.status(500).json({ error: 'Tenant resolution error' });
     }
-    if (!row) {
+    if (!row || row.status === 'inactive') {
+      if (row && row.status === 'inactive') {
+        return res.status(403).json({ error: 'This SME centre is not active' });
+      }
       // Default fallback to subdomain 'unity'
       db.get('SELECT * FROM tenants WHERE subdomain = ?', ['unity'], (err2, defaultRow) => {
         if (err2 || !defaultRow) {
           return res.status(500).json({ error: 'Tenant configuration missing' });
+        }
+        if (defaultRow.status === 'inactive') {
+          return res.status(403).json({ error: 'This SME centre is not active' });
         }
         req.tenant = defaultRow;
         next();
@@ -235,6 +241,7 @@ function initDatabase() {
         username TEXT UNIQUE NOT NULL,
         password TEXT NOT NULL,
         role TEXT DEFAULT 'super_admin',
+        tenant_id INTEGER,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
       )
     `);
@@ -372,7 +379,8 @@ function initDatabase() {
       { name: 'products', col: 'cost_price', type: 'REAL' },
       { name: 'sales', col: 'customer_id', type: 'INTEGER' },
       { name: 'admins', col: 'role', type: 'TEXT' },
-      { name: 'tenants', col: 'status', type: 'TEXT' }
+      { name: 'tenants', col: 'status', type: 'TEXT' },
+      { name: 'admins', col: 'tenant_id', type: 'INTEGER' }
     ];
 
     let alterCount = 0;
@@ -392,6 +400,7 @@ function initDatabase() {
         db.run('UPDATE services SET tenant_id = 1 WHERE tenant_id IS NULL');
         db.run("UPDATE admins SET role = 'super_admin' WHERE role IS NULL");
         db.run("UPDATE tenants SET status = 'active' WHERE status IS NULL");
+        db.run("UPDATE admins SET tenant_id = 1 WHERE tenant_id IS NULL");
 
         // Seed admin from env vars, falling back to 'admin' / 'admin123' if not set
         const adminUser = process.env.ADMIN_USERNAME || 'admin';
@@ -624,8 +633,8 @@ app.post("/api/admin/login", (req, res) => {
     const isMatch = await bcrypt.compare(password, row.password);
     if (!isMatch) return res.status(401).json({ error: "Invalid admin credentials" });
 
-    const token = jwt.sign({ id: row.id, username: row.username, role: row.role || 'super_admin' }, JWT_SECRET, { expiresIn: '24h' });
-    res.json({ message: "Admin logged in", token, admin: { id: row.id, username: row.username, role: row.role || 'super_admin' } });
+    const token = jwt.sign({ id: row.id, username: row.username, role: row.role || 'super_admin', tenant_id: row.tenant_id }, JWT_SECRET, { expiresIn: '24h' });
+    res.json({ message: "Admin logged in", token, admin: { id: row.id, username: row.username, role: row.role || 'super_admin', tenant_id: row.tenant_id } });
   });
 });
 
@@ -690,6 +699,64 @@ app.delete('/api/admin/tenants/:id', authenticateToken(['platform_admin', 'super
   db.run(sql, [req.params.id], function(err) {
     if (err) return res.status(500).json({ error: err.message });
     res.json({ message: 'Tenant deactivated successfully', changes: this.changes });
+  });
+});
+
+// Provision a tenant with categories and an initial centre_admin user
+app.post('/api/admin/tenants/:id/provision', authenticateToken(['platform_admin', 'super_admin']), (req, res) => {
+  const tenantId = req.params.id;
+  const { username, password } = req.body;
+
+  if (!username || !password) {
+    return res.status(400).json({ error: 'Missing username or password for initial centre_admin user' });
+  }
+
+  // 1. Verify tenant exists and is active
+  db.get('SELECT * FROM tenants WHERE id = ?', [tenantId], (err, tenant) => {
+    if (err) return res.status(500).json({ error: err.message });
+    if (!tenant) return res.status(404).json({ error: 'Tenant not found' });
+    if (tenant.status === 'inactive') return res.status(400).json({ error: 'Cannot provision an inactive tenant' });
+
+    // 2. Guard against double-provisioning of centre_admin
+    db.get('SELECT * FROM admins WHERE tenant_id = ? AND role = ?', [tenantId, 'centre_admin'], (err2, existingAdmin) => {
+      if (err2) return res.status(500).json({ error: err2.message });
+      if (existingAdmin) {
+        return res.status(400).json({ error: 'This tenant is already provisioned with a centre_admin' });
+      }
+
+      // Check if username is globally unique to avoid SQLite UNIQUE constraint issues
+      db.get('SELECT * FROM admins WHERE username = ?', [username], async (err3, existingUsername) => {
+        if (err3) return res.status(500).json({ error: err3.message });
+        if (existingUsername) {
+          return res.status(400).json({ error: 'Username already taken' });
+        }
+
+        try {
+          // 3. Hash password
+          const hashedPassword = await bcrypt.hash(password, 10);
+
+          // 4. Create centre_admin user associated with tenant
+          const sql = 'INSERT INTO admins (username, password, role, tenant_id) VALUES (?, ?, ?, ?)';
+          db.run(sql, [username, hashedPassword, 'centre_admin', tenantId], function(err4) {
+            if (err4) return res.status(500).json({ error: err4.message });
+
+            // Return created centre_admin user info
+            res.status(201).json({
+              message: 'Tenant provisioned successfully',
+              centre_admin: {
+                username: username,
+                role: 'centre_admin',
+                tenant_id: parseInt(tenantId, 10),
+                note: 'Password was set successfully'
+              },
+              categories_note: 'Product categories are free-text strings on products; nothing to seed.'
+            });
+          });
+        } catch (hashError) {
+          res.status(500).json({ error: hashError.message });
+        }
+      });
+    });
   });
 });
 
