@@ -107,6 +107,7 @@ function initDatabase() {
         name TEXT NOT NULL,
         subdomain TEXT UNIQUE NOT NULL,
         branding TEXT NOT NULL,
+        status TEXT DEFAULT 'active',
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
       )
     `, (err) => {
@@ -370,7 +371,8 @@ function initDatabase() {
       { name: 'services', col: 'tenant_id', type: 'INTEGER' },
       { name: 'products', col: 'cost_price', type: 'REAL' },
       { name: 'sales', col: 'customer_id', type: 'INTEGER' },
-      { name: 'admins', col: 'role', type: 'TEXT' }
+      { name: 'admins', col: 'role', type: 'TEXT' },
+      { name: 'tenants', col: 'status', type: 'TEXT' }
     ];
 
     let alterCount = 0;
@@ -389,6 +391,7 @@ function initDatabase() {
         db.run('UPDATE users SET tenant_id = 1 WHERE tenant_id IS NULL');
         db.run('UPDATE services SET tenant_id = 1 WHERE tenant_id IS NULL');
         db.run("UPDATE admins SET role = 'super_admin' WHERE role IS NULL");
+        db.run("UPDATE tenants SET status = 'active' WHERE status IS NULL");
 
         // Seed admin from env vars, falling back to 'admin' / 'admin123' if not set
         const adminUser = process.env.ADMIN_USERNAME || 'admin';
@@ -623,6 +626,70 @@ app.post("/api/admin/login", (req, res) => {
 
     const token = jwt.sign({ id: row.id, username: row.username, role: row.role || 'super_admin' }, JWT_SECRET, { expiresIn: '24h' });
     res.json({ message: "Admin logged in", token, admin: { id: row.id, username: row.username, role: row.role || 'super_admin' } });
+  });
+});
+
+// ============== TENANT MANAGEMENT CRUD API (platform/super admin only) ==============
+
+// List all tenants
+app.get('/api/admin/tenants', authenticateToken(['platform_admin', 'super_admin']), (req, res) => {
+  db.all('SELECT id, name, subdomain, branding, status, created_at FROM tenants ORDER BY id ASC', [], (err, rows) => {
+    if (err) return res.status(500).json({ error: err.message });
+    const tenants = rows.map(row => {
+      try {
+        return { ...row, branding: JSON.parse(row.branding) };
+      } catch (e) {
+        return row;
+      }
+    });
+    res.json(tenants);
+  });
+});
+
+// Create a tenant
+app.post('/api/admin/tenants', authenticateToken(['platform_admin', 'super_admin']), (req, res) => {
+  const { name, subdomain, branding } = req.body;
+  if (!name || !subdomain || !branding) {
+    return res.status(400).json({ error: 'Missing required tenant fields: name, subdomain, branding' });
+  }
+
+  // Check unique subdomain
+  db.get('SELECT * FROM tenants WHERE subdomain = ?', [subdomain], (err, row) => {
+    if (err) return res.status(500).json({ error: err.message });
+    if (row) {
+      return res.status(409).json({ error: 'Subdomain already exists' });
+    }
+
+    const brandingStr = typeof branding === 'object' ? JSON.stringify(branding) : branding;
+    const sql = 'INSERT INTO tenants (name, subdomain, branding, status) VALUES (?, ?, ?, ?)';
+    db.run(sql, [name, subdomain, brandingStr, 'active'], function(err2) {
+      if (err2) return res.status(500).json({ error: err2.message });
+      res.status(201).json({ id: this.lastID, message: 'Tenant created successfully' });
+    });
+  });
+});
+
+// Update a tenant
+app.put('/api/admin/tenants/:id', authenticateToken(['platform_admin', 'super_admin']), (req, res) => {
+  const { name, branding } = req.body;
+  if (!name || !branding) {
+    return res.status(400).json({ error: 'Missing required tenant fields: name, branding' });
+  }
+
+  const brandingStr = typeof branding === 'object' ? JSON.stringify(branding) : branding;
+  const sql = 'UPDATE tenants SET name = ?, branding = ? WHERE id = ?';
+  db.run(sql, [name, brandingStr, req.params.id], function(err) {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json({ message: 'Tenant updated successfully', changes: this.changes });
+  });
+});
+
+// Delete (soft-delete/deactivate) a tenant
+app.delete('/api/admin/tenants/:id', authenticateToken(['platform_admin', 'super_admin']), (req, res) => {
+  const sql = "UPDATE tenants SET status = 'inactive' WHERE id = ?";
+  db.run(sql, [req.params.id], function(err) {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json({ message: 'Tenant deactivated successfully', changes: this.changes });
   });
 });
 
