@@ -180,7 +180,6 @@
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <script async defer crossorigin="anonymous" src="https://connect.facebook.net/en_US/sdk.js"></script>
 
-
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
@@ -255,6 +254,10 @@
     <nav>
       <a onclick="switchTab('overview')" id="nav-overview" class="nav-link active">📊 Overview</a>
       <a onclick="switchTab('accounts')" id="nav-accounts" class="nav-link">📉 Accounts</a>
+      <a onclick="switchTab('customers')" id="nav-customers" class="nav-link">👥 Customers</a>
+      <a onclick="switchTab('suppliers')" id="nav-suppliers" class="nav-link">🚛 Suppliers</a>
+      <a onclick="switchTab('cashflow')" id="nav-cashflow" class="nav-link">💸 Cash Flow</a>
+      <a onclick="switchTab('intelligence')" id="nav-intelligence" class="nav-link">🔮 Intelligence</a>
       <a onclick="switchTab('orders')" id="nav-orders" class="nav-link">📝 Orders</a>
       <a onclick="switchTab('products')" id="nav-products" class="nav-link">📦 Products</a>
 
@@ -265,7 +268,7 @@
       <div class="mall-link">
         <a href="/" class="nav-link" style="color: var(--success);">🏠 View Mall</a>
       </div>
-      <div style="margin-top: 2rem; padding: 1rem; border-top: 1px solid var(--border); font-size: 0.75rem; color: var(--text-muted);">
+      <div id="supportSection" style="margin-top: 2rem; padding: 1rem; border-top: 1px solid var(--border); font-size: 0.75rem; color: var(--text-muted);">
         <p style="color: var(--text-accent); font-weight: 700; margin-bottom: 0.5rem;">Support</p>
         <p>Email: wokman@dspng.tech</p>
         <p>Phone: (675) 8300 99881</p>
@@ -278,11 +281,10 @@
   <nav class="mobile-nav hidden" id="mobileNav">
     <a onclick="switchTab('overview')" id="m-nav-overview" class="nav-link active">📊<br>Home</a>
     <a onclick="switchTab('accounts')" id="m-nav-accounts" class="nav-link">📉<br>Accounts</a>
+    <a onclick="switchTab('customers')" id="m-nav-customers" class="nav-link">👥<br>Cust</a>
+    <a onclick="switchTab('suppliers')" id="m-nav-suppliers" class="nav-link">🚛<br>Supp</a>
     <a onclick="switchTab('orders')" id="m-nav-orders" class="nav-link">📝<br>Orders</a>
     <a onclick="switchTab('products')" id="m-nav-products" class="nav-link">📦<br>Products</a>
-
-    <a onclick="switchTab('sell')" id="m-nav-sell" class="nav-link">🛒<br>Sell</a>
-    <a onclick="switchTab('reports')" id="m-nav-reports" class="nav-link">📄<br>Reports</a>
     <a href="/" class="nav-link" style="color: var(--success);">🏠<br>Mall</a>
   </nav>
 
@@ -366,34 +368,90 @@
           <h3 class="card-title">🏦 Financing Readiness</h3>
           <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1.5rem;">Generate a professional revenue report for your bank loan application (Micro-Lending).</p>
           <button onclick="generateLendingReport()" class="btn btn-primary" style="width: 100%;">Download Lending Readiness PDF</button>
-          <div style="margin-top: 2rem; padding: 1rem; background: var(--bg-dark); border-radius: 8px;">
-            <h4 style="font-size: 0.85rem; color: var(--text-accent); margin-bottom: 0.5rem;">Bot Interface Simulation</h4>
-            <div id="botChat" style="height: 100px; overflow-y: auto; font-size: 0.8rem; background: #000; padding: 0.5rem; border-radius: 4px; margin-bottom: 0.5rem;">
-               <div style="color: #10b981;">Bot: 👋 Send "Sale 50" to log a K50 sale.</div>
+          <div style="margin-top: 2rem; padding: 1.25rem; background: var(--bg-dark); border-radius: 8px; border: 1px solid var(--border);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+              <h4 style="font-size: 0.9rem; color: var(--text-accent); margin: 0;">🔮 Grounded AI Business Advisor</h4>
+              <span style="font-size: 0.7rem; padding: 2px 6px; background: #1e293b; color: var(--text-muted); border-radius: 4px;">Context-Grounded (PNG eSME)</span>
+            </div>
+            <p style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.75rem;">Ask questions in English or Tok Pisin about health score, stock alerts, sales or cash flow.</p>
+            <div id="botChat" style="height: 240px; overflow-y: auto; font-size: 0.8rem; background: #0b0f19; padding: 0.75rem; border-radius: 6px; border: 1px solid var(--border); margin-bottom: 0.75rem;">
+               <div style="margin-bottom: 8px; padding: 6px 10px; background: #0f172a; border-radius: 6px; text-align: left; color: #10b981; max-width: 85%; line-height: 1.4;">
+                 <strong>Advisor:</strong> 👋 Halo! Mi AI Advisor bilong yu. Sposim yu askim mi wanpela samting, o clickim ol quick-action buttons klostu long stat!
+               </div>
+            </div>
+            <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 0.75rem;">
+              <button onclick="clickChip('Diagnose my health score')" style="background: #1e293b; border: 1px solid var(--border); border-radius: 20px; padding: 4px 10px; font-size: 0.72rem; color: var(--text-muted); cursor: pointer; transition: all 0.2s;">🩺 Diagnose Health</button>
+              <button onclick="clickChip('How is my cash flow?')" style="background: #1e293b; border: 1px solid var(--border); border-radius: 20px; padding: 4px 10px; font-size: 0.72rem; color: var(--text-muted); cursor: pointer; transition: all 0.2s;">💰 Cash Flow</button>
+              <button onclick="clickChip('Do I have any restocking warnings?')" style="background: #1e293b; border: 1px solid var(--border); border-radius: 20px; padding: 4px 10px; font-size: 0.72rem; color: var(--text-muted); cursor: pointer; transition: all 0.2s;">⚠️ Restock Alerts</button>
+              <button onclick="clickChip('Summarize my sales performance')" style="background: #1e293b; border: 1px solid var(--border); border-radius: 20px; padding: 4px 10px; font-size: 0.72rem; color: var(--text-muted); cursor: pointer; transition: all 0.2s;">📈 Projections</button>
             </div>
             <div style="display: flex; gap: 4px;">
-              <input type="text" id="botInput" class="input" style="height: 32px; font-size: 0.8rem;" placeholder="Type message...">
-              <button onclick="sendBotMsg()" class="btn" style="padding: 0 12px; font-size: 0.8rem; background: var(--primary);">Send</button>
+              <input type="text" id="botInput" class="input" style="height: 36px; font-size: 0.8rem;" placeholder="Raitim askim bilong yu...">
+              <button onclick="sendBotMsg()" class="btn" style="padding: 0 16px; font-size: 0.8rem; background: var(--primary);">Ask AI</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" style="grid-column: 1 / -1;">
+          <h3 class="card-title">🩺 Business Health Score & Diagnostics</h3>
+          <div style="display: flex; gap: 2rem; align-items: center; margin-bottom: 1.5rem;">
+            <div style="background: var(--bg-dark); border: 2px solid var(--primary); border-radius: 50%; width: 100px; height: 100px; display: flex; align-items: center; justify-content: center; font-size: 2rem; font-weight: 800; color: var(--text-accent);" id="scoreDisplay">0</div>
+            <div>
+              <p style="font-size: 1.1rem; font-weight: 600;" id="scoreStatus">Overall Health Status: --</p>
+              <p style="color: var(--text-muted); font-size: 0.85rem;" id="scoreLabel">This score is calculated using weighted metrics across Sales, Profit, Cash Flow, Inventory, Retention, and Expense control.</p>
+            </div>
+          </div>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem;">
+            <div style="background: var(--bg-dark); padding: 1rem; border-radius: 8px;">
+              <h4 style="color: var(--success); font-size: 0.9rem;" id="scoreHealthyHeader">💪 What is Healthy</h4>
+              <p style="font-size: 0.85rem; color: var(--text-muted);" id="scoreHealthy">--</p>
+            </div>
+            <div style="background: var(--bg-dark); padding: 1rem; border-radius: 8px;">
+              <h4 style="color: #ef4444; font-size: 0.9rem;" id="scoreWeakHeader">⚠️ What is Weak</h4>
+              <p style="font-size: 0.85rem; color: var(--text-muted);" id="scoreWeak">--</p>
+            </div>
+            <div style="background: var(--bg-dark); padding: 1rem; border-radius: 8px;">
+              <h4 style="color: var(--text-accent); font-size: 0.9rem;" id="scoreUrgentHeader">🚨 Most Urgent Issue</h4>
+              <p style="font-size: 0.85rem; color: var(--text-muted);" id="scoreUrgent">--</p>
+            </div>
+            <div style="background: var(--bg-dark); padding: 1rem; border-radius: 8px;">
+              <h4 style="color: #3b82f6; font-size: 0.9rem;" id="scoreActionHeader">💡 Recommended Next Action</h4>
+              <p style="font-size: 0.85rem; color: var(--text-muted);" id="scoreAction">--</p>
             </div>
           </div>
         </div>
       </div>
     </div>
+
+    <!-- Accounts Tab -->
     <div id="tab-accounts" class="tab-content hidden">
       <div class="card" style="padding: 1.5rem; background: linear-gradient(135deg, var(--bg-card), #1e293b);">
-        <h3 style="color: var(--text-accent); margin-bottom: 1rem;">📈 SME Financial Summary</h3>
-        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; text-align: center;">
+        <h3 style="color: var(--text-accent); margin-bottom: 1rem;" id="lblAccSummary">📈 SME Financial Summary</h3>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 1rem; text-align: center;">
           <div>
-            <div style="color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase;">Total Sales</div>
+            <div style="color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase;" id="lblRevenue">Revenue (Total Sales)</div>
             <div id="accTotalSales" style="color: var(--success); font-size: 1.25rem; font-weight: 700;">K0.00</div>
+            <small style="font-size: 0.65rem; color: var(--text-muted);" id="helpRevenue">Total money received</small>
           </div>
           <div>
-            <div style="color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase;">Total Expenses</div>
+            <div style="color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase;" id="lblCogs">COGS (Stock Cost)</div>
+            <div id="accTotalCogs" style="color: #ca8a04; font-size: 1.25rem; font-weight: 700;">K0.00</div>
+            <small style="font-size: 0.65rem; color: var(--text-muted);" id="helpCogs">Stock purchasing cost</small>
+          </div>
+          <div>
+            <div style="color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase;" id="lblGrossProfit">Gross Profit</div>
+            <div id="accGrossProfit" style="color: var(--text-accent); font-size: 1.25rem; font-weight: 700;">K0.00</div>
+            <small style="font-size: 0.65rem; color: var(--text-muted);" id="helpGrossProfit">Revenue minus COGS</small>
+          </div>
+          <div>
+            <div style="color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase;" id="lblExpenses">Expenses</div>
             <div id="accTotalExpenses" style="color: #ef4444; font-size: 1.25rem; font-weight: 700;">K0.00</div>
+            <small style="font-size: 0.65rem; color: var(--text-muted);" id="helpExpenses">Other business costs</small>
           </div>
           <div>
-            <div style="color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase;">Net Profit</div>
-            <div id="accNetProfit" style="color: var(--primary); font-size: 1.25rem; font-weight: 700;">K0.00</div>
+            <div style="color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase;" id="lblNetProfit">Net Profit</div>
+            <div id="accNetProfit" style="color: var(--success); font-size: 1.25rem; font-weight: 700;">K0.00</div>
+            <small style="font-size: 0.65rem; color: var(--text-muted);" id="helpNetProfit">True take-home profit</small>
           </div>
         </div>
       </div>
@@ -433,7 +491,6 @@
                 <th>Date</th>
                 <th>Description</th>
                 <th style="text-align: right;">Amount</th>
-                <th style="text-align: center;">Action</th>
               </tr>
             </thead>
             <tbody id="accTransactionBody">
@@ -443,6 +500,253 @@
         </div>
       </div>
     </div>
+
+    <!-- Customers Tab -->
+    <div id="tab-customers" class="tab-content hidden">
+      <div class="card">
+        <h3 class="card-title">👥 Add New Customer</h3>
+        <form id="addCustomerForm" onsubmit="addCustomer(event)">
+          <div class="form-grid">
+            <div class="form-group">
+              <label class="label">Customer Name</label>
+              <input type="text" id="cName" class="input" placeholder="e.g. John Doe" required>
+            </div>
+            <div class="form-group">
+              <label class="label">Phone</label>
+              <input type="text" id="cPhone" class="input" placeholder="70000000">
+            </div>
+            <div class="form-group">
+              <label class="label">Email</label>
+              <input type="email" id="cEmail" class="input" placeholder="john@example.com">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="label">Notes / Preferences</label>
+            <textarea id="cNotes" class="input" style="height: 80px;"></textarea>
+          </div>
+          <button type="submit" class="btn btn-primary">Save Customer</button>
+        </form>
+      </div>
+
+      <div class="card">
+        <h3 class="card-title">👥 Customer Database</h3>
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Phone</th>
+                <th>Email</th>
+                <th>First Purchase Date</th>
+                <th>Notes</th>
+              </tr>
+            </thead>
+            <tbody id="customersTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Suppliers Tab -->
+    <div id="tab-suppliers" class="tab-content hidden">
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+        <div class="card">
+          <h3 class="card-title">🚛 Add Supplier</h3>
+          <form id="addSupplierForm" onsubmit="addSupplier(event)">
+            <div class="form-group">
+              <label class="label">Supplier Name</label>
+              <input type="text" id="supName" class="input" placeholder="e.g. PNG Wholesale" required>
+            </div>
+            <div class="form-group">
+              <label class="label">Contact Detail (Phone/Email)</label>
+              <input type="text" id="supContact" class="input">
+            </div>
+            <div class="form-group">
+              <label class="label">Products Supplied</label>
+              <input type="text" id="supProducts" class="input" placeholder="e.g. Bilums, Coffee beans">
+            </div>
+            <div class="form-group">
+              <label class="label">Payment Status</label>
+              <select id="supStatus" class="input">
+                <option value="paid">Paid</option>
+                <option value="unpaid">Unpaid</option>
+              </select>
+            </div>
+            <button type="submit" class="btn btn-primary" style="width: 100%;">Save Supplier</button>
+          </form>
+        </div>
+
+        <div class="card">
+          <h3 class="card-title">📦 Record Supplier Purchase</h3>
+          <form id="recordPurchaseForm" onsubmit="recordSupplierPurchase(event)">
+            <div class="form-group">
+              <label class="label">Supplier</label>
+              <select id="purchaseSup" class="input" required></select>
+            </div>
+            <div class="form-group">
+              <label class="label">Amount (K)</label>
+              <input type="number" id="purchaseAmount" class="input" step="0.01" required>
+            </div>
+            <div class="form-group">
+              <label class="label">Description / Invoice Ref</label>
+              <input type="text" id="purchaseDesc" class="input" placeholder="Invoice #456">
+            </div>
+            <button type="submit" class="btn btn-primary" style="width: 100%;">Record Purchase</button>
+          </form>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3 class="card-title">🚛 Supplier Directory</h3>
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Contact</th>
+                <th>Products Supplied</th>
+                <th>Payment Status</th>
+              </tr>
+            </thead>
+            <tbody id="suppliersTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3 class="card-title">📄 Supplier Purchase History</h3>
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Supplier</th>
+                <th>Amount</th>
+                <th>Description</th>
+              </tr>
+            </thead>
+            <tbody id="purchasesTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Cash Flow Tab -->
+    <div id="tab-cashflow" class="tab-content hidden">
+      <div class="card" style="padding: 1.5rem; background: linear-gradient(135deg, var(--bg-card), #0f172a);">
+        <h3 style="color: var(--text-accent); margin-bottom: 1.5rem;">💸 Running Cash Position</h3>
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1.5rem; text-align: center; margin-bottom: 1.5rem;">
+          <div>
+            <div style="color: var(--text-muted); font-size: 0.8rem; text-transform: uppercase;">Total Cash In (Sales)</div>
+            <div id="cashInTotal" style="color: var(--success); font-size: 1.75rem; font-weight: 800;">K0.00</div>
+          </div>
+          <div>
+            <div style="color: var(--text-muted); font-size: 0.8rem; text-transform: uppercase;">Total Cash Out (Expenses + Purchases)</div>
+            <div id="cashOutTotal" style="color: #ef4444; font-size: 1.75rem; font-weight: 800;">K0.00</div>
+          </div>
+          <div>
+            <div style="color: var(--text-muted); font-size: 0.8rem; text-transform: uppercase;">Net Running Cash Position</div>
+            <div id="cashNetPosition" style="color: var(--primary); font-size: 1.75rem; font-weight: 800;">K0.00</div>
+          </div>
+        </div>
+        <p style="color: var(--text-muted); font-size: 0.85rem; border-top: 1px solid var(--border); padding-top: 1rem;" id="cashFlowExplanation">
+          Cash Flow represents the actual movements of money into and out of your business bank/cash box. (Note: Cash Flow is NOT Net Profit. Net Profit subtracts stock costs (COGS) and other bills, whereas Cash Flow only looks at actual money received vs paid out).
+        </p>
+      </div>
+    </div>
+
+    <!-- Intelligence Tab -->
+    <div id="tab-intelligence" class="tab-content hidden">
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem;">
+
+        <!-- Demand Forecast & GST Liability -->
+        <div class="card" style="padding: 1.5rem;">
+          <h3 class="card-title">🔮 Demand Forecast & GST Projections (7-Day)</h3>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; text-align: center; margin-bottom: 1.5rem;">
+            <div>
+              <div style="color: var(--text-muted); font-size: 0.8rem; text-transform: uppercase;">Daily Sales Run Rate</div>
+              <div id="intelRunRate" style="color: var(--success); font-size: 1.5rem; font-weight: 800;">K0.00</div>
+            </div>
+            <div>
+              <div style="color: var(--text-muted); font-size: 0.8rem; text-transform: uppercase;">7-Day Projected Sales</div>
+              <div id="intelProjectedSales" style="color: var(--text-accent); font-size: 1.5rem; font-weight: 800;">K0.00</div>
+            </div>
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; text-align: center;">
+            <div>
+              <div style="color: var(--text-muted); font-size: 0.8rem; text-transform: uppercase;">Current GST (10% PNG)</div>
+              <div id="intelCurrentGst" style="color: #ca8a04; font-size: 1.5rem; font-weight: 800;">K0.00</div>
+            </div>
+            <div>
+              <div style="color: var(--text-muted); font-size: 0.8rem; text-transform: uppercase;">Projected 7-Day GST</div>
+              <div id="intelProjectedGst" style="color: var(--success); font-size: 1.5rem; font-weight: 800;">K0.00</div>
+            </div>
+          </div>
+          <p style="color: var(--text-muted); font-size: 0.8rem; margin-top: 1.5rem; border-top: 1px solid var(--border); padding-top: 1rem;">
+            Calculated dynamically based on real-time historical ledger records over the past 30 days. Projections assume consistent market behavior.
+          </p>
+        </div>
+
+        <!-- What-If Scenario Builder -->
+        <div class="card" style="padding: 1.5rem;">
+          <h3 class="card-title">📊 Scenario Simulation (What-If Optimization)</h3>
+          <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1rem;">
+            Adjust the sliders below to forecast cash reserves and take-home net profit margins under different growth & optimization scenarios.
+          </p>
+          <div class="form-group">
+            <div style="display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 0.5rem;">
+              <span>Target Sales Growth (%):</span>
+              <span id="growthSliderVal" style="font-weight:700; color:var(--text-accent);">0%</span>
+            </div>
+            <input type="range" id="growthSlider" min="-50" max="150" value="0" class="input" style="padding: 0; cursor: pointer;" oninput="updateSimulation()">
+          </div>
+          <div class="form-group">
+            <div style="display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 0.5rem;">
+              <span>Expense Optimization (% Change):</span>
+              <span id="expenseSliderVal" style="font-weight:700; color:#ef4444;">0%</span>
+            </div>
+            <input type="range" id="expenseSlider" min="-50" max="100" value="0" class="input" style="padding: 0; cursor: pointer;" oninput="updateSimulation()">
+          </div>
+
+          <div style="background: var(--bg-dark); padding: 1rem; border-radius: 8px; margin-top: 1rem; display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; text-align: center;">
+            <div>
+              <div style="color: var(--text-muted); font-size: 0.75rem;">Simulated Revenue</div>
+              <div id="simRevenue" style="color: var(--success); font-size: 1.25rem; font-weight: 700;">K0.00</div>
+            </div>
+            <div>
+              <div style="color: var(--text-muted); font-size: 0.75rem;">Simulated Net Profit</div>
+              <div id="simProfit" style="color: var(--text-accent); font-size: 1.25rem; font-weight: 700;">K0.00</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Restocking Recommendations -->
+      <div class="card">
+        <h3 class="card-title">📦 Smart Stock Replenishment & Supply Recommendations</h3>
+        <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1rem;">
+          These products are either low on stock or have 7-day projected demand that exceeds your current physical inventory.
+        </p>
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Product Name</th>
+                <th>Current Stock</th>
+                <th>7-day Projected Demand</th>
+                <th>Recommended Replenish Qty</th>
+                <th>Urgency Status</th>
+              </tr>
+            </thead>
+            <tbody id="intelStockTable">
+              <!-- JS-rendered -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
     <div id="tab-overview" class="tab-content">
       <div class="stats-grid">
         <div class="stat-card">
@@ -523,6 +827,16 @@
               <input type="number" id="pPrice" class="input" placeholder="0.00" step="0.01" required>
             </div>
           </div>
+          <div class="form-grid">
+            <div class="form-group">
+              <label class="label">Cost Price (COGS purchase cost PGK)</label>
+              <input type="number" id="pCostPrice" class="input" placeholder="0.00" step="0.01">
+            </div>
+            <div class="form-group">
+              <label class="label">Stock Level</label>
+              <input type="number" id="pStock" class="input" placeholder="0" value="10">
+            </div>
+          </div>
           <div class="form-group">
             <label class="label">Description</label>
             <textarea id="pDesc" class="input" style="height: 100px;"></textarea>
@@ -590,6 +904,67 @@
   </main>
 
   <script>
+    let currentVendor = JSON.parse(localStorage.getItem('um_vendor'));
+    const API_URL = '/api';
+
+    // Helper for authenticated fetch
+    async function apiFetch(url, options = {}) {
+      const token = localStorage.getItem('um_vendor_token');
+      if (token) {
+        options.headers = {
+          ...options.headers,
+          'Authorization': `Bearer ${token}`
+        };
+      }
+      return fetch(url, options);
+    }
+
+    async function loadTenantConfig() {
+      try {
+        const res = await fetch('/api/config');
+        const data = await res.json();
+        const b = data.branding;
+
+        document.title = `${b.name} | Vendor Dashboard`;
+        const sidebarLogo = document.querySelector('.logo');
+        if (sidebarLogo) sidebarLogo.textContent = b.name;
+
+        const supportSection = document.getElementById('supportSection');
+        if (supportSection) {
+          supportSection.innerHTML = `
+            <p style="color: var(--text-accent); font-weight: 700; margin-bottom: 0.5rem;">Support</p>
+            <p>Email: ${b.email}</p>
+            <p>Phone: ${b.phone}</p>
+            <p>WhatsApp: ${b.phone}</p>
+            <p>Text: ${b.text}</p>
+          `;
+        }
+
+        // GSI initialization
+        if (window.google && window.google.accounts) {
+          window.google.accounts.id.initialize({
+            client_id: b.googleClientId || 'your-google-client-id.apps.googleusercontent.com',
+            callback: handleGoogleCallback
+          });
+          window.google.accounts.id.renderButton(
+            document.getElementById("g_id_signin"),
+            { theme: "outline", size: "large", width: "100%" }
+          );
+        }
+
+        // FB initialization
+        if (window.FB) {
+          window.FB.init({
+            appId      : b.facebookAppId || 'your-facebook-app-id',
+            cookie     : true,
+            xfbml      : true,
+            version    : 'v18.0'
+          });
+        }
+      } catch (err) {
+        console.error('Failed to load tenant configuration', err);
+      }
+    }
 
     function handleGoogleCallback(response) {
       const payload = JSON.parse(atob(response.credential.split('.')[1]));
@@ -599,17 +974,6 @@
         id: payload.sub,
         token: response.credential
       });
-    }
-
-    function initGSI() {
-      window.google.accounts.id.initialize({
-        client_id: 'your-google-client-id.apps.googleusercontent.com',
-        callback: handleGoogleCallback
-      });
-      window.google.accounts.id.renderButton(
-        document.getElementById("g_id_signin"),
-        { theme: "outline", size: "large", width: "100%" }
-      );
     }
 
     async function socialLogin(provider) {
@@ -633,7 +997,7 @@
 
     async function handleSocialAuth(provider, userData) {
       try {
-        const res = await fetch(`${API_URL}/auth/social`, {
+        const res = await apiFetch(`${API_URL}/auth/social`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ provider, role: 'vendor', ...userData })
@@ -642,6 +1006,7 @@
         if (data.error) throw new Error(data.error);
 
         localStorage.setItem('um_vendor', JSON.stringify(data.vendor));
+        localStorage.setItem('um_vendor_token', data.token); // Save vendor token
         currentVendor = data.vendor;
         alert(`Logged in with ${provider.charAt(0).toUpperCase() + provider.slice(1)}!`);
         showDashboard();
@@ -650,27 +1015,16 @@
       }
     }
 
-    window.fbAsyncInit = function() {
-      FB.init({
-        appId      : 'your-facebook-app-id',
-        cookie     : true,
-        xfbml      : true,
-        version    : 'v18.0'
-      });
-    };
-
-    let currentVendor = JSON.parse(localStorage.getItem('um_vendor'));
-    const API_URL = '/api';
-
-    // Accounting Logic for Vendor
-    let accountingTransactions = [];
-
     let currentLang = "en";
 
     const translations = {
       en: {
         "nav-overview": "📊 Overview",
         "nav-accounts": "📉 Accounts",
+        "nav-customers": "👥 Customers",
+        "nav-suppliers": "🚛 Suppliers",
+        "nav-cashflow": "💸 Cash Flow",
+        "nav-intelligence": "🔮 Intelligence",
         "nav-orders": "📝 Orders",
         "nav-products": "📦 Products",
         "nav-sell": "🛒 Sell",
@@ -681,11 +1035,27 @@
         "add-product": "+ Add Product",
         "sell-title": "🛒 Quick Sell / Register Sale",
         "report-title": "📊 Business Health",
-        "finance-title": "🏦 Financing Readiness"
+        "finance-title": "🏦 Financing Readiness",
+
+        "lblAccSummary": "📈 SME Financial Summary",
+        "lblRevenue": "Revenue (Total Sales)",
+        "helpRevenue": "Total money received",
+        "lblCogs": "COGS (Stock Cost)",
+        "helpCogs": "Stock purchasing cost",
+        "lblGrossProfit": "Gross Profit",
+        "helpGrossProfit": "Revenue minus COGS",
+        "lblExpenses": "Expenses",
+        "helpExpenses": "Other business costs",
+        "lblNetProfit": "Net Profit",
+        "helpNetProfit": "True take-home profit"
       },
       tpi: {
         "nav-overview": "📊 Lukluk Olgeta",
         "nav-accounts": "📉 Mani Toktok",
+        "nav-customers": "👥 Ol Kastoma",
+        "nav-suppliers": "🚛 Ol Splaia",
+        "nav-cashflow": "💸 Mani Flow",
+        "nav-intelligence": "🔮 Kwik Painim",
         "nav-orders": "📝 Ol Oda",
         "nav-products": "📦 Ol Kago",
         "nav-sell": "🛒 Salim Kago",
@@ -696,7 +1066,19 @@
         "add-product": "+ Putim Nupela Kago",
         "sell-title": "🛒 Kwik Salim / Putim Sale",
         "report-title": "📊 Helt bilong Bisnis",
-        "finance-title": "🏦 Kisim Dinau Redi"
+        "finance-title": "🏦 Kisim Dinau Redi",
+
+        "lblAccSummary": "📈 Toktok bilong Mani bilong SME",
+        "lblRevenue": "Revenue (Mani i Kam In)",
+        "helpRevenue": "Olgeta mani baim kago",
+        "lblCogs": "COGS (Mani baim kago pastaim)",
+        "helpCogs": "Kost baim kago bipo long salim",
+        "lblGrossProfit": "Gros Profit",
+        "helpGrossProfit": "Mani i kam in minus kost baim kago",
+        "lblExpenses": "Ol Narapela Kost",
+        "helpExpenses": "Olsem rent, transport, woks",
+        "lblNetProfit": "Net Profit (Trupela Win)",
+        "helpNetProfit": "Trupela mani winim long bisnis"
       }
     };
 
@@ -705,40 +1087,54 @@
       const t = translations[currentLang];
       document.getElementById("nav-overview").innerHTML = t["nav-overview"];
       document.getElementById("nav-accounts").innerHTML = t["nav-accounts"];
+      document.getElementById("nav-customers").innerHTML = t["nav-customers"];
+      document.getElementById("nav-suppliers").innerHTML = t["nav-suppliers"];
+      document.getElementById("nav-cashflow").innerHTML = t["nav-cashflow"];
+      document.getElementById("nav-intelligence").innerHTML = t["nav-intelligence"];
       document.getElementById("nav-orders").innerHTML = t["nav-orders"];
       document.getElementById("nav-products").innerHTML = t["nav-products"];
-      document.getElementById("nav-sell").innerHTML = t["nav-sell"];
-      document.getElementById("nav-reports").innerHTML = t["nav-reports"];
-      document.getElementById("nav-settings").innerHTML = t["nav-settings"];
       document.getElementById("langLabel").textContent = t["langLabel"];
       document.querySelector(".header h2").childNodes[0].textContent = t["welcome"] + ", ";
       document.querySelector(".header .btn-primary").textContent = t["add-product"];
 
-      // Update tab titles
       const sellTitle = document.querySelector("#tab-sell .card-title");
       if (sellTitle) sellTitle.textContent = t["sell-title"];
       const reportTitles = document.querySelectorAll("#tab-reports .card-title");
       if (reportTitles[0]) reportTitles[0].textContent = t["report-title"];
       if (reportTitles[1]) reportTitles[1].textContent = t["finance-title"];
+
+      document.getElementById("lblAccSummary").textContent = t["lblAccSummary"];
+      document.getElementById("lblRevenue").textContent = t["lblRevenue"];
+      document.getElementById("helpRevenue").textContent = t["helpRevenue"];
+      document.getElementById("lblCogs").textContent = t["lblCogs"];
+      document.getElementById("helpCogs").textContent = t["helpCogs"];
+      document.getElementById("lblGrossProfit").textContent = t["lblGrossProfit"];
+      document.getElementById("helpGrossProfit").textContent = t["helpGrossProfit"];
+      document.getElementById("lblExpenses").textContent = t["lblExpenses"];
+      document.getElementById("helpExpenses").textContent = t["helpExpenses"];
+      document.getElementById("lblNetProfit").textContent = t["lblNetProfit"];
+      document.getElementById("helpNetProfit").textContent = t["helpNetProfit"];
     }
 
     let healthChart = null;
 
-    function renderHealthChart() {
+    function renderHealthChart(metrics) {
       const ctx = document.getElementById("healthChart").getContext("2d");
-      const sales = accountingTransactions.filter(t => t.type === "sale").reduce((acc, t) => acc + parseFloat(t.amount), 0);
-      const expenses = accountingTransactions.filter(t => t.type === "expense").reduce((acc, t) => acc + parseFloat(t.amount), 0);
+      const rev = metrics ? metrics.revenue : 0;
+      const cogs = metrics ? metrics.cogs : 0;
+      const exp = metrics ? metrics.operatingExpenses : 0;
+      const net = metrics ? metrics.netProfit : 0;
 
       if (healthChart) healthChart.destroy();
 
       healthChart = new Chart(ctx, {
         type: "bar",
         data: {
-          labels: ["Revenue", "Expenses"],
+          labels: ["Revenue", "COGS", "Expenses", "Net Profit"],
           datasets: [{
             label: "PGK (K)",
-            data: [sales, expenses],
-            backgroundColor: ["#10b981", "#ef4444"]
+            data: [rev, cogs, exp, net],
+            backgroundColor: ["#10b981", "#ca8a04", "#ef4444", "#3b82f6"]
           }]
         },
         options: {
@@ -758,6 +1154,9 @@
       const { jsPDF } = window.jspdf;
       const doc = new jsPDF();
 
+      const res = await apiFetch(`${API_URL}/dashboard`);
+      const metrics = await res.json();
+
       doc.setFontSize(20);
       doc.setTextColor(202, 138, 4);
       doc.text("Unity Mall SME centre - Micro-Lending Readiness", 20, 20);
@@ -770,19 +1169,19 @@
       doc.line(20, 48, 190, 48);
 
       doc.text("Financial Summary (Last 6 Months):", 20, 58);
-      const sales = accountingTransactions.filter(t => t.type === "sale").reduce((acc, t) => acc + parseFloat(t.amount), 0);
-      const expenses = accountingTransactions.filter(t => t.type === "expense").reduce((acc, t) => acc + parseFloat(t.amount), 0);
 
-      doc.text(`Total Revenue: K${sales.toFixed(2)}`, 30, 68);
-      doc.text(`Total Expenses: K${expenses.toFixed(2)}`, 30, 75);
-      doc.text(`Estimated GST (10%): K${(sales * 0.1).toFixed(2)}`, 30, 82);
+      doc.text(`Total Revenue: K${metrics.revenue.toFixed(2)}`, 30, 68);
+      doc.text(`COGS: K${metrics.cogs.toFixed(2)}`, 30, 75);
+      doc.text(`Gross Profit: K${metrics.grossProfit.toFixed(2)}`, 30, 82);
+      doc.text(`Operating Expenses: K${metrics.operatingExpenses.toFixed(2)}`, 30, 89);
+      doc.text(`Estimated GST (10%): K${metrics.gstCollected.toFixed(2)}`, 30, 96);
       doc.setFont('helvetica', 'bold');
-      doc.text(`Net Cash Flow: K${(sales - expenses).toFixed(2)}`, 30, 92);
+      doc.text(`Net Take-Home Profit: K${metrics.netProfit.toFixed(2)}`, 30, 106);
 
       doc.setFont('helvetica', 'normal');
-      doc.text("Banker Notes:", 20, 110);
+      doc.text("Banker Notes:", 20, 120);
       doc.setFontSize(10);
-      doc.text("This vendor has maintained consistent digital records. Transaction logs are available upon request.", 20, 118);
+      doc.text("This vendor has maintained consistent digital records. Transaction logs are available upon request.", 20, 128);
 
       doc.save(`Lending_Report_${currentVendor.id}.pdf`);
     }
@@ -790,7 +1189,7 @@
     async function updateSellPrice() {
       const pId = document.getElementById("sellProduct").value;
       if (!pId) return;
-      const res = await fetch(`${API_URL}/products`);
+      const res = await apiFetch(`${API_URL}/products`);
       const products = await res.json();
       const p = products.find(x => x.id == pId);
       if (p) document.getElementById("sellPrice").value = p.price;
@@ -798,168 +1197,420 @@
 
     document.getElementById("quickSellForm").onsubmit = async (e) => {
       e.preventDefault();
-      const pId = document.getElementById("sellProduct").value;
-      const qty = parseInt(document.getElementById("sellQty").value);
-      const price = parseFloat(document.getElementById("sellPrice").value);
-      const total = price * qty;
+      const product_id = document.getElementById("sellProduct").value;
+      const quantity = parseInt(document.getElementById("sellQty").value);
+      const unit_price = parseFloat(document.getElementById("sellPrice").value);
+      const total = unit_price * quantity;
 
-      // GST calc
-      const gst = total * 0.1;
+      try {
+        const res = await apiFetch('/api/sales', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ product_id, quantity, unit_price, total })
+        });
+        const data = await res.json();
+        if (data.error) throw new Error(data.error);
 
-      // Add to accounting
-      accountingTransactions.push({
-        date: new Date().toISOString().split('T')[0],
-        type: "sale",
-        amount: total,
-        desc: `Quick Sell: ${qty}x item (Incl. K${gst.toFixed(2)} GST)`
-      });
-      saveAccounting();
-      updateAccountingUI();
-      renderHealthChart();
-
-      // Inventory Trigger simulation
-      if (qty >= 5) {
-         document.getElementById("inventoryAlert").classList.remove("hidden");
+        alert(`Sale recorded! Total: K${total.toFixed(2)} (GST K${(total * 0.1).toFixed(2)})`);
+        e.target.reset();
+        loadStoreData();
+      } catch (err) {
+        alert(err.message);
       }
-
-      alert(`Sale recorded! Total: K${total.toFixed(2)} (GST K${gst.toFixed(2)})`);
-      e.target.reset();
     };
 
 
     function simPayment(provider) {
-      const amount = document.getElementById("sellPrice").value;
+      const pId = document.getElementById("sellProduct").value;
+      const amount = parseFloat(document.getElementById("sellPrice").value);
+      const qty = parseInt(document.getElementById("sellQty").value);
       if (!amount) return alert("Select a product first.");
 
-      const confirmMsg = provider === "cellmoni" ? "Send Cellmoni Payment request (K" + amount + ")?" : "Send EasiPay Payment request (K" + amount + ")?";
+      const confirmMsg = provider === "cellmoni" ? "Send Cellmoni Payment request (K" + (amount * qty) + ")?" : "Send EasiPay Payment request (K" + (amount * qty) + ")?";
       if (confirm(confirmMsg)) {
-        setTimeout(() => {
-          accountingTransactions.push({
-            date: new Date().toISOString().split('T')[0],
-            type: "sale",
-            amount: amount,
-            desc: "Payment via " + (provider === "cellmoni" ? "Cellmoni" : "EasiPay")
-          });
-          saveAccounting();
-          updateAccountingUI();
-          renderHealthChart();
-          alert("✅ " + (provider === "cellmoni" ? "Cellmoni" : "EasiPay") + " payment received! Your Accounts Suite is reconciled.");
+        setTimeout(async () => {
+          try {
+            await apiFetch('/api/sales', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ product_id: pId, quantity: qty, unit_price: amount, total: amount * qty, payment_method: provider })
+            });
+            alert("✅ " + (provider === "cellmoni" ? "Cellmoni" : "EasiPay") + " payment received! Your Accounts Suite is reconciled.");
+            loadStoreData();
+          } catch (err) {
+            alert(err.message);
+          }
         }, 1000);
       }
     }
+
+    function clickChip(text) {
+      document.getElementById("botInput").value = text;
+      sendBotMsg();
+    }
+
     async function sendBotMsg() {
       const msg = document.getElementById("botInput").value;
       if (!msg) return;
 
       const chat = document.getElementById("botChat");
-      chat.innerHTML += `<div style="color: var(--text-accent);">You: ${msg}</div>`;
+      chat.innerHTML += `
+        <div style="margin-bottom: 8px; padding: 6px 10px; background: #1e293b; border-radius: 6px; text-align: right; color: var(--text-accent); max-width: 80%; margin-left: auto;">
+          <strong>You:</strong> ${msg}
+        </div>
+      `;
 
       try {
-        const res = await fetch(`${API_URL}/bot/webhook`, {
+        const res = await apiFetch(`${API_URL}/ai/ask`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ message: msg })
+          body: JSON.stringify({ question: msg })
         });
         const data = await res.json();
-        chat.innerHTML += `<div style="color: #10b981;">Bot: ${data.reply}</div>`;
+        chat.innerHTML += `
+          <div style="margin-bottom: 8px; padding: 6px 10px; background: #0f172a; border-radius: 6px; text-align: left; color: #10b981; max-width: 85%; line-height: 1.4; white-space: pre-line;">
+            <strong>Advisor:</strong> ${data.reply}
+          </div>
+        `;
 
         if (data.action === "record_sale") {
-          accountingTransactions.push({
-            date: new Date().toISOString().split('T')[0],
-            type: "sale",
-            amount: data.amount,
-            desc: "Bot recorded sale"
+          await apiFetch('/api/sales', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ quantity: 1, unit_price: data.amount, total: data.amount, sales_channel: 'bot' })
           });
-          saveAccounting();
-          updateAccountingUI();
-          renderHealthChart();
+          loadStoreData();
         }
       } catch (err) {
-        chat.innerHTML += `<div style="color: #ef4444;">Error: Offline</div>`;
+        chat.innerHTML += `<div style="color: #ef4444; margin-bottom: 8px; text-align: left; background: #0f172a; padding: 6px 10px; border-radius: 6px;">Error: Unable to connect to AI Advisor.</div>`;
       }
 
       document.getElementById("botInput").value = "";
       chat.scrollTop = chat.scrollHeight;
     }
 
-    function updateAccountingUI() {
-      const tbody = document.getElementById('accTransactionBody');
+    async function loadAccountingUI() {
       const salesEl = document.getElementById('accTotalSales');
+      const cogsEl = document.getElementById('accTotalCogs');
+      const gpEl = document.getElementById('accGrossProfit');
       const expensesEl = document.getElementById('accTotalExpenses');
       const netProfitEl = document.getElementById('accNetProfit');
+      const tbody = document.getElementById('accTransactionBody');
 
-      if (!tbody) return;
+      try {
+        const dRes = await apiFetch('/api/dashboard');
+        const metrics = await dRes.json();
 
-      if (!accountingTransactions || accountingTransactions.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding: 2rem; color:var(--text-muted);">No transactions recorded yet.</td></tr>';
-        salesEl.textContent = 'K0.00';
-        expensesEl.textContent = 'K0.00';
-        netProfitEl.textContent = 'K0.00';
-        return;
-      }
+        salesEl.textContent = `K${metrics.revenue.toFixed(2)}`;
+        cogsEl.textContent = `K${metrics.cogs.toFixed(2)}`;
+        gpEl.textContent = `K${metrics.grossProfit.toFixed(2)}`;
+        expensesEl.textContent = `K${metrics.operatingExpenses.toFixed(2)}`;
+        netProfitEl.textContent = `K${metrics.netProfit.toFixed(2)}`;
+        netProfitEl.style.color = metrics.netProfit >= 0 ? 'var(--success)' : '#ef4444';
 
-      let totalSales = 0;
-      let totalExpenses = 0;
+        // Load Sales and Expenses from server for Transaction History ledger
+        const salesRes = await apiFetch('/api/sales');
+        const salesList = await salesRes.json();
 
-      tbody.innerHTML = accountingTransactions
-        .sort((a, b) => new Date(b.date) - new Date(a.date))
-        .map((t, index) => {
-          const amount = parseFloat(t.amount);
-          if (t.type === 'sale') totalSales += amount;
-          else totalExpenses += amount;
+        const expRes = await apiFetch('/api/expenses');
+        const expList = await expRes.json();
 
-          return `
+        const merged = [];
+        salesList.forEach(s => {
+          merged.push({
+            date: s.sold_at.split('T')[0],
+            type: 'sale',
+            amount: s.total,
+            desc: `Quick Sell: ${s.quantity}x ${s.product_name || 'Item'} (Ref: ${s.customer_ref || 'None'})`
+          });
+        });
+        expList.forEach(e => {
+          merged.push({
+            date: e.incurred_at.split('T')[0],
+            type: 'expense',
+            amount: e.amount,
+            desc: `Expense [${e.category}]: ${e.description}`
+          });
+        });
+
+        tbody.innerHTML = merged
+          .sort((a, b) => new Date(b.date) - new Date(a.date))
+          .map(t => `
             <tr style="border-bottom: 1px solid var(--border);">
               <td style="padding: 12px;">${t.date}</td>
               <td style="padding: 12px;">
                 <span style="font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; margin-right: 4px; background: ${t.type === 'sale' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)'}; color: ${t.type === 'sale' ? 'var(--success)' : '#ef4444'}; text-transform: uppercase;">${t.type}</span>
                 ${t.desc}
               </td>
-              <td style="padding: 12px; text-align: right; font-weight: 600; color: ${t.type === 'sale' ? 'var(--success)' : '#ef4444'};">${t.type === 'sale' ? '' : '-'}${amount.toFixed(2)}</td>
-              <td style="padding: 12px; text-align: center;">
-                <button onclick="deleteTransaction(${index})" style="background:none; border:none; color:#ef4444; cursor:pointer; font-size: 1.25rem;">×</button>
-              </td>
+              <td style="padding: 12px; text-align: right; font-weight: 600; color: ${t.type === 'sale' ? 'var(--success)' : '#ef4444'};">${t.type === 'sale' ? '' : '-'}${t.amount.toFixed(2)}</td>
             </tr>
-          `;
-        }).join('');
+          `).join('');
 
-      const netProfit = totalSales - totalExpenses;
-      salesEl.textContent = `K${totalSales.toFixed(2)}`;
-      expensesEl.textContent = `K${totalExpenses.toFixed(2)}`;
-      netProfitEl.textContent = `K${netProfit.toFixed(2)}`;
-      netProfitEl.style.color = netProfit >= 0 ? 'var(--success)' : '#ef4444';
+        renderHealthChart(metrics);
+        loadHealthScore();
+        loadCashFlow();
+        loadPredictiveIntelligence();
+      } catch (err) {
+        console.error(err);
+      }
     }
 
-    function addTransaction(e) {
+    async function loadHealthScore() {
+      try {
+        const hsRes = await apiFetch('/api/health-score');
+        const scoreData = await hsRes.json();
+
+        document.getElementById('scoreDisplay').textContent = scoreData.overallScore;
+        const statusEl = document.getElementById('scoreStatus');
+        if (scoreData.overallScore >= 80) {
+          statusEl.textContent = "Overall Health Status: EXCELLENT 💪";
+          statusEl.style.color = "var(--success)";
+        } else if (scoreData.overallScore >= 60) {
+          statusEl.textContent = "Overall Health Status: GOOD 👍";
+          statusEl.style.color = "var(--text-accent)";
+        } else {
+          statusEl.textContent = "Overall Health Status: WEAK ⚠️";
+          statusEl.style.color = "#ef4444";
+        }
+
+        document.getElementById('scoreHealthy').textContent = scoreData.breakdown.whatIsHealthy;
+        document.getElementById('scoreWeak').textContent = scoreData.breakdown.whatIsWeak;
+        document.getElementById('scoreUrgent').textContent = scoreData.breakdown.mostUrgentIssue;
+        document.getElementById('scoreAction').textContent = scoreData.breakdown.recommendedNextAction;
+      } catch (err) {
+        console.error('Failed to load health score', err);
+      }
+    }
+
+    async function loadCashFlow() {
+      try {
+        const cfRes = await apiFetch('/api/cashflow');
+        const cf = await cfRes.json();
+
+        document.getElementById('cashInTotal').textContent = `K${cf.cashReceived.toFixed(2)}`;
+        document.getElementById('cashOutTotal').textContent = `K${cf.cashPaidOut.toFixed(2)}`;
+
+        const netEl = document.getElementById('cashNetPosition');
+        netEl.textContent = `K${cf.netRunningCashPosition || cf.netCashPosition.toFixed(2)}`;
+        netEl.style.color = cf.netCashPosition >= 0 ? "var(--success)" : "#ef4444";
+      } catch (err) {
+        console.error('Failed to load cashflow', err);
+      }
+    }
+
+    // Phase 5: Load Predictive Intelligence Data
+    async function loadPredictiveIntelligence() {
+      try {
+        const res = await apiFetch('/api/predictive-analytics');
+        const data = await res.json();
+
+        document.getElementById('intelRunRate').textContent = `K${data.demandForecast.dailyRunRate.toFixed(2)}`;
+        document.getElementById('intelProjectedSales').textContent = `K${data.demandForecast.projectedRevenue7Days.toFixed(2)}`;
+        document.getElementById('intelCurrentGst').textContent = `K${data.gstProjection.currentGstLiability.toFixed(2)}`;
+        document.getElementById('intelProjectedGst').textContent = `K${data.gstProjection.projectedGst7DaysLiability.toFixed(2)}`;
+
+        // Render restocking recommendations
+        const tbody = document.getElementById('intelStockTable');
+        tbody.innerHTML = data.restockingRecommendations.map(r => `
+          <tr style="border-bottom: 1px solid var(--border);">
+            <td style="padding: 12px; font-weight:600;">${r.name}</td>
+            <td style="padding: 12px;">${r.current_stock}</td>
+            <td style="padding: 12px;">${r.projected_demand_7_days}</td>
+            <td style="padding: 12px; font-weight: 700; color: var(--text-accent);">${r.recommended_restock_qty} units</td>
+            <td style="padding: 12px;"><span class="status-pill" style="background: ${r.urgency === 'HIGH' ? 'rgba(239,68,68,0.1)' : 'rgba(234,179,8,0.1)'}; color: ${r.urgency === 'HIGH' ? '#ef4444' : 'var(--text-accent)'}; font-weight: 700;">${r.urgency}</span></td>
+          </tr>
+        `).join('') || '<tr><td colspan="5" style="text-align:center; padding: 2rem; color: var(--text-muted);">All products have sufficient stock levels. No replenishments needed!</td></tr>';
+
+        // Set baseline in Scenario Builder
+        document.getElementById('simRevenue').textContent = `K${data.scenarioAnalysis.baselineMonthlyRevenue.toFixed(2)}`;
+        document.getElementById('simProfit').textContent = `K${(data.scenarioAnalysis.baselineMonthlyRevenue - data.scenarioAnalysis.baselineMonthlyExpenses).toFixed(2)}`;
+
+      } catch (err) {
+        console.error('Failed to load predictive intelligence', err);
+      }
+    }
+
+    // Dynamic slider updates for what-if scenario builder
+    async function updateSimulation() {
+      const growth = document.getElementById('growthSlider').value;
+      const expenseChange = document.getElementById('expenseSlider').value;
+
+      document.getElementById('growthSliderVal').textContent = (growth >= 0 ? '+' : '') + growth + '%';
+      document.getElementById('expenseSliderVal').textContent = (expenseChange >= 0 ? '+' : '') + expenseChange + '%';
+
+      try {
+        const res = await apiFetch(`/api/predictive-analytics?growth=${growth}&expense_change=${expenseChange}`);
+        const data = await res.json();
+
+        document.getElementById('simRevenue').textContent = `K${data.scenarioAnalysis.simulatedMonthlyRevenue.toFixed(2)}`;
+        document.getElementById('simProfit').textContent = `K${data.scenarioAnalysis.simulatedNetProfit.toFixed(2)}`;
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    async function addTransaction(e) {
       e.preventDefault();
       const date = document.getElementById('accDate').value;
       const type = document.getElementById('accType').value;
-      const amount = document.getElementById('accAmount').value;
+      const amount = parseFloat(document.getElementById('accAmount').value);
       const desc = document.getElementById('accDesc').value;
 
-      accountingTransactions.push({ date, type, amount, desc });
-      saveAccounting();
-      updateAccountingUI();
-      e.target.reset();
-      alert('Transaction recorded successfully');
-    }
-
-    function deleteTransaction(index) {
-      if (confirm('Delete this transaction?')) {
-        accountingTransactions.splice(index, 1);
-        saveAccounting();
-        updateAccountingUI();
+      try {
+        if (type === 'sale') {
+          await apiFetch('/api/sales', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ quantity: 1, unit_price: amount, total: amount, customer_ref: desc, sold_at: date })
+          });
+        } else {
+          await apiFetch('/api/expenses', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ category: 'other', amount, description: desc, incurred_at: date })
+          });
+        }
+        alert('Transaction recorded successfully!');
+        e.target.reset();
+        loadStoreData();
+      } catch (err) {
+        alert(err.message);
       }
     }
 
-    function saveAccounting() {
-      if (currentVendor) {
-        localStorage.setItem('um_accounting_vendor_' + currentVendor.id, JSON.stringify(accountingTransactions));
+    // Phase 3 Customers Tab
+    async function loadCustomers() {
+      try {
+        const res = await apiFetch('/api/customers');
+        const list = await res.json();
+
+        document.getElementById('customersTableBody').innerHTML = list.map(c => `
+          <tr style="border-bottom: 1px solid var(--border);">
+            <td style="padding: 12px; font-weight:600;">${c.name}</td>
+            <td style="padding: 12px;">${c.phone || '--'}</td>
+            <td style="padding: 12px;">${c.email || '--'}</td>
+            <td style="padding: 12px;">${new Date(c.first_purchase_at).toLocaleDateString()}</td>
+            <td style="padding: 12px; font-size: 0.8rem; color: var(--text-muted);">${c.notes || '--'}</td>
+          </tr>
+        `).join('') || '<tr><td colspan="5" style="text-align:center; padding: 2rem; color: var(--text-muted);">No customers added yet.</td></tr>';
+      } catch (err) {
+        console.error(err);
       }
     }
 
-    function init() {
+    async function addCustomer(e) {
+      e.preventDefault();
+      const payload = {
+        name: document.getElementById('cName').value,
+        phone: document.getElementById('cPhone').value,
+        email: document.getElementById('cEmail').value,
+        notes: document.getElementById('cNotes').value
+      };
 
+      try {
+        await apiFetch('/api/customers', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        alert('Customer added successfully!');
+        e.target.reset();
+        loadCustomers();
+      } catch (err) {
+        alert(err.message);
+      }
+    }
+
+    // Phase 3 Suppliers Tab
+    async function loadSuppliers() {
+      try {
+        const res = await apiFetch('/api/suppliers');
+        const list = await res.json();
+
+        // Populate select list
+        const select = document.getElementById('purchaseSup');
+        select.innerHTML = list.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+
+        document.getElementById('suppliersTableBody').innerHTML = list.map(s => `
+          <tr style="border-bottom: 1px solid var(--border);">
+            <td style="padding: 12px; font-weight:600;">${s.name}</td>
+            <td style="padding: 12px;">${s.contact || '--'}</td>
+            <td style="padding: 12px;">${s.products_supplied || '--'}</td>
+            <td style="padding: 12px;"><span class="status-pill" style="background: ${s.payment_status === 'paid' ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)'}; color: ${s.payment_status === 'paid' ? 'var(--success)' : '#ef4444'};">${s.payment_status}</span></td>
+          </tr>
+        `).join('') || '<tr><td colspan="4" style="text-align:center; padding: 2rem; color: var(--text-muted);">No suppliers added yet.</td></tr>';
+
+        loadSupplierPurchases();
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    async function addSupplier(e) {
+      e.preventDefault();
+      const payload = {
+        name: document.getElementById('supName').value,
+        contact: document.getElementById('supContact').value,
+        products_supplied: document.getElementById('supProducts').value,
+        payment_status: document.getElementById('supStatus').value
+      };
+
+      try {
+        await apiFetch('/api/suppliers', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        alert('Supplier added successfully!');
+        e.target.reset();
+        loadSuppliers();
+      } catch (err) {
+        alert(err.message);
+      }
+    }
+
+    async function recordSupplierPurchase(e) {
+      e.preventDefault();
+      const payload = {
+        supplier_id: parseInt(document.getElementById('purchaseSup').value),
+        amount: parseFloat(document.getElementById('purchaseAmount').value),
+        description: document.getElementById('purchaseDesc').value
+      };
+
+      try {
+        await apiFetch('/api/supplier-purchases', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        alert('Supplier purchase recorded successfully!');
+        e.target.reset();
+        loadSupplierPurchases();
+        loadAccountingUI();
+      } catch (err) {
+        alert(err.message);
+      }
+    }
+
+    async function loadSupplierPurchases() {
+      try {
+        const res = await apiFetch('/api/supplier-purchases');
+        const list = await res.json();
+
+        document.getElementById('purchasesTableBody').innerHTML = list.map(p => `
+          <tr style="border-bottom: 1px solid var(--border);">
+            <td style="padding: 12px;">${new Date(p.purchased_at).toLocaleDateString()}</td>
+            <td style="padding: 12px; font-weight:600;">${p.supplier_name || 'Unknown'}</td>
+            <td style="padding: 12px; font-weight:600; color: #ef4444;">-K${p.amount.toFixed(2)}</td>
+            <td style="padding: 12px; font-size: 0.85rem; color: var(--text-muted);">${p.description || '--'}</td>
+          </tr>
+        `).join('') || '<tr><td colspan="4" style="text-align:center; padding: 2rem; color: var(--text-muted);">No purchases recorded yet.</td></tr>';
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    async function init() {
       if ("serviceWorker" in navigator) {
         window.addEventListener("load", () => {
           navigator.serviceWorker.register("/sw.js").then(reg => {
@@ -970,7 +1621,7 @@
         });
       }
 
-      initGSI();
+      await loadTenantConfig();
       if (currentVendor) {
         showDashboard();
       }
@@ -988,7 +1639,7 @@
       const password = document.getElementById('loginPassword').value;
 
       try {
-        const res = await fetch(`${API_URL}/auth/login`, {
+        const res = await apiFetch(`${API_URL}/auth/login`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email, password })
@@ -997,6 +1648,7 @@
         if (data.error) throw new Error(data.error);
 
         localStorage.setItem('um_vendor', JSON.stringify(data.vendor));
+        localStorage.setItem('um_vendor_token', data.token); // Save vendor token
         currentVendor = data.vendor;
         showDashboard();
       } catch (err) {
@@ -1013,11 +1665,11 @@
         password: document.getElementById('regPassword').value,
         phone: document.getElementById('regPhone').value,
         category: 'General',
-        location: 'Unity Mall'
+        location: 'SME centre'
       };
 
       try {
-        const res = await fetch(`${API_URL}/auth/register`, {
+        const res = await apiFetch(`${API_URL}/auth/register`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
@@ -1034,50 +1686,29 @@
 
 
     async function loadSellProducts() {
-      const res = await fetch(`${API_URL}/products`);
+      const res = await apiFetch(`${API_URL}/products`);
       const products = await res.json();
       const sellSelect = document.getElementById("sellProduct");
       sellSelect.innerHTML = products.map(p => `<option value="${p.id}">${p.name} (K${p.price})</option>`).join("");
       updateSellPrice();
     }
-    function showDashboard() {
-      accountingTransactions = JSON.parse(localStorage.getItem("um_accounting_vendor_" + currentVendor.id) || "[]");
 
+    function showDashboard() {
       loadSellProducts();
-      renderHealthChart();
-      updateAccountingUI();
       document.getElementById('authScreen').classList.add('hidden');
       document.getElementById('sidebar').classList.remove('hidden');
       document.getElementById('mobileNav').classList.remove('hidden');
       document.getElementById('mainContent').classList.remove('hidden');
       document.getElementById('vendorStoreName').textContent = currentVendor.name;
       loadStoreData();
-    }
-
-    function logout() {
-      localStorage.removeItem('um_vendor');
-      document.getElementById('sidebar').classList.add('hidden');
-      document.getElementById('mobileNav').classList.add('hidden');
-      document.getElementById('mainContent').classList.add('hidden');
-      document.getElementById('authScreen').classList.remove('hidden');
-      location.reload();
-    }
-
-    function switchTab(tabId) {
-      document.querySelectorAll('.tab-content').forEach(t => t.classList.add('hidden'));
-      document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
-
-      document.getElementById(`tab-${tabId}`).classList.remove('hidden');
-      const desktopNav = document.getElementById(`nav-${tabId}`);
-      const mobileNav = document.getElementById(`m-nav-${tabId}`);
-      if (desktopNav) desktopNav.classList.add('active');
-      if (mobileNav) mobileNav.classList.add('active');
+      loadCustomers();
+      loadSuppliers();
     }
 
     async function loadStoreData() {
       try {
         // Load products
-        const res = await fetch(`${API_URL}/vendors/${currentVendor.id}/products`);
+        const res = await apiFetch(`${API_URL}/vendors/${currentVendor.id}/products`);
         const products = await res.json();
 
         document.getElementById('statProducts').textContent = products.length;
@@ -1097,7 +1728,7 @@
         document.getElementById('allProductsTable').innerHTML = products.map(renderProduct).join('') || '<tr><td colspan="4" style="text-align:center; padding:2rem;">No products found.</td></tr>';
 
         // Load Orders
-        const oRes = await fetch(`${API_URL}/vendors/${currentVendor.id}/orders`);
+        const oRes = await apiFetch(`${API_URL}/vendors/${currentVendor.id}/orders`);
         const orders = await oRes.json();
 
         const ordersBody = document.getElementById('ordersTable');
@@ -1119,13 +1750,16 @@
         }).join('') || '<tr><td colspan="6" style="text-align:center; padding:2rem;">No orders yet.</td></tr>';
 
         // Fill settings
-        const vRes = await fetch(`${API_URL}/vendors/me/${currentVendor.id}`);
+        const vRes = await apiFetch(`${API_URL}/vendors/me/${currentVendor.id}`);
         const vendor = await vRes.json();
         document.getElementById('sName').value = vendor.name;
         document.getElementById('sCategory').value = vendor.category;
         document.getElementById('sPhone').value = vendor.phone;
         document.getElementById('sLocation').value = vendor.location || '';
         document.getElementById('sDesc').value = vendor.description || '';
+
+        // Refresh transaction accounting panel
+        loadAccountingUI();
       } catch (err) {
         console.error(err);
       }
@@ -1139,12 +1773,14 @@
         name: document.getElementById('pName').value,
         category: document.getElementById('pCategory').value,
         price: document.getElementById('pPrice').value,
+        cost_price: document.getElementById('pCostPrice').value,
+        stock: document.getElementById('pStock').value,
         description: document.getElementById('pDesc').value,
         status: 'active'
       };
 
       try {
-        const res = await fetch(`${API_URL}/products`, {
+        const res = await apiFetch(`${API_URL}/products`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
@@ -1153,7 +1789,6 @@
         alert('Product added!');
         e.target.reset();
         loadStoreData();
-        updateAccountingUI();
       } catch (err) {
         alert(err.message);
       }
@@ -1171,7 +1806,7 @@
       };
 
       try {
-        const res = await fetch(`${API_URL}/vendors/${currentVendor.id}`, {
+        const res = await apiFetch(`${API_URL}/vendors/${currentVendor.id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
@@ -1188,15 +1823,14 @@
 
     async function deleteProduct(id) {
       if (confirm('Delete this product?')) {
-        await fetch(`${API_URL}/products/${id}`, { method: 'DELETE' });
+        await apiFetch(`${API_URL}/products/${id}`, { method: 'DELETE' });
         loadStoreData();
-        updateAccountingUI();
       }
     }
 
     async function updateOrderStatus(id, status) {
       try {
-        await fetch(`${API_URL}/orders/${id}/status`, {
+        await apiFetch(`${API_URL}/orders/${id}/status`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ status })
@@ -1205,6 +1839,27 @@
       } catch (err) {
         alert('Failed to update status');
       }
+    }
+
+    function logout() {
+      localStorage.removeItem('um_vendor');
+      localStorage.removeItem('um_vendor_token');
+      document.getElementById('sidebar').classList.add('hidden');
+      document.getElementById('mobileNav').classList.add('hidden');
+      document.getElementById('mainContent').classList.add('hidden');
+      document.getElementById('authScreen').classList.remove('hidden');
+      location.reload();
+    }
+
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-content').forEach(t => t.classList.add('hidden'));
+      document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+
+      document.getElementById(`tab-${tabId}`).classList.remove('hidden');
+      const desktopNav = document.getElementById(`nav-${tabId}`);
+      const mobileNav = document.getElementById(`m-nav-${tabId}`);
+      if (desktopNav) desktopNav.classList.add('active');
+      if (mobileNav) mobileNav.classList.add('active');
     }
 
     init();
