@@ -233,6 +233,7 @@ function initDatabase() {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         username TEXT UNIQUE NOT NULL,
         password TEXT NOT NULL,
+        role TEXT DEFAULT 'super_admin',
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
       )
     `);
@@ -368,7 +369,8 @@ function initDatabase() {
       { name: 'users', col: 'tenant_id', type: 'INTEGER' },
       { name: 'services', col: 'tenant_id', type: 'INTEGER' },
       { name: 'products', col: 'cost_price', type: 'REAL' },
-      { name: 'sales', col: 'customer_id', type: 'INTEGER' }
+      { name: 'sales', col: 'customer_id', type: 'INTEGER' },
+      { name: 'admins', col: 'role', type: 'TEXT' }
     ];
 
     let alterCount = 0;
@@ -386,6 +388,7 @@ function initDatabase() {
         db.run('UPDATE orders SET tenant_id = 1 WHERE tenant_id IS NULL');
         db.run('UPDATE users SET tenant_id = 1 WHERE tenant_id IS NULL');
         db.run('UPDATE services SET tenant_id = 1 WHERE tenant_id IS NULL');
+        db.run("UPDATE admins SET role = 'super_admin' WHERE role IS NULL");
 
         // Seed admin from env vars, falling back to 'admin' / 'admin123' if not set
         const adminUser = process.env.ADMIN_USERNAME || 'admin';
@@ -394,7 +397,7 @@ function initDatabase() {
         db.get('SELECT * FROM admins WHERE username = ?', [adminUser], async (err, row) => {
           if (!row) {
             const hashedPass = await bcrypt.hash(adminPass, 10);
-            db.run('INSERT INTO admins (username, password) VALUES (?, ?)', [adminUser, hashedPass]);
+            db.run('INSERT INTO admins (username, password, role) VALUES (?, ?, ?)', [adminUser, hashedPass, 'super_admin']);
             console.log(`Admin seeded: ${adminUser}`);
           } else {
             // Check if existing password is plaintext. Bcrypt hashes always start with $2a$ or $2b$ or $2y$
@@ -618,15 +621,15 @@ app.post("/api/admin/login", (req, res) => {
     const isMatch = await bcrypt.compare(password, row.password);
     if (!isMatch) return res.status(401).json({ error: "Invalid admin credentials" });
 
-    const token = jwt.sign({ id: row.id, username: row.username, role: 'admin' }, JWT_SECRET, { expiresIn: '24h' });
-    res.json({ message: "Admin logged in", token, admin: { id: row.id, username: row.username } });
+    const token = jwt.sign({ id: row.id, username: row.username, role: row.role || 'super_admin' }, JWT_SECRET, { expiresIn: '24h' });
+    res.json({ message: "Admin logged in", token, admin: { id: row.id, username: row.username, role: row.role || 'super_admin' } });
   });
 });
 
 // ============== PHASE 1 / PHASE 6: ADMIN SUITE ENDPOINTS ==============
 
 // Admin Stats
-app.get('/api/admin/stats', authenticateToken(['admin']), (req, res) => {
+app.get('/api/admin/stats', authenticateToken(['centre_admin', 'platform_admin', 'super_admin']), (req, res) => {
   const stats = {};
   db.get('SELECT COUNT(*) as count FROM vendors', [], (err, row) => {
     stats.totalVendors = row ? (row.count || row['COUNT(*)'] || 0) : 0;
@@ -644,7 +647,7 @@ app.get('/api/admin/stats', authenticateToken(['admin']), (req, res) => {
 });
 
 // Admin Vendors Management
-app.get('/api/admin/vendors', authenticateToken(['admin']), (req, res) => {
+app.get('/api/admin/vendors', authenticateToken(['centre_admin', 'platform_admin', 'super_admin']), (req, res) => {
   db.all('SELECT * FROM vendors ORDER BY created_at DESC', [], (err, rows) => {
     if (err) return res.status(500).json({ error: err.message });
     res.json(rows);
@@ -652,7 +655,7 @@ app.get('/api/admin/vendors', authenticateToken(['admin']), (req, res) => {
 });
 
 // Admin Products Management
-app.get('/api/admin/products', authenticateToken(['admin']), (req, res) => {
+app.get('/api/admin/products', authenticateToken(['centre_admin', 'platform_admin', 'super_admin']), (req, res) => {
   const sql = 'SELECT p.*, v.name as vendor_name FROM products p LEFT JOIN vendors v ON p.vendor_id = v.id ORDER BY p.created_at DESC';
   db.all(sql, [], (err, rows) => {
     if (err) return res.status(500).json({ error: err.message });
@@ -661,7 +664,7 @@ app.get('/api/admin/products', authenticateToken(['admin']), (req, res) => {
 });
 
 // Admin Orders Management
-app.get('/api/admin/orders', authenticateToken(['admin']), (req, res) => {
+app.get('/api/admin/orders', authenticateToken(['centre_admin', 'platform_admin', 'super_admin']), (req, res) => {
   const sql = 'SELECT o.*, v.name as vendor_name FROM orders o LEFT JOIN vendors v ON o.vendor_id = v.id ORDER BY o.created_at DESC';
   db.all(sql, [], (err, rows) => {
     if (err) return res.status(500).json({ error: err.message });
@@ -670,7 +673,7 @@ app.get('/api/admin/orders', authenticateToken(['admin']), (req, res) => {
 });
 
 // Admin Delete Vendor
-app.delete('/api/admin/vendors/:id', authenticateToken(['admin']), (req, res) => {
+app.delete('/api/admin/vendors/:id', authenticateToken(['centre_admin', 'platform_admin', 'super_admin']), (req, res) => {
   db.run('DELETE FROM vendors WHERE id = ?', [req.params.id], function(err) {
     if (err) return res.status(500).json({ error: err.message });
     res.json({ message: 'Vendor deleted successfully' });
@@ -678,7 +681,7 @@ app.delete('/api/admin/vendors/:id', authenticateToken(['admin']), (req, res) =>
 });
 
 // Admin Delete Product
-app.delete('/api/admin/products/:id', authenticateToken(['admin']), (req, res) => {
+app.delete('/api/admin/products/:id', authenticateToken(['centre_admin', 'platform_admin', 'super_admin']), (req, res) => {
   db.run('DELETE FROM products WHERE id = ?', [req.params.id], function(err) {
     if (err) return res.status(500).json({ error: err.message });
     res.json({ message: 'Product deleted successfully' });
@@ -686,7 +689,7 @@ app.delete('/api/admin/products/:id', authenticateToken(['admin']), (req, res) =
 });
 
 // Admin Delete Order
-app.delete('/api/admin/orders/:id', authenticateToken(['admin']), (req, res) => {
+app.delete('/api/admin/orders/:id', authenticateToken(['centre_admin', 'platform_admin', 'super_admin']), (req, res) => {
   db.run('DELETE FROM orders WHERE id = ?', [req.params.id], function(err) {
     if (err) return res.status(500).json({ error: err.message });
     res.json({ message: 'Order deleted successfully' });
@@ -725,7 +728,7 @@ app.get('/api/vendors/me/:id', (req, res) => {
 });
 
 // Update vendor
-app.put('/api/vendors/:id', authenticateToken(['vendor', 'admin']), (req, res) => {
+app.put('/api/vendors/:id', authenticateToken(['vendor', 'centre_admin', 'platform_admin', 'super_admin']), (req, res) => {
   const tenant_id = req.tenant.id;
   const { name, category, phone, location, description, facebook, email } = req.body;
 
@@ -737,7 +740,7 @@ app.put('/api/vendors/:id', authenticateToken(['vendor', 'admin']), (req, res) =
 });
 
 // Delete vendor
-app.delete('/api/vendors/:id', authenticateToken(['vendor', 'admin']), (req, res) => {
+app.delete('/api/vendors/:id', authenticateToken(['vendor', 'centre_admin', 'platform_admin', 'super_admin']), (req, res) => {
   const tenant_id = req.tenant.id;
   db.run('DELETE FROM vendors WHERE id = ? AND tenant_id = ?', [req.params.id, tenant_id], function(err) {
     if (err) return res.status(500).json({ error: err.message });
@@ -748,7 +751,7 @@ app.delete('/api/vendors/:id', authenticateToken(['vendor', 'admin']), (req, res
 // ============== PRODUCT ROUTES ==============
 
 // Create product
-app.post('/api/products', authenticateToken(['vendor', 'admin']), (req, res) => {
+app.post('/api/products', authenticateToken(['vendor', 'centre_admin', 'platform_admin', 'super_admin']), (req, res) => {
   const { vendor_id, name, category, price, stock, description, status, cost_price } = req.body;
   const tenant_id = req.tenant.id;
 
@@ -760,7 +763,7 @@ app.post('/api/products', authenticateToken(['vendor', 'admin']), (req, res) => 
 });
 
 // Upload product images
-app.post('/api/products/:id/images', authenticateToken(['vendor', 'admin']), upload.array('images', 5), (req, res) => {
+app.post('/api/products/:id/images', authenticateToken(['vendor', 'centre_admin', 'platform_admin', 'super_admin']), upload.array('images', 5), (req, res) => {
   const productId = req.params.id;
   const files = req.files;
   if (!files || files.length === 0) return res.status(400).json({ error: 'No files uploaded' });
@@ -821,7 +824,7 @@ app.get('/api/vendors/:vendorId/products', (req, res) => {
 });
 
 // Delete product
-app.delete('/api/products/:id', authenticateToken(['vendor', 'admin']), (req, res) => {
+app.delete('/api/products/:id', authenticateToken(['vendor', 'centre_admin', 'platform_admin', 'super_admin']), (req, res) => {
   const tenant_id = req.tenant.id;
   db.run('DELETE FROM products WHERE id = ? AND tenant_id = ?', [req.params.id, tenant_id], function(err) {
     if (err) return res.status(500).json({ error: err.message });
@@ -832,7 +835,7 @@ app.delete('/api/products/:id', authenticateToken(['vendor', 'admin']), (req, re
 // ============== SERVICE ROUTES ==============
 
 // Create service
-app.post('/api/services', authenticateToken(['vendor', 'admin']), upload.single('image'), (req, res) => {
+app.post('/api/services', authenticateToken(['vendor', 'centre_admin', 'platform_admin', 'super_admin']), upload.single('image'), (req, res) => {
   const { vendor_id, name, category, price, duration, description } = req.body;
   const imageUrl = req.file ? `/uploads/${req.file.filename}` : null;
   const tenant_id = req.tenant.id;
@@ -855,7 +858,7 @@ app.get('/api/services', (req, res) => {
 });
 
 // Delete service
-app.delete('/api/services/:id', authenticateToken(['vendor', 'admin']), (req, res) => {
+app.delete('/api/services/:id', authenticateToken(['vendor', 'centre_admin', 'platform_admin', 'super_admin']), (req, res) => {
   const tenant_id = req.tenant.id;
   db.run('DELETE FROM services WHERE id = ? AND tenant_id = ?', [req.params.id, tenant_id], function(err) {
     if (err) return res.status(500).json({ error: err.message });
@@ -866,7 +869,7 @@ app.delete('/api/services/:id', authenticateToken(['vendor', 'admin']), (req, re
 // ============== ORDER ROUTES ==============
 
 // Create order
-app.post('/api/orders', authenticateToken(['customer', 'vendor', 'admin']), (req, res) => {
+app.post('/api/orders', authenticateToken(['customer', 'vendor', 'centre_admin', 'platform_admin', 'super_admin']), (req, res) => {
   const { vendor_id, customer_name, customer_phone, items, total_price } = req.body;
   const tenant_id = req.tenant.id;
 
@@ -894,7 +897,7 @@ app.post('/api/orders', authenticateToken(['customer', 'vendor', 'admin']), (req
 });
 
 // Get orders by vendor (filtered by tenant)
-app.get('/api/vendors/:vendorId/orders', authenticateToken(['vendor', 'admin']), (req, res) => {
+app.get('/api/vendors/:vendorId/orders', authenticateToken(['vendor', 'centre_admin', 'platform_admin', 'super_admin']), (req, res) => {
   const tenant_id = req.tenant.id;
   db.all('SELECT * FROM orders WHERE vendor_id = ? AND tenant_id = ? ORDER BY created_at DESC', [req.params.vendorId, tenant_id], (err, rows) => {
     if (err) return res.status(500).json({ error: err.message });
@@ -903,7 +906,7 @@ app.get('/api/vendors/:vendorId/orders', authenticateToken(['vendor', 'admin']),
 });
 
 // Update order status & decrement stock on 'completed'
-app.put('/api/orders/:id/status', authenticateToken(['vendor', 'admin']), (req, res) => {
+app.put('/api/orders/:id/status', authenticateToken(['vendor', 'centre_admin', 'platform_admin', 'super_admin']), (req, res) => {
   const { status } = req.body;
   const tenant_id = req.tenant.id;
 
@@ -941,7 +944,7 @@ app.put('/api/orders/:id/status', authenticateToken(['vendor', 'admin']), (req, 
 // ============== PHASE 2: SALES, EXPENSES & INVENTORY ENDPOINTS ==============
 
 // Record Sale
-app.post('/api/sales', authenticateToken(['vendor', 'admin']), (req, res) => {
+app.post('/api/sales', authenticateToken(['vendor', 'centre_admin', 'platform_admin', 'super_admin']), (req, res) => {
   const { product_id, quantity, unit_price, total, payment_method, sales_channel, customer_ref, customer_id, sold_at } = req.body;
   const vendor_id = req.user.id;
   const tenant_id = req.tenant.id;
@@ -966,7 +969,7 @@ app.post('/api/sales', authenticateToken(['vendor', 'admin']), (req, res) => {
 });
 
 // Get Sales
-app.get('/api/sales', authenticateToken(['vendor', 'admin']), (req, res) => {
+app.get('/api/sales', authenticateToken(['vendor', 'centre_admin', 'platform_admin', 'super_admin']), (req, res) => {
   const vendor_id = req.user.id;
   const tenant_id = req.tenant.id;
 
@@ -977,7 +980,7 @@ app.get('/api/sales', authenticateToken(['vendor', 'admin']), (req, res) => {
 });
 
 // Record Expense
-app.post('/api/expenses', authenticateToken(['vendor', 'admin']), (req, res) => {
+app.post('/api/expenses', authenticateToken(['vendor', 'centre_admin', 'platform_admin', 'super_admin']), (req, res) => {
   const { category, amount, description, incurred_at } = req.body;
   const vendor_id = req.user.id;
   const tenant_id = req.tenant.id;
@@ -991,7 +994,7 @@ app.post('/api/expenses', authenticateToken(['vendor', 'admin']), (req, res) => 
 });
 
 // Get Expenses
-app.get('/api/expenses', authenticateToken(['vendor', 'admin']), (req, res) => {
+app.get('/api/expenses', authenticateToken(['vendor', 'centre_admin', 'platform_admin', 'super_admin']), (req, res) => {
   const vendor_id = req.user.id;
   const tenant_id = req.tenant.id;
 
@@ -1002,7 +1005,7 @@ app.get('/api/expenses', authenticateToken(['vendor', 'admin']), (req, res) => {
 });
 
 // Record Inventory Movement
-app.post('/api/inventory', authenticateToken(['vendor', 'admin']), (req, res) => {
+app.post('/api/inventory', authenticateToken(['vendor', 'centre_admin', 'platform_admin', 'super_admin']), (req, res) => {
   const { product_id, type, quantity, reason } = req.body; // type: 'in' or 'out'
   const vendor_id = req.user.id;
   const tenant_id = req.tenant.id;
@@ -1021,7 +1024,7 @@ app.post('/api/inventory', authenticateToken(['vendor', 'admin']), (req, res) =>
 });
 
 // Get Inventory Movements
-app.get('/api/inventory', authenticateToken(['vendor', 'admin']), (req, res) => {
+app.get('/api/inventory', authenticateToken(['vendor', 'centre_admin', 'platform_admin', 'super_admin']), (req, res) => {
   const vendor_id = req.user.id;
   const tenant_id = req.tenant.id;
 
@@ -1032,7 +1035,7 @@ app.get('/api/inventory', authenticateToken(['vendor', 'admin']), (req, res) => 
 });
 
 // Get Dashboard Analytics
-app.get('/api/dashboard', authenticateToken(['vendor', 'admin']), (req, res) => {
+app.get('/api/dashboard', authenticateToken(['vendor', 'centre_admin', 'platform_admin', 'super_admin']), (req, res) => {
   const vendor_id = req.user.id;
   const tenant_id = req.tenant.id;
 
@@ -1145,7 +1148,7 @@ app.get('/api/dashboard', authenticateToken(['vendor', 'admin']), (req, res) => 
 // ============== PHASE 3: CUSTOMERS, SUPPLIERS, & CASHFLOW ==============
 
 // Customers CRUD
-app.post('/api/customers', authenticateToken(['vendor', 'admin']), (req, res) => {
+app.post('/api/customers', authenticateToken(['vendor', 'centre_admin', 'platform_admin', 'super_admin']), (req, res) => {
   const { name, phone, email, notes } = req.body;
   const vendor_id = req.user.id;
   const tenant_id = req.tenant.id;
@@ -1158,7 +1161,7 @@ app.post('/api/customers', authenticateToken(['vendor', 'admin']), (req, res) =>
   });
 });
 
-app.get('/api/customers', authenticateToken(['vendor', 'admin']), (req, res) => {
+app.get('/api/customers', authenticateToken(['vendor', 'centre_admin', 'platform_admin', 'super_admin']), (req, res) => {
   const vendor_id = req.user.id;
   const tenant_id = req.tenant.id;
 
@@ -1168,7 +1171,7 @@ app.get('/api/customers', authenticateToken(['vendor', 'admin']), (req, res) => 
   });
 });
 
-app.put('/api/customers/:id', authenticateToken(['vendor', 'admin']), (req, res) => {
+app.put('/api/customers/:id', authenticateToken(['vendor', 'centre_admin', 'platform_admin', 'super_admin']), (req, res) => {
   const { name, phone, email, notes } = req.body;
   const vendor_id = req.user.id;
   const tenant_id = req.tenant.id;
@@ -1180,7 +1183,7 @@ app.put('/api/customers/:id', authenticateToken(['vendor', 'admin']), (req, res)
   });
 });
 
-app.delete('/api/customers/:id', authenticateToken(['vendor', 'admin']), (req, res) => {
+app.delete('/api/customers/:id', authenticateToken(['vendor', 'centre_admin', 'platform_admin', 'super_admin']), (req, res) => {
   const vendor_id = req.user.id;
   const tenant_id = req.tenant.id;
 
@@ -1191,7 +1194,7 @@ app.delete('/api/customers/:id', authenticateToken(['vendor', 'admin']), (req, r
 });
 
 // Suppliers CRUD
-app.post('/api/suppliers', authenticateToken(['vendor', 'admin']), (req, res) => {
+app.post('/api/suppliers', authenticateToken(['vendor', 'centre_admin', 'platform_admin', 'super_admin']), (req, res) => {
   const { name, contact, products_supplied, payment_status } = req.body;
   const vendor_id = req.user.id;
   const tenant_id = req.tenant.id;
@@ -1203,7 +1206,7 @@ app.post('/api/suppliers', authenticateToken(['vendor', 'admin']), (req, res) =>
   });
 });
 
-app.get('/api/suppliers', authenticateToken(['vendor', 'admin']), (req, res) => {
+app.get('/api/suppliers', authenticateToken(['vendor', 'centre_admin', 'platform_admin', 'super_admin']), (req, res) => {
   const vendor_id = req.user.id;
   const tenant_id = req.tenant.id;
 
@@ -1213,7 +1216,7 @@ app.get('/api/suppliers', authenticateToken(['vendor', 'admin']), (req, res) => 
   });
 });
 
-app.put('/api/suppliers/:id', authenticateToken(['vendor', 'admin']), (req, res) => {
+app.put('/api/suppliers/:id', authenticateToken(['vendor', 'centre_admin', 'platform_admin', 'super_admin']), (req, res) => {
   const { name, contact, products_supplied, payment_status } = req.body;
   const vendor_id = req.user.id;
   const tenant_id = req.tenant.id;
@@ -1225,7 +1228,7 @@ app.put('/api/suppliers/:id', authenticateToken(['vendor', 'admin']), (req, res)
   });
 });
 
-app.delete('/api/suppliers/:id', authenticateToken(['vendor', 'admin']), (req, res) => {
+app.delete('/api/suppliers/:id', authenticateToken(['vendor', 'centre_admin', 'platform_admin', 'super_admin']), (req, res) => {
   const vendor_id = req.user.id;
   const tenant_id = req.tenant.id;
 
@@ -1236,7 +1239,7 @@ app.delete('/api/suppliers/:id', authenticateToken(['vendor', 'admin']), (req, r
 });
 
 // Supplier Purchases CRUD
-app.post('/api/supplier-purchases', authenticateToken(['vendor', 'admin']), (req, res) => {
+app.post('/api/supplier-purchases', authenticateToken(['vendor', 'centre_admin', 'platform_admin', 'super_admin']), (req, res) => {
   const { supplier_id, amount, description, purchased_at } = req.body;
   const vendor_id = req.user.id;
   const tenant_id = req.tenant.id;
@@ -1249,7 +1252,7 @@ app.post('/api/supplier-purchases', authenticateToken(['vendor', 'admin']), (req
   });
 });
 
-app.get('/api/supplier-purchases', authenticateToken(['vendor', 'admin']), (req, res) => {
+app.get('/api/supplier-purchases', authenticateToken(['vendor', 'centre_admin', 'platform_admin', 'super_admin']), (req, res) => {
   const vendor_id = req.user.id;
   const tenant_id = req.tenant.id;
 
@@ -1266,7 +1269,7 @@ app.get('/api/supplier-purchases', authenticateToken(['vendor', 'admin']), (req,
   });
 });
 
-app.delete('/api/supplier-purchases/:id', authenticateToken(['vendor', 'admin']), (req, res) => {
+app.delete('/api/supplier-purchases/:id', authenticateToken(['vendor', 'centre_admin', 'platform_admin', 'super_admin']), (req, res) => {
   const vendor_id = req.user.id;
   const tenant_id = req.tenant.id;
 
@@ -1277,7 +1280,7 @@ app.delete('/api/supplier-purchases/:id', authenticateToken(['vendor', 'admin'])
 });
 
 // Get Cash Flow over selected period
-app.get('/api/cashflow', authenticateToken(['vendor', 'admin']), (req, res) => {
+app.get('/api/cashflow', authenticateToken(['vendor', 'centre_admin', 'platform_admin', 'super_admin']), (req, res) => {
   const vendor_id = req.user.id;
   const tenant_id = req.tenant.id;
 
@@ -1330,7 +1333,7 @@ app.get('/api/cashflow', authenticateToken(['vendor', 'admin']), (req, res) => {
 });
 
 // Explainable, Weighted Business Health Score
-app.get('/api/health-score', authenticateToken(['vendor', 'admin']), (req, res) => {
+app.get('/api/health-score', authenticateToken(['vendor', 'centre_admin', 'platform_admin', 'super_admin']), (req, res) => {
   const vendor_id = req.user.id;
   const tenant_id = req.tenant.id;
 
@@ -1439,7 +1442,7 @@ app.get('/api/health-score', authenticateToken(['vendor', 'admin']), (req, res) 
 });
 
 // ============== PHASE 5: PREDICTIVE INTELLIGENCE ==============
-app.get('/api/predictive-analytics', authenticateToken(['vendor', 'admin']), (req, res) => {
+app.get('/api/predictive-analytics', authenticateToken(['vendor', 'centre_admin', 'platform_admin', 'super_admin']), (req, res) => {
   const vendor_id = req.user.id;
   const tenant_id = req.tenant.id;
 
@@ -1555,7 +1558,7 @@ app.get('/api/predictive-analytics', authenticateToken(['vendor', 'admin']), (re
 
 // ============== PHASE 6: GROUNDED AI BUSINESS ADVISOR & CHAT ENDPOINTS ==============
 
-app.post('/api/ai/ask', authenticateToken(['vendor', 'admin']), async (req, res) => {
+app.post('/api/ai/ask', authenticateToken(['vendor', 'centre_admin', 'platform_admin', 'super_admin']), async (req, res) => {
   const vendor_id = req.user.id;
   const tenant_id = req.tenant.id;
   const { question } = req.body;
@@ -1703,7 +1706,7 @@ app.post('/api/ai/ask', authenticateToken(['vendor', 'admin']), async (req, res)
 });
 
 // Backward compatible bot/webhook routing to the AI advisor
-app.post('/api/bot/webhook', authenticateToken(['vendor', 'admin']), async (req, res) => {
+app.post('/api/bot/webhook', authenticateToken(['vendor', 'centre_admin', 'platform_admin', 'super_admin']), async (req, res) => {
   const { message } = req.body;
   if (!message) return res.status(400).json({ error: "No message provided" });
 
