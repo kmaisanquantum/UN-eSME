@@ -911,7 +911,7 @@ app.put('/api/orders/:id/status', authenticateToken(['vendor', 'centre_admin', '
   const tenant_id = req.tenant.id;
 
   // Fetch order current status first to prevent duplicate stock decrement
-  db.get('SELECT status FROM orders WHERE id = ? AND tenant_id = ?', [req.params.id, tenant_id], (err, order) => {
+  db.get('SELECT * FROM orders WHERE id = ? AND tenant_id = ?', [req.params.id, tenant_id], (err, order) => {
     if (err) return res.status(500).json({ error: err.message });
     if (!order) return res.status(404).json({ error: 'Order not found' });
 
@@ -927,12 +927,26 @@ app.put('/api/orders/:id/status', authenticateToken(['vendor', 'centre_admin', '
     db.run('UPDATE orders SET status = ? WHERE id = ? AND tenant_id = ?', [status, req.params.id, tenant_id], function(err2) {
       if (err2) return res.status(500).json({ error: err2.message });
 
-      // If status is transitioning to 'completed', decrement stock for each line item
+      // If status is transitioning to 'completed', decrement stock for each line item, insert sale, and log inventory out movement
       if (status === 'completed') {
         db.all('SELECT * FROM order_items WHERE order_id = ?', [req.params.id], (err3, items) => {
           if (err3 || !items) return;
+          const now = new Date().toISOString();
           items.forEach(item => {
+            // Decrement stock (existing logic)
             db.run('UPDATE products SET stock = stock - ? WHERE id = ?', [item.quantity, item.product_id]);
+
+            // Insert into sales table
+            db.run(
+              'INSERT INTO sales (tenant_id, vendor_id, product_id, quantity, unit_price, total, payment_method, sales_channel, customer_ref, sold_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+              [order.tenant_id, order.vendor_id, item.product_id, item.quantity, item.unit_price, item.quantity * item.unit_price, 'marketplace', 'online', 'Order #' + order.id, now]
+            );
+
+            // Insert into inventory_movements table
+            db.run(
+              'INSERT INTO inventory_movements (tenant_id, vendor_id, product_id, type, quantity, reason, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
+              [order.tenant_id, order.vendor_id, item.product_id, 'out', item.quantity, 'Sale', now]
+            );
           });
         });
       }
