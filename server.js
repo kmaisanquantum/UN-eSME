@@ -164,6 +164,8 @@ function initDatabase() {
         social_provider TEXT,
         social_id TEXT,
         tenant_id INTEGER,
+        verified INTEGER DEFAULT 0,
+        opening_hours TEXT,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
       )
@@ -370,6 +372,22 @@ function initDatabase() {
       )
     `);
 
+    // 16. Reviews table
+    db.run(`
+      CREATE TABLE IF NOT EXISTS reviews (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        tenant_id INTEGER,
+        product_id INTEGER NOT NULL,
+        vendor_id INTEGER NOT NULL,
+        customer_id INTEGER NOT NULL,
+        rating INTEGER NOT NULL,
+        comment TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
+        FOREIGN KEY (customer_id) REFERENCES users(id) ON DELETE CASCADE
+      )
+    `);
+
     // Backfill columns for any older existing DB
     const tablesToAlter = [
       { name: 'vendors', col: 'tenant_id', type: 'INTEGER' },
@@ -382,7 +400,9 @@ function initDatabase() {
       { name: 'admins', col: 'role', type: 'TEXT' },
       { name: 'tenants', col: 'status', type: 'TEXT' },
       { name: 'admins', col: 'tenant_id', type: 'INTEGER' },
-      { name: 'tenants', col: 'subscription_tier', type: "TEXT DEFAULT 'free'" }
+      { name: 'tenants', col: 'subscription_tier', type: "TEXT DEFAULT 'free'" },
+      { name: 'vendors', col: 'verified', type: 'INTEGER DEFAULT 0' },
+      { name: 'vendors', col: 'opening_hours', type: 'TEXT' }
     ];
 
     let alterCount = 0;
@@ -403,6 +423,7 @@ function initDatabase() {
         db.run("UPDATE admins SET role = 'super_admin' WHERE role IS NULL");
         db.run("UPDATE tenants SET status = 'active' WHERE status IS NULL");
         db.run("UPDATE tenants SET subscription_tier = 'free' WHERE subscription_tier IS NULL");
+        db.run("UPDATE vendors SET verified = 0 WHERE verified IS NULL");
         db.run("UPDATE admins SET tenant_id = 1 WHERE tenant_id IS NULL");
 
         // Seed admin from env vars, falling back to 'admin' / 'admin123' if not set
@@ -896,6 +917,28 @@ app.get('/api/admin/vendors', authenticateToken(['centre_admin', 'platform_admin
   }
 });
 
+// PUT verify a vendor
+app.put('/api/admin/vendors/:id/verify', authenticateToken(['centre_admin', 'platform_admin', 'super_admin']), (req, res) => {
+  const vendorId = req.params.id;
+  let { verified } = req.body;
+  const verifiedVal = (verified === true || verified === 1 || verified === '1') ? 1 : 0;
+
+  db.get('SELECT * FROM vendors WHERE id = ?', [vendorId], (err, vendor) => {
+    if (err) return res.status(500).json({ error: err.message });
+    if (!vendor) return res.status(404).json({ error: 'Vendor not found' });
+
+    // Scoping for centre_admin
+    if (req.user.role === 'centre_admin' && vendor.tenant_id !== req.user.tenant_id) {
+      return res.status(403).json({ error: 'Access forbidden: cannot verify vendor of another tenant' });
+    }
+
+    db.run('UPDATE vendors SET verified = ? WHERE id = ?', [verifiedVal, vendorId], function(err2) {
+      if (err2) return res.status(500).json({ error: err2.message });
+      res.json({ message: 'Vendor verification updated successfully', verified: verifiedVal });
+    });
+  });
+});
+
 // Admin Products Management
 app.get('/api/admin/products', authenticateToken(['centre_admin', 'platform_admin', 'super_admin']), (req, res) => {
   const { role, tenant_id } = req.user;
@@ -985,9 +1028,32 @@ app.delete('/api/admin/orders/:id', authenticateToken(['centre_admin', 'platform
 // Get all vendors (filtered by tenant)
 app.get('/api/vendors', (req, res) => {
   const tenant_id = req.tenant.id;
-  db.all('SELECT id, name, category, phone, location, description, facebook, email, created_at FROM vendors WHERE tenant_id = ?', [tenant_id], (err, rows) => {
+  db.all('SELECT id, name, category, phone, location, description, facebook, email, verified, opening_hours, created_at FROM vendors WHERE tenant_id = ?', [tenant_id], (err, vendors) => {
     if (err) return res.status(500).json({ error: err.message });
-    res.json(rows);
+
+    db.all('SELECT rating, vendor_id FROM reviews WHERE tenant_id = ?', [tenant_id], (err2, reviews) => {
+      const vendorReviewsMap = {};
+      (reviews || []).forEach(r => {
+        if (!vendorReviewsMap[r.vendor_id]) {
+          vendorReviewsMap[r.vendor_id] = [];
+        }
+        vendorReviewsMap[r.vendor_id].push(r.rating);
+      });
+
+      const result = vendors.map(v => {
+        const ratings = vendorReviewsMap[v.id] || [];
+        const count = ratings.length;
+        const sum = ratings.reduce((acc, rating) => acc + rating, 0);
+        const avg = count > 0 ? parseFloat((sum / count).toFixed(2)) : 0;
+        return {
+          ...v,
+          average_rating: avg,
+          review_count: count
+        };
+      });
+
+      res.json(result);
+    });
   });
 });
 
@@ -997,7 +1063,19 @@ app.get('/api/vendors/:id', (req, res) => {
   db.get('SELECT * FROM vendors WHERE id = ? AND tenant_id = ?', [req.params.id, tenant_id], (err, row) => {
     if (err) return res.status(500).json({ error: err.message });
     if (!row) return res.status(404).json({ error: 'Vendor not found' });
-    res.json(row);
+
+    db.all('SELECT rating FROM reviews WHERE vendor_id = ? AND tenant_id = ?', [req.params.id, tenant_id], (err2, reviews) => {
+      const ratings = (reviews || []).map(r => r.rating);
+      const count = ratings.length;
+      const sum = ratings.reduce((acc, rating) => acc + rating, 0);
+      const avg = count > 0 ? parseFloat((sum / count).toFixed(2)) : 0;
+
+      res.json({
+        ...row,
+        average_rating: avg,
+        review_count: count
+      });
+    });
   });
 });
 
@@ -1064,6 +1142,78 @@ app.post('/api/products/:id/images', authenticateToken(['vendor', 'centre_admin'
   });
 });
 
+// Submit rating & comment for a product (tenant-scoped)
+app.post('/api/reviews', authenticateToken(['customer']), (req, res) => {
+  const { product_id, rating, comment } = req.body;
+  const customer_id = req.user.id;
+  const tenant_id = req.user.tenant_id || 1;
+
+  if (!product_id || !rating) {
+    return res.status(400).json({ error: 'product_id and rating are required' });
+  }
+
+  const ratingInt = parseInt(rating, 10);
+  if (isNaN(ratingInt) || ratingInt < 1 || ratingInt > 5) {
+    return res.status(400).json({ error: 'Rating must be an integer between 1 and 5' });
+  }
+
+  // 1. Fetch product to verify and get vendor_id
+  db.get('SELECT * FROM products WHERE id = ?', [product_id], (err, product) => {
+    if (err) return res.status(500).json({ error: err.message });
+    if (!product) return res.status(404).json({ error: 'Product not found' });
+
+    const vendor_id = product.vendor_id;
+
+    // 2. Check if a review already exists for this product and customer
+    db.get('SELECT * FROM reviews WHERE product_id = ? AND customer_id = ?', [product_id, customer_id], (err2, existingReview) => {
+      if (err2) return res.status(500).json({ error: err2.message });
+
+      if (existingReview) {
+        // Update existing review
+        const updateSql = 'UPDATE reviews SET rating = ?, comment = ? WHERE id = ?';
+        db.run(updateSql, [ratingInt, comment || '', existingReview.id], function(err3) {
+          if (err3) return res.status(500).json({ error: err3.message });
+          res.json({ message: 'Review updated successfully', id: existingReview.id });
+        });
+      } else {
+        // Insert new review
+        const insertSql = 'INSERT INTO reviews (tenant_id, product_id, vendor_id, customer_id, rating, comment) VALUES (?, ?, ?, ?, ?, ?)';
+        db.run(insertSql, [tenant_id, product_id, vendor_id, customer_id, ratingInt, comment || ''], function(err3) {
+          if (err3) return res.status(500).json({ error: err3.message });
+          res.status(201).json({ message: 'Review submitted successfully', id: this.lastID });
+        });
+      }
+    });
+  });
+});
+
+// Fetch product's reviews, average rating and review count
+app.get('/api/products/:id/reviews', (req, res) => {
+  const product_id = req.params.id;
+
+  const sql = `
+    SELECT r.id, r.tenant_id, r.product_id, r.vendor_id, r.customer_id, r.rating, r.comment, r.created_at, u.name as customer_name
+    FROM reviews r
+    LEFT JOIN users u ON r.customer_id = u.id
+    WHERE r.product_id = ?
+    ORDER BY r.created_at DESC
+  `;
+  db.all(sql, [product_id], (err, rows) => {
+    if (err) return res.status(500).json({ error: err.message });
+
+    const count = rows.length;
+    const sum = rows.reduce((acc, r) => acc + r.rating, 0);
+    const averageRating = count > 0 ? parseFloat((sum / count).toFixed(2)) : 0;
+
+    res.json({
+      product_id: parseInt(product_id, 10),
+      average_rating: averageRating,
+      review_count: count,
+      reviews: rows
+    });
+  });
+});
+
 // Get all products (filtered by tenant)
 app.get('/api/products', (req, res) => {
   const tenant_id = req.tenant.id;
@@ -1071,19 +1221,41 @@ app.get('/api/products', (req, res) => {
   const sql = `
     SELECT p.id, p.vendor_id, p.name, p.category, p.price, p.stock, p.stock_threshold, p.description, p.status, p.cost_price, p.created_at, p.updated_at,
            GROUP_CONCAT(pi.image_url) as images,
-           v.name as vendor_name, v.phone as vendor_phone, v.location as vendor_location
+           v.name as vendor_name, v.phone as vendor_phone, v.location as vendor_location, v.verified as vendor_verified
     FROM products p
     LEFT JOIN product_images pi ON p.id = pi.product_id
     LEFT JOIN vendors v ON p.vendor_id = v.id
     WHERE p.tenant_id = ?
     GROUP BY p.id, p.vendor_id, p.name, p.category, p.price, p.stock, p.stock_threshold, p.description, p.status, p.cost_price, p.created_at, p.updated_at,
-             v.id, v.name, v.phone, v.location
+             v.id, v.name, v.phone, v.location, v.verified
     ORDER BY p.created_at DESC
   `;
   db.all(sql, [tenant_id], (err, rows) => {
     if (err) return res.status(500).json({ error: err.message });
-    const products = rows.map(row => ({ ...row, images: row.images ? row.images.split(',') : [] }));
-    res.json(products);
+
+    db.all('SELECT rating, product_id FROM reviews WHERE tenant_id = ?', [tenant_id], (err2, reviews) => {
+      const productReviewsMap = {};
+      (reviews || []).forEach(r => {
+        if (!productReviewsMap[r.product_id]) productReviewsMap[r.product_id] = [];
+        productReviewsMap[r.product_id].push(r.rating);
+      });
+
+      const products = rows.map(row => {
+        const ratings = productReviewsMap[row.id] || [];
+        const count = ratings.length;
+        const sum = ratings.reduce((acc, rating) => acc + rating, 0);
+        const avg = count > 0 ? parseFloat((sum / count).toFixed(2)) : 0;
+
+        return {
+          ...row,
+          images: row.images ? row.images.split(',') : [],
+          vendor_verified: row.vendor_verified || 0,
+          average_rating: avg,
+          review_count: count
+        };
+      });
+      res.json(products);
+    });
   });
 });
 
@@ -1093,17 +1265,42 @@ app.get('/api/vendors/:vendorId/products', (req, res) => {
   // Fully PostgreSQL-compliant GROUP BY clause listing all columns
   const sql = `
     SELECT p.id, p.vendor_id, p.name, p.category, p.price, p.stock, p.stock_threshold, p.description, p.status, p.cost_price, p.created_at, p.updated_at,
-           GROUP_CONCAT(pi.image_url) as images
+           GROUP_CONCAT(pi.image_url) as images,
+           v.name as vendor_name, v.phone as vendor_phone, v.location as vendor_location, v.verified as vendor_verified
     FROM products p
     LEFT JOIN product_images pi ON p.id = pi.product_id
+    LEFT JOIN vendors v ON p.vendor_id = v.id
     WHERE p.vendor_id = ? AND p.tenant_id = ?
-    GROUP BY p.id, p.vendor_id, p.name, p.category, p.price, p.stock, p.stock_threshold, p.description, p.status, p.cost_price, p.created_at, p.updated_at
+    GROUP BY p.id, p.vendor_id, p.name, p.category, p.price, p.stock, p.stock_threshold, p.description, p.status, p.cost_price, p.created_at, p.updated_at,
+             v.id, v.name, v.phone, v.location, v.verified
     ORDER BY p.created_at DESC
   `;
   db.all(sql, [req.params.vendorId, tenant_id], (err, rows) => {
     if (err) return res.status(500).json({ error: err.message });
-    const products = rows.map(row => ({ ...row, images: row.images ? row.images.split(',') : [] }));
-    res.json(products);
+
+    db.all('SELECT rating, product_id FROM reviews WHERE tenant_id = ?', [tenant_id], (err2, reviews) => {
+      const productReviewsMap = {};
+      (reviews || []).forEach(r => {
+        if (!productReviewsMap[r.product_id]) productReviewsMap[r.product_id] = [];
+        productReviewsMap[r.product_id].push(r.rating);
+      });
+
+      const products = rows.map(row => {
+        const ratings = productReviewsMap[row.id] || [];
+        const count = ratings.length;
+        const sum = ratings.reduce((acc, rating) => acc + rating, 0);
+        const avg = count > 0 ? parseFloat((sum / count).toFixed(2)) : 0;
+
+        return {
+          ...row,
+          images: row.images ? row.images.split(',') : [],
+          vendor_verified: row.vendor_verified || 0,
+          average_rating: avg,
+          review_count: count
+        };
+      });
+      res.json(products);
+    });
   });
 });
 

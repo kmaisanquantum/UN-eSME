@@ -562,6 +562,7 @@
       <h1>Unity Mall <span style="font-weight: 300;">SME centre</span></h1>
     </a>
     <div class="header-actions">
+      <button onclick="toggleLanguage()" class="auth-btn" style="background:none; border:1px solid var(--border); color:var(--text-muted); cursor:pointer;" id="langBtn">🌐 Tok Pisin</button>
       <button class="cart-trigger" onclick="toggleCart()">
         🛒 <span class="cart-count" id="cartCount">0</span>
       </button>
@@ -721,6 +722,19 @@
             Place Order
           </button>
         </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Product Detail & Reviews Modal -->
+  <div id="productModal" class="modal">
+    <div class="modal-content" style="max-width: 550px;">
+      <div class="modal-header">
+        <h3 id="productModalTitle" style="color: var(--text-accent);">Product Details</h3>
+        <button onclick="closeProductModal()" style="background:none; border:none; color:var(--text-muted); font-size:1.5rem; cursor:pointer;">&times;</button>
+      </div>
+      <div class="modal-body" id="productModalContent" style="padding: 1.25rem; display: flex; flex-direction: column; gap: 1rem;">
+        <!-- Filled dynamically -->
       </div>
     </div>
   </div>
@@ -910,8 +924,9 @@
           category: p.category,
           price: parseFloat(p.price),
           stall: p.vendor_name || 'Unity Stall',
-          rating: 4.5,
-          reviews: Math.floor(Math.random() * 50),
+          vendor_verified: p.vendor_verified || 0,
+          rating: p.average_rating !== undefined ? p.average_rating : 0,
+          reviews: p.review_count !== undefined ? p.review_count : 0,
           image: p.images && p.images.length > 0 ? p.images[0] : 'https://images.unsplash.com/photo-1580915411954-282cb1b0d780?w=400&auto=format',
           level: 1
         }));
@@ -953,32 +968,36 @@
         return;
       }
 
-      container.innerHTML = filtered.map(p => `
-        <div class="card">
-          <div class="card-img-container">
-            <img src="${p.image}" class="card-img" alt="${p.name}" loading="lazy">
-            ${p.rating > 4.7 ? '<span class="card-badge">Top Rated</span>' : ''}
-          </div>
-          <div class="card-content">
-            <div class="card-category">${p.category} • ${p.stall}</div>
-            <h3 class="card-name">${p.name}</h3>
-            <div class="card-meta">
-              <span>⭐ ${p.rating}</span>
-              <span>(${p.reviews})</span>
-              <span>• L${p.level}</span>
+      container.innerHTML = filtered.map(p => {
+        const verifiedBadge = p.vendor_verified ? ` <span class="verified-badge" style="color: #ca8a04; font-weight: bold; background: rgba(202,138,4,0.1); padding: 1px 4px; border-radius: 4px; font-size: 0.7rem;" data-i18n="verifiedBadge">✓ Verified</span>` : '';
+        const ratingVal = p.rating > 0 ? p.rating.toFixed(1) : '0';
+        return `
+          <div class="card">
+            <div class="card-img-container">
+              <img src="${p.image}" class="card-img" alt="${p.name}" loading="lazy" style="cursor: pointer;" onclick="openProductModal(${p.id})">
+              ${p.rating > 4.7 ? '<span class="card-badge">Top Rated</span>' : ''}
             </div>
-            <div class="card-price">K${p.price.toFixed(2)}</div>
-            <div class="card-actions">
-              <button class="btn-cart" onclick="addToCart(${p.id})">
-                <span>🛒</span> Add
-              </button>
-              <button class="btn-whatsapp" onclick="openWhatsApp('${p.stall}', '${p.name}')">
-                <span>💬</span>
-              </button>
+            <div class="card-content">
+              <div class="card-category">${p.category} • <strong>${p.stall}</strong>${verifiedBadge}</div>
+              <h3 class="card-name" style="cursor: pointer;" onclick="openProductModal(${p.id})">${p.name}</h3>
+              <div class="card-meta">
+                <span>⭐ ${ratingVal}</span>
+                <span>(${p.reviews})</span>
+                <span>• L${p.level}</span>
+              </div>
+              <div class="card-price">K${p.price.toFixed(2)}</div>
+              <div class="card-actions">
+                <button class="btn-cart" onclick="addToCart(${p.id})">
+                  <span>🛒</span> Add
+                </button>
+                <button class="btn-whatsapp" onclick="openWhatsApp('${p.stall}', '${p.name}')">
+                  <span>💬</span>
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      `).join('');
+        `;
+      }).join('');
     }
 
     function addToCart(productId) {
@@ -1295,6 +1314,194 @@
         checkUserSession();
       } catch (err) {
         alert(err.message);
+      }
+    }
+
+    let currentLang = 'en';
+    const translations = {
+      en: {
+        verifiedBadge: "✓ Verified",
+        writeReviewTitle: "Write a Review",
+        ratingLabel: "Rating (1-5)",
+        commentLabel: "Comment / Feedback",
+        submitReviewBtn: "Submit Review",
+        mustBeLoggedIn: "You must be logged in as a customer to submit a review.",
+        noReviews: "No reviews yet for this product.",
+        reviewsTitle: "Reviews",
+        langBtn: "🌐 Tok Pisin"
+      },
+      tpi: {
+        verifiedBadge: "✓ Tru",
+        writeReviewTitle: "Wokim Reviw",
+        ratingLabel: "Sila (1-5)",
+        commentLabel: "Tingting / Toktok",
+        submitReviewBtn: "Submitim Reviw",
+        mustBeLoggedIn: "Yu mas log in pastaim olsem kastoma long wokim reviw.",
+        noReviews: "No gat nupela reviw i stap yet.",
+        reviewsTitle: "Ol Reviw",
+        langBtn: "🌐 English"
+      }
+    };
+
+    function toggleLanguage() {
+      currentLang = currentLang === 'en' ? 'tpi' : 'en';
+      const t = translations[currentLang];
+      document.getElementById('langBtn').textContent = t.langBtn;
+
+      const elements = document.querySelectorAll('[data-i18n]');
+      elements.forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        if (t[key]) {
+          el.textContent = t[key];
+        }
+      });
+
+      applyI18nOnModal();
+      filterStalls();
+    }
+
+    function applyI18nOnModal() {
+      const modal = document.getElementById('productModal');
+      if (!modal) return;
+
+      const elements = modal.querySelectorAll('[data-i18n]');
+      elements.forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        if (translations[currentLang] && translations[currentLang][key]) {
+          el.textContent = translations[currentLang][key];
+        }
+      });
+    }
+
+    function openProductModal(productId) {
+      const p = products.find(prod => prod.id === productId);
+      if (!p) return;
+
+      const token = localStorage.getItem('um_token');
+
+      fetch(`/api/products/${productId}/reviews`)
+        .then(res => res.json())
+        .then(data => {
+          const reviews = data.reviews || [];
+          const avgRating = data.average_rating || 0;
+          const reviewCount = data.review_count || 0;
+
+          let reviewsHtml = '';
+          if (reviews.length === 0) {
+            reviewsHtml = `<p style="color: var(--text-muted); font-style: italic; margin-top: 0.5rem;" data-i18n="noReviews">No reviews yet for this product.</p>`;
+          } else {
+            reviewsHtml = reviews.map(r => `
+              <div style="border-bottom: 1px solid var(--border); padding: 8px 0;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                  <strong style="color: var(--text-accent);">${r.customer_name || 'Anonymous Customer'}</strong>
+                  <span style="color: #ca8a04;">⭐ ${r.rating}</span>
+                </div>
+                <p style="font-size: 0.9rem; color: var(--text);">${r.comment || ''}</p>
+                <small style="font-size: 0.75rem; color: var(--text-muted);">${new Date(r.created_at).toLocaleDateString()}</small>
+              </div>
+            `).join('');
+          }
+
+          let reviewFormHtml = '';
+          if (token) {
+            reviewFormHtml = `
+              <div style="margin-top: 1.5rem; border-top: 1px solid var(--border); padding-top: 1rem;">
+                <h4 style="color: var(--text-accent); margin-bottom: 0.5rem;" data-i18n="writeReviewTitle">Write a Review</h4>
+                <div id="reviewFormError" style="color: #ef4444; font-size: 0.85rem; margin-bottom: 0.5rem; display: none;"></div>
+                <form id="submitReviewForm" onsubmit="event.preventDefault(); submitReview(${productId});">
+                  <div class="form-group" style="margin-bottom: 0.75rem;">
+                    <label class="form-label" data-i18n="ratingLabel" style="font-size: 0.85rem;">Rating (1-5)</label>
+                    <select id="reviewRating" class="form-input" required style="width: 100%; max-width: 120px; background: var(--bg-dark); color: #fff;">
+                      <option value="5">5 ⭐⭐⭐⭐⭐</option>
+                      <option value="4">4 ⭐⭐⭐⭐</option>
+                      <option value="3">3 ⭐⭐⭐</option>
+                      <option value="2">2 ⭐⭐</option>
+                      <option value="1">1 ⭐</option>
+                    </select>
+                  </div>
+                  <div class="form-group" style="margin-bottom: 0.75rem;">
+                    <label class="form-label" data-i18n="commentLabel" style="font-size: 0.85rem;">Comment / Feedback</label>
+                    <textarea id="reviewComment" class="form-input" rows="3" placeholder="Tell us about this product..." style="width: 100%; box-sizing: border-box; background: var(--bg-dark); color: #fff;"></textarea>
+                  </div>
+                  <button type="submit" class="auth-btn" style="width: 100%; padding: 8px 12px; font-size: 0.9rem;" data-i18n="submitReviewBtn">Submit Review</button>
+                </form>
+              </div>
+            `;
+          } else {
+            reviewFormHtml = `
+              <div style="margin-top: 1.5rem; border-top: 1px solid var(--border); padding-top: 1rem; color: var(--text-muted); font-size: 0.85rem; text-align: center;" data-i18n="mustBeLoggedIn">
+                You must be logged in as a customer to submit a review.
+              </div>
+            `;
+          }
+
+          const container = document.getElementById('productModalContent');
+          const verifiedBadge = p.vendor_verified ? ' <span class="verified-badge" style="color: #ca8a04; font-weight: bold; background: rgba(202,138,4,0.1); padding: 2px 6px; border-radius: 4px; font-size: 0.75rem;" data-i18n="verifiedBadge">✓ Verified</span>' : '';
+
+          container.innerHTML = `
+            <div style="display: flex; gap: 1rem; border-bottom: 1px solid var(--border); padding-bottom: 1rem; flex-wrap: wrap;">
+              <img src="${p.image}" style="width: 120px; height: 120px; object-fit: cover; border-radius: 8px; border: 1px solid var(--border);" alt="${p.name}">
+              <div style="flex: 1; min-width: 200px;">
+                <h3 style="color: var(--text-accent); margin-bottom: 4px;">${p.name}</h3>
+                <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 8px;">
+                  Category: ${p.category} • Stall: <strong>${p.stall}</strong>${verifiedBadge}
+                </div>
+                <div style="font-size: 1.25rem; font-weight: 700; color: var(--primary); margin-bottom: 8px;">K${p.price.toFixed(2)}</div>
+                <div style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem;">
+                  <span>⭐ ${avgRating.toFixed(1)}</span>
+                  <span style="color: var(--text-muted);">(${reviewCount} reviews)</span>
+                </div>
+              </div>
+            </div>
+
+            <div style="margin-top: 1rem;">
+              <h4 style="color: var(--text-accent); margin-bottom: 0.5rem;" data-i18n="reviewsTitle">Reviews</h4>
+              <div id="reviewsList" style="max-height: 200px; overflow-y: auto; padding-right: 4px;">
+                ${reviewsHtml}
+              </div>
+            </div>
+
+            ${reviewFormHtml}
+          `;
+
+          document.getElementById('productModal').classList.add('show');
+          applyI18nOnModal();
+        })
+        .catch(err => console.error('Failed to load product reviews:', err));
+    }
+
+    function closeProductModal() {
+      document.getElementById('productModal').classList.remove('show');
+    }
+
+    async function submitReview(productId) {
+      const rating = document.getElementById('reviewRating').value;
+      const comment = document.getElementById('reviewComment').value;
+      const token = localStorage.getItem('um_token');
+      const errBox = document.getElementById('reviewFormError');
+      errBox.style.display = 'none';
+
+      try {
+        const res = await fetch('/api/reviews', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({ product_id: productId, rating, comment })
+        });
+
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.error || 'Failed to submit review');
+        }
+
+        await fetchProducts();
+        filterStalls();
+        openProductModal(productId);
+      } catch (err) {
+        errBox.textContent = err.message;
+        errBox.style.display = 'block';
       }
     }
 
