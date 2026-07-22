@@ -388,6 +388,22 @@ function initDatabase() {
       )
     `);
 
+    // 17. Marketplace events table
+    db.run(`
+      CREATE TABLE IF NOT EXISTS marketplace_events (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        tenant_id INTEGER,
+        event_type TEXT NOT NULL,
+        product_id INTEGER,
+        vendor_id INTEGER,
+        search_term TEXT,
+        session_ref TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE SET NULL,
+        FOREIGN KEY (vendor_id) REFERENCES vendors(id) ON DELETE SET NULL
+      )
+    `);
+
     // Backfill columns for any older existing DB
     const tablesToAlter = [
       { name: 'vendors', col: 'tenant_id', type: 'INTEGER' },
@@ -479,6 +495,35 @@ app.get('/api/config', (req, res) => {
   } catch (err) {
     res.status(500).json({ error: 'Failed to parse tenant branding config' });
   }
+});
+
+// ============== EVENT INGESTION ENDPOINT ==============
+app.post('/api/events', (req, res) => {
+  const { event_type, product_id, vendor_id, search_term, session_ref } = req.body;
+  const tenant_id = req.tenant.id;
+
+  const allowedTypes = ['product_view', 'vendor_view', 'search', 'add_to_cart', 'checkout'];
+  if (!event_type || !allowedTypes.includes(event_type)) {
+    return res.status(400).json({ error: 'Invalid or missing event_type' });
+  }
+
+  const sql = `
+    INSERT INTO marketplace_events (tenant_id, event_type, product_id, vendor_id, search_term, session_ref)
+    VALUES (?, ?, ?, ?, ?, ?)
+  `;
+  db.run(sql, [
+    tenant_id,
+    event_type,
+    product_id ? parseInt(product_id, 10) : null,
+    vendor_id ? parseInt(vendor_id, 10) : null,
+    search_term || null,
+    session_ref || null
+  ], function(err) {
+    if (err) {
+      return res.status(500).json({ error: err.message });
+    }
+    res.status(201).json({ message: 'Event logged successfully', id: this.lastID });
+  });
 });
 
 // ============== AUTH ROUTES ==============
@@ -899,6 +944,92 @@ app.get('/api/admin/stats', authenticateToken(['centre_admin', 'platform_admin',
       });
     });
   });
+});
+
+// GET /api/analytics/marketplace
+app.get('/api/analytics/marketplace', authenticateToken(['centre_admin', 'platform_admin', 'super_admin']), async (req, res) => {
+  const targetTenantId = (req.user.role === 'centre_admin') ? req.user.tenant_id : req.tenant.id;
+
+  const dbQuery = (sql, params = []) => {
+    return new Promise((resolve, reject) => {
+      db.all(sql, params, (err, rows) => {
+        if (err) reject(err);
+        else resolve(rows);
+      });
+    });
+  };
+
+  const dbGet = (sql, params = []) => {
+    return new Promise((resolve, reject) => {
+      db.get(sql, params, (err, row) => {
+        if (err) reject(err);
+        else resolve(row);
+      });
+    });
+  };
+
+  try {
+    // 1. Total product views
+    const viewsRow = await dbGet(
+      "SELECT COUNT(*) as count FROM marketplace_events WHERE event_type = 'product_view' AND tenant_id = ?",
+      [targetTenantId]
+    );
+    const totalProductViews = viewsRow ? (viewsRow.count || viewsRow['COUNT(*)'] || 0) : 0;
+
+    // 2. Total checkouts
+    const checkoutsRow = await dbGet(
+      "SELECT COUNT(*) as count FROM marketplace_events WHERE event_type = 'checkout' AND tenant_id = ?",
+      [targetTenantId]
+    );
+    const totalCheckouts = checkoutsRow ? (checkoutsRow.count || checkoutsRow['COUNT(*)'] || 0) : 0;
+
+    // 3. Conversion Rate
+    const conversionRate = totalProductViews > 0 ? parseFloat((totalCheckouts / totalProductViews).toFixed(4)) : 0;
+
+    // 4. Top viewed products
+    const topProducts = await dbQuery(`
+      SELECT p.id, p.name, COUNT(me.id) as view_count
+      FROM marketplace_events me
+      JOIN products p ON me.product_id = p.id
+      WHERE me.event_type = 'product_view' AND me.tenant_id = ?
+      GROUP BY p.id, p.name
+      ORDER BY view_count DESC
+      LIMIT 5
+    `, [targetTenantId]);
+
+    // 5. Top viewed vendors
+    const topVendors = await dbQuery(`
+      SELECT v.id, v.name, COUNT(me.id) as view_count
+      FROM marketplace_events me
+      JOIN vendors v ON me.vendor_id = v.id
+      WHERE me.event_type = 'vendor_view' AND me.tenant_id = ?
+      GROUP BY v.id, v.name
+      ORDER BY view_count DESC
+      LIMIT 5
+    `, [targetTenantId]);
+
+    // 6. Top search terms
+    const topSearches = await dbQuery(`
+      SELECT search_term, COUNT(id) as search_count
+      FROM marketplace_events
+      WHERE event_type = 'search' AND tenant_id = ? AND search_term IS NOT NULL AND search_term != ''
+      GROUP BY search_term
+      ORDER BY search_count DESC
+      LIMIT 5
+    `, [targetTenantId]);
+
+    res.json({
+      tenant_id: targetTenantId,
+      total_product_views: totalProductViews,
+      total_checkouts: totalCheckouts,
+      conversion_rate: conversionRate,
+      top_viewed_products: topProducts,
+      top_viewed_vendors: topVendors,
+      top_search_terms: topSearches
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // Admin Vendors Management

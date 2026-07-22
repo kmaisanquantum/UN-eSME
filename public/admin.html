@@ -70,6 +70,68 @@
       </div>
     </div>
 
+    <!-- Marketplace Insights Panel -->
+    <div class="card" style="max-width: 100%; margin-bottom: 2rem;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <h2 id="insightsTitle" style="color: var(--text-accent);">Marketplace Insights / Lukluk long Kibung</h2>
+        <div>
+          <button id="langToggleBtn" onclick="toggleAdminLanguage()" style="background: var(--primary); color: #000; border: none; padding: 4px 10px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 0.85rem;">🌐 Tok Pisin</button>
+        </div>
+      </div>
+
+      <div class="stats-grid" style="margin-bottom: 1.5rem;">
+        <div class="stat-card" style="background: var(--bg-dark);">
+          <div class="stat-label" id="lblProductViews">Total Product Views</div>
+          <div id="statProductViews" class="stat-value">0</div>
+        </div>
+        <div class="stat-card" style="background: var(--bg-dark);">
+          <div class="stat-label" id="lblConversionRate">Conversion Rate</div>
+          <div id="statConversionRate" class="stat-value">0.00%</div>
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem;">
+        <div>
+          <h3 id="lblTopProducts" style="color: var(--text-main); font-size: 1.1rem; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; margin-bottom: 0.5rem;">Top Viewed Products</h3>
+          <table style="margin-top: 0;">
+            <thead>
+              <tr>
+                <th id="thProduct">Product</th>
+                <th id="thViews1" style="text-align: right;">Views</th>
+              </tr>
+            </thead>
+            <tbody id="topProductsTable"></tbody>
+          </table>
+        </div>
+
+        <div>
+          <h3 id="lblTopVendors" style="color: var(--text-main); font-size: 1.1rem; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; margin-bottom: 0.5rem;">Top Viewed Vendors</h3>
+          <table style="margin-top: 0;">
+            <thead>
+              <tr>
+                <th id="thVendor">Vendor</th>
+                <th id="thViews2" style="text-align: right;">Views</th>
+              </tr>
+            </thead>
+            <tbody id="topVendorsTable"></tbody>
+          </table>
+        </div>
+
+        <div>
+          <h3 id="lblTopSearches" style="color: var(--text-main); font-size: 1.1rem; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; margin-bottom: 0.5rem;">Top Search Terms</h3>
+          <table style="margin-top: 0;">
+            <thead>
+              <tr>
+                <th id="thTerm">Search Term</th>
+                <th id="thCount" style="text-align: right;">Count</th>
+              </tr>
+            </thead>
+            <tbody id="topSearchesTable"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
     <div class="card" style="max-width: 100%; margin-bottom: 2rem;">
       <h2 style="color: var(--text-accent); margin-bottom: 1rem;">All Orders</h2>
       <div style="overflow-x: auto;">
@@ -178,6 +240,60 @@
       }
     };
 
+    let adminLang = 'en';
+    const adminTranslations = {
+      en: {
+        insightsTitle: "Marketplace Insights",
+        langBtn: "🌐 Tok Pisin",
+        lblProductViews: "Total Product Views",
+        lblConversionRate: "Conversion Rate",
+        lblTopProducts: "Top Viewed Products",
+        lblTopVendors: "Top Viewed Vendors",
+        lblTopSearches: "Top Search Terms",
+        thProduct: "Product",
+        thVendor: "Vendor",
+        thTerm: "Search Term",
+        thViews: "Views",
+        thCount: "Count"
+      },
+      tpi: {
+        insightsTitle: "Lukluk long Kibung",
+        langBtn: "🌐 English",
+        lblProductViews: "Olapela Lukluk long Samting",
+        lblConversionRate: "Sila Bilong Baim Samting",
+        lblTopProducts: "Ol Samting Igat Planti Lukluk",
+        lblTopVendors: "Ol Stoaman Igat Planti Lukluk",
+        lblTopSearches: "Ol Toktok Planti Kastoma Painim",
+        thProduct: "Kago / Prodakt",
+        thVendor: "Stoaman",
+        thTerm: "Toktok long Painim",
+        thViews: "Lukluk",
+        thCount: "Namba"
+      }
+    };
+
+    function toggleAdminLanguage() {
+      adminLang = adminLang === 'en' ? 'tpi' : 'en';
+      applyAdminTranslations();
+    }
+
+    function applyAdminTranslations() {
+      const t = adminTranslations[adminLang];
+      document.getElementById('insightsTitle').firstChild.textContent = t.insightsTitle + ' / ';
+      document.getElementById('langToggleBtn').textContent = t.langBtn;
+      document.getElementById('lblProductViews').textContent = t.lblProductViews;
+      document.getElementById('lblConversionRate').textContent = t.lblConversionRate;
+      document.getElementById('lblTopProducts').textContent = t.lblTopProducts;
+      document.getElementById('lblTopVendors').textContent = t.lblTopVendors;
+      document.getElementById('lblTopSearches').textContent = t.lblTopSearches;
+      document.getElementById('thProduct').textContent = t.thProduct;
+      document.getElementById('thViews1').textContent = t.thViews;
+      document.getElementById('thVendor').textContent = t.thVendor;
+      document.getElementById('thViews2').textContent = t.thViews;
+      document.getElementById('thTerm').textContent = t.thTerm;
+      document.getElementById('thCount').textContent = t.thCount;
+    }
+
     async function showDashboard() {
       await loadTenantConfig();
       document.getElementById('authScreen').style.display = 'none';
@@ -186,6 +302,46 @@
       loadOrders();
       loadVendors();
       loadProducts();
+      loadMarketplaceAnalytics();
+      applyAdminTranslations();
+    }
+
+    async function loadMarketplaceAnalytics() {
+      try {
+        const res = await apiFetch(`/api/analytics/marketplace`);
+        if (!res.ok) {
+          console.warn('Failed to load marketplace analytics: HTTP status ' + res.status);
+          return;
+        }
+        const data = await res.json();
+
+        document.getElementById('statProductViews').textContent = data.total_product_views || 0;
+        document.getElementById('statConversionRate').textContent = ((data.conversion_rate || 0) * 100).toFixed(2) + '%';
+
+        document.getElementById('topProductsTable').innerHTML = (data.top_viewed_products || []).map(p => `
+          <tr>
+            <td>${p.name}</td>
+            <td style="text-align: right; font-weight: bold; color: var(--text-accent);">${p.view_count}</td>
+          </tr>
+        `).join('') || '<tr><td colspan="2" style="text-align:center; padding:1rem; color: var(--text-muted);">No product views yet.</td></tr>';
+
+        document.getElementById('topVendorsTable').innerHTML = (data.top_viewed_vendors || []).map(v => `
+          <tr>
+            <td>${v.name}</td>
+            <td style="text-align: right; font-weight: bold; color: var(--text-accent);">${v.view_count}</td>
+          </tr>
+        `).join('') || '<tr><td colspan="2" style="text-align:center; padding:1rem; color: var(--text-muted);">No vendor views yet.</td></tr>';
+
+        document.getElementById('topSearchesTable').innerHTML = (data.top_search_terms || []).map(s => `
+          <tr>
+            <td>"${s.search_term}"</td>
+            <td style="text-align: right; font-weight: bold; color: var(--text-accent);">${s.search_count}</td>
+          </tr>
+        `).join('') || '<tr><td colspan="2" style="text-align:center; padding:1rem; color: var(--text-muted);">No search events yet.</td></tr>';
+
+      } catch (err) {
+        console.error('Error fetching marketplace analytics:', err);
+      }
     }
 
     async function loadStats() {
