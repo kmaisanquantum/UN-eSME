@@ -827,6 +827,27 @@
   </nav>
 
   <script>
+    // Initialize random session_ref in localStorage if not exists
+    let sessionRef = localStorage.getItem('um_session_ref');
+    if (!sessionRef) {
+      sessionRef = 'sess_' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+      localStorage.setItem('um_session_ref', sessionRef);
+    }
+
+    // Event Ingestion helper
+    function logMarketplaceEvent(eventType, details = {}) {
+      const session_ref = localStorage.getItem('um_session_ref') || '';
+      fetch('/api/events', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          event_type: eventType,
+          session_ref: session_ref,
+          ...details
+        })
+      }).catch(err => console.error('Failed to log event:', err));
+    }
+
     const categories = ['All', 'Fashion', 'Catering', 'Tech', 'Beauty', 'Home & Living', 'Sports', 'Accessories'];
     let products = [];
     let currentCategory = 'All';
@@ -952,6 +973,9 @@
 
     function filterStalls() {
       const search = document.getElementById('searchInput').value.toLowerCase();
+      if (search && search.trim() !== '') {
+        logMarketplaceEvent('search', { search_term: search });
+      }
       const filtered = products.filter(p => {
         const matchesSearch = p.name.toLowerCase().includes(search) ||
                               p.stall.toLowerCase().includes(search) ||
@@ -1003,6 +1027,7 @@
     function addToCart(productId) {
       const product = products.find(p => p.id === productId);
       if (product) {
+        logMarketplaceEvent('add_to_cart', { product_id: product.id, vendor_id: product.vendor_id });
         const existing = cart.find(item => item.id === productId);
         if (existing) {
           existing.quantity++;
@@ -1188,6 +1213,10 @@
           });
         }
         alert('Order placed successfully! Vendors will contact you via WhatsApp.');
+        // Log checkout events before clearing the cart
+        for (const item of cart) {
+          logMarketplaceEvent('checkout', { product_id: item.id, vendor_id: item.vendor_id });
+        }
         cart = [];
         saveCart();
         updateCartUI();
@@ -1376,6 +1405,8 @@
     function openProductModal(productId) {
       const p = products.find(prod => prod.id === productId);
       if (!p) return;
+
+      logMarketplaceEvent('product_view', { product_id: p.id, vendor_id: p.vendor_id });
 
       const token = localStorage.getItem('um_token');
 
