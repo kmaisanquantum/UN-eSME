@@ -615,7 +615,7 @@
         <p style="color: var(--text-muted);">Manage your products, orders, and business profiles.</p>
       </div>
 
-      <div class="acc-card" style="text-align: center; border-color: var(--primary);">
+      <div id="vendorCardContainer" class="acc-card" style="text-align: center; border-color: var(--primary);">
          <h3>Ready to sell?</h3>
          <p style="margin: 1rem 0; color: var(--text-muted);">Access your dedicated vendor dashboard to start listing products.</p>
          <a href="backend.html" class="auth-btn" style="display: inline-block; text-decoration: none; padding: 12px 24px;">Go to Dashboard</a>
@@ -663,12 +663,14 @@
             <div class="acc-val" id="accExp">K0.00</div>
           </div>
         </div>
-        <div class="acc-card" style="text-align: center;">
-           <div class="acc-label">Estimated Profit</div>
+        <div class="acc-card" style="text-align: center; border: 1px dashed var(--primary);">
+           <div class="acc-label" id="lblOfflinePreview" style="color: var(--text-accent); font-weight: bold; margin-bottom: 0.5rem;">Offline Preview / Liklik Piksa</div>
+           <div class="acc-label">Estimated Profit (Local)</div>
            <div class="acc-val" id="accProfit" style="font-size: 2rem;">K0.00</div>
+           <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.5rem;">Note: This is a local offline preview. For your official real-time, server-synchronized financials, please access your Vendor Dashboard.</p>
         </div>
         <div style="text-align: center; margin-top: 1rem;">
-           <a href="backend.html" class="auth-btn" style="display: block; text-decoration: none; padding: 12px;">Manage Transactions</a>
+           <a href="backend.html" class="auth-btn" style="display: block; text-decoration: none; padding: 12px;">Go to Server Dashboard</a>
         </div>
       </div>
     </div>
@@ -752,7 +754,7 @@
           <form id="loginForm">
             <div class="form-group">
               <label class="form-label">Email Address</label>
-              <input type="email" id="loginEmail" class="form-input" placeholder="vendor@example.com" required>
+              <input type="email" id="loginEmail" class="form-input" placeholder="you@example.com" required>
             </div>
             <div class="form-group">
               <label class="form-label">Password</label>
@@ -769,7 +771,7 @@
             </div>
             <div class="form-group">
               <label class="form-label">Email Address</label>
-              <input type="email" id="regEmail" class="form-input" placeholder="vendor@example.com" required>
+              <input type="email" id="regEmail" class="form-input" placeholder="you@example.com" required>
             </div>
             <div class="form-group">
               <label class="form-label">Phone Number</label>
@@ -1097,6 +1099,26 @@
       document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
       const activeBtn = Array.from(document.querySelectorAll('.nav-btn')).find(btn => btn.onclick.toString().includes(screenId));
       if (activeBtn) activeBtn.classList.add('active');
+
+      if (screenId === 'vendor') {
+        const isVendorLoggedIn = !!localStorage.getItem('um_vendor_token');
+        const vendorCard = document.getElementById('vendorCardContainer');
+        if (vendorCard) {
+          if (isVendorLoggedIn) {
+            vendorCard.innerHTML = `
+              <h3 style="color: var(--text-accent);">Welcome Back, Vendor!</h3>
+              <p style="margin: 1rem 0; color: var(--text-muted);">You are already logged in to your vendor account. Access your dedicated dashboard to manage your store directly.</p>
+              <a href="backend.html" class="auth-btn" style="display: inline-block; text-decoration: none; padding: 12px 24px;">Go to your Dashboard</a>
+            `;
+          } else {
+            vendorCard.innerHTML = `
+              <h3>Ready to sell?</h3>
+              <p style="margin: 1rem 0; color: var(--text-muted);">Access your dedicated vendor dashboard to start listing products.</p>
+              <a href="backend.html?mode=register" class="auth-btn" style="display: inline-block; text-decoration: none; padding: 12px 24px;">Register & Start Selling</a>
+            `;
+          }
+        }
+      }
     }
 
     function openAuthModal(mode = 'login') {
@@ -1230,11 +1252,12 @@
 
     function showNotification(msg) {
       const toast = document.createElement('div');
-      toast.style.cssText = 'position:fixed; bottom:80px; left:50%; transform:translateX(-50%); background:var(--bg-card); border:1px solid var(--primary); padding:12px 24px; border-radius:30px; z-index:1000; font-size:14px; box-shadow:0 4px 12px rgba(0,0,0,0.5);';
+      toast.style.cssText = 'position:fixed; bottom:80px; left:50%; transform:translateX(-50%); background:var(--bg-card); border:1px solid var(--primary); padding:12px 24px; border-radius:30px; z-index:2000; font-size:14px; box-shadow:0 4px 12px rgba(0,0,0,0.5); color: #fff; text-align: center;';
       toast.textContent = msg;
       document.body.appendChild(toast);
-      setTimeout(() => toast.remove(), 2000);
+      setTimeout(() => toast.remove(), 3000);
     }
+    window.alert = showNotification;
 
     function goToSlide(n) {
       currentSlide = n;
