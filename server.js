@@ -404,6 +404,20 @@ function initDatabase() {
       )
     `);
 
+    // 18. Onboarding state table
+    db.run(`
+      CREATE TABLE IF NOT EXISTS onboarding_state (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        tenant_id INTEGER,
+        vendor_id INTEGER NOT NULL,
+        current_step INTEGER,
+        data TEXT,
+        completed INTEGER DEFAULT 0,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (vendor_id) REFERENCES vendors(id) ON DELETE CASCADE
+      )
+    `);
+
     // Backfill columns for any older existing DB
     const tablesToAlter = [
       { name: 'vendors', col: 'tenant_id', type: 'INTEGER' },
@@ -418,7 +432,15 @@ function initDatabase() {
       { name: 'admins', col: 'tenant_id', type: 'INTEGER' },
       { name: 'tenants', col: 'subscription_tier', type: "TEXT DEFAULT 'free'" },
       { name: 'vendors', col: 'verified', type: 'INTEGER DEFAULT 0' },
-      { name: 'vendors', col: 'opening_hours', type: 'TEXT' }
+      { name: 'vendors', col: 'opening_hours', type: 'TEXT' },
+      { name: 'vendors', col: 'logo_url', type: 'TEXT' },
+      { name: 'vendors', col: 'cover_url', type: 'TEXT' },
+      { name: 'vendors', col: 'business_type', type: 'TEXT' },
+      { name: 'vendors', col: 'owner_name', type: 'TEXT' },
+      { name: 'vendors', col: 'floor_section', type: 'TEXT' },
+      { name: 'vendors', col: 'landmark', type: 'TEXT' },
+      { name: 'vendors', col: 'published', type: 'INTEGER DEFAULT 0' },
+      { name: 'vendors', col: 'published_at', type: 'DATETIME' }
     ];
 
     let alterCount = 0;
@@ -441,6 +463,7 @@ function initDatabase() {
         db.run("UPDATE tenants SET subscription_tier = 'free' WHERE subscription_tier IS NULL");
         db.run("UPDATE vendors SET verified = 0 WHERE verified IS NULL");
         db.run("UPDATE admins SET tenant_id = 1 WHERE tenant_id IS NULL");
+        db.run("UPDATE vendors SET published = 0 WHERE published IS NULL");
 
         // Seed admin from env vars, falling back to 'admin' / 'admin123' if not set
         const adminUser = process.env.ADMIN_USERNAME || 'admin';
@@ -497,12 +520,33 @@ app.get('/api/config', (req, res) => {
   }
 });
 
+// ============== CURATED CATEGORIES ENDPOINT ==============
+app.get('/api/categories', (req, res) => {
+  res.json([
+    "Retail",
+    "Food and Beverage",
+    "Fashion",
+    "Beauty and Personal Care",
+    "Electronics and Technology",
+    "Mobile Phones and Accessories",
+    "Repairs and Services",
+    "Professional Services",
+    "Health and Wellness",
+    "Other"
+  ]);
+});
+
 // ============== EVENT INGESTION ENDPOINT ==============
 app.post('/api/events', (req, res) => {
   const { event_type, product_id, vendor_id, search_term, session_ref } = req.body;
   const tenant_id = req.tenant.id;
 
-  const allowedTypes = ['product_view', 'vendor_view', 'search', 'add_to_cart', 'checkout'];
+  const allowedTypes = [
+    'product_view', 'vendor_view', 'search', 'add_to_cart', 'checkout',
+    'landing_view', 'clicked_list_business', 'started_registration', 'completed_registration',
+    'started_onboarding', 'completed_identity', 'added_offering', 'uploaded_image',
+    'published_profile', 'first_enquiry'
+  ];
   if (!event_type || !allowedTypes.includes(event_type)) {
     return res.status(400).json({ error: 'Invalid or missing event_type' });
   }
@@ -1154,6 +1198,164 @@ app.delete('/api/admin/orders/:id', authenticateToken(['centre_admin', 'platform
   });
 });
 
+// ============== ONBOARDING ROUTES ==============
+
+app.get('/api/onboarding', authenticateToken(['vendor']), (req, res) => {
+  const vendor_id = req.user.id;
+  const tenant_id = req.tenant.id;
+
+  db.get('SELECT * FROM onboarding_state WHERE vendor_id = ? AND tenant_id = ?', [vendor_id, tenant_id], (err, row) => {
+    if (err) {
+      return res.status(500).json({ error: err.message });
+    }
+    if (!row) {
+      return res.json({
+        current_step: 1,
+        data: {},
+        completed: 0
+      });
+    }
+    let parsedData = {};
+    try {
+      parsedData = row.data ? JSON.parse(row.data) : {};
+    } catch (e) {
+      parsedData = {};
+    }
+    res.json({
+      id: row.id,
+      tenant_id: row.tenant_id,
+      vendor_id: row.vendor_id,
+      current_step: row.current_step,
+      data: parsedData,
+      completed: row.completed,
+      updated_at: row.updated_at
+    });
+  });
+});
+
+app.put('/api/onboarding', authenticateToken(['vendor']), (req, res) => {
+  const vendor_id = req.user.id;
+  const tenant_id = req.tenant.id;
+  const { current_step, data, completed } = req.body;
+
+  const currentStepVal = current_step !== undefined ? parseInt(current_step, 10) : 1;
+  const completedVal = (completed === true || completed === 1 || completed === '1') ? 1 : 0;
+  const dataStr = data ? JSON.stringify(data) : '{}';
+
+  db.get('SELECT id FROM onboarding_state WHERE vendor_id = ? AND tenant_id = ?', [vendor_id, tenant_id], (err, row) => {
+    if (err) {
+      return res.status(500).json({ error: err.message });
+    }
+
+    const now = new Date().toISOString();
+    if (row) {
+      const sql = `
+        UPDATE onboarding_state
+        SET current_step = ?, data = ?, completed = ?, updated_at = ?
+        WHERE id = ?
+      `;
+      db.run(sql, [currentStepVal, dataStr, completedVal, now, row.id], function(err2) {
+        if (err2) {
+          return res.status(500).json({ error: err2.message });
+        }
+        res.json({ message: 'Onboarding state updated successfully', current_step: currentStepVal, completed: completedVal });
+      });
+    } else {
+      const sql = `
+        INSERT INTO onboarding_state (tenant_id, vendor_id, current_step, data, completed, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?)
+      `;
+      db.run(sql, [tenant_id, vendor_id, currentStepVal, dataStr, completedVal, now], function(err2) {
+        if (err2) {
+          return res.status(500).json({ error: err2.message });
+        }
+        res.status(201).json({ id: this.lastID, message: 'Onboarding state created successfully', current_step: currentStepVal, completed: completedVal });
+      });
+    }
+  });
+});
+
+app.get('/api/onboarding/completion', authenticateToken(['vendor']), (req, res) => {
+  const vendor_id = req.user.id;
+  const tenant_id = req.tenant.id;
+
+  db.get('SELECT * FROM vendors WHERE id = ? AND tenant_id = ?', [vendor_id, tenant_id], (err, vendor) => {
+    if (err) return res.status(500).json({ error: err.message });
+    if (!vendor) return res.status(404).json({ error: 'Vendor not found' });
+
+    db.get('SELECT ((SELECT COUNT(*) FROM products WHERE vendor_id = ?) + (SELECT COUNT(*) FROM services WHERE vendor_id = ?)) AS offering_count', [vendor_id, vendor_id], (err2, row) => {
+      if (err2) return res.status(500).json({ error: err2.message });
+
+      const offeringCount = row ? (row.offering_count || 0) : 0;
+      const missing_actions = [];
+
+      if (!vendor.description || vendor.description.trim() === '') {
+        missing_actions.push('business description');
+      }
+      if (!vendor.logo_url || vendor.logo_url.trim() === '') {
+        missing_actions.push('logo');
+      }
+      if (offeringCount === 0) {
+        missing_actions.push('at least one product/service');
+      }
+      if (!vendor.opening_hours || vendor.opening_hours.trim() === '') {
+        missing_actions.push('opening hours');
+      }
+      if (!vendor.verified) {
+        missing_actions.push('verify info');
+      }
+
+      const completedCount = 5 - missing_actions.length;
+      const completion_percentage = Math.round((completedCount / 5) * 100);
+
+      res.json({
+        completion_percentage,
+        missing_actions
+      });
+    });
+  });
+});
+
+app.post('/api/onboarding/publish', authenticateToken(['vendor']), (req, res) => {
+  const vendor_id = req.user.id;
+  const tenant_id = req.tenant.id;
+
+  db.get('SELECT * FROM vendors WHERE id = ? AND tenant_id = ?', [vendor_id, tenant_id], (err, vendor) => {
+    if (err) return res.status(500).json({ error: err.message });
+    if (!vendor) return res.status(404).json({ error: 'Vendor not found' });
+
+    const missing_fields = [];
+    if (!vendor.name || vendor.name.trim() === '') {
+      missing_fields.push('name');
+    }
+    if (!vendor.category || vendor.category.trim() === '') {
+      missing_fields.push('category');
+    }
+
+    const hasPhone = vendor.phone && vendor.phone.trim() !== '';
+    const hasEmail = vendor.email && vendor.email.trim() !== '';
+    if (!hasPhone && !hasEmail) {
+      missing_fields.push('contact (phone or email)');
+    }
+
+    if (missing_fields.length > 0) {
+      return res.status(400).json({
+        error: 'Minimum profile is incomplete',
+        missing_fields
+      });
+    }
+
+    const now = new Date().toISOString();
+    db.run('UPDATE vendors SET published = 1, published_at = ? WHERE id = ? AND tenant_id = ?', [now, vendor_id, tenant_id], function(err2) {
+      if (err2) return res.status(500).json({ error: err2.message });
+      res.json({
+        message: 'Profile published successfully',
+        published_at: now
+      });
+    });
+  });
+});
+
 // ============== VENDOR ROUTES ==============
 
 // Get all vendors (filtered by tenant)
@@ -1223,12 +1425,46 @@ app.get('/api/vendors/me/:id', (req, res) => {
 // Update vendor
 app.put('/api/vendors/:id', authenticateToken(['vendor', 'centre_admin', 'platform_admin', 'super_admin']), (req, res) => {
   const tenant_id = req.tenant.id;
-  const { name, category, phone, location, description, facebook, email } = req.body;
+  const vendorId = req.params.id;
 
-  const sql = 'UPDATE vendors SET name=?, category=?, phone=?, location=?, description=?, facebook=?, email=?, updated_at=CURRENT_TIMESTAMP WHERE id=? AND tenant_id=?';
-  db.run(sql, [name, category, phone, location, description, facebook, email, req.params.id, tenant_id], function(err) {
+  if (req.user.role === 'vendor' && parseInt(req.user.id, 10) !== parseInt(vendorId, 10)) {
+    return res.status(403).json({ error: 'Access forbidden: cannot update another vendor' });
+  }
+
+  db.get('SELECT * FROM vendors WHERE id = ? AND tenant_id = ?', [vendorId, tenant_id], (err, row) => {
     if (err) return res.status(500).json({ error: err.message });
-    res.json({ message: 'Vendor updated successfully', changes: this.changes });
+    if (!row) return res.status(404).json({ error: 'Vendor not found' });
+
+    const name = req.body.name !== undefined ? req.body.name : row.name;
+    const category = req.body.category !== undefined ? req.body.category : row.category;
+    const phone = req.body.phone !== undefined ? req.body.phone : row.phone;
+    const location = req.body.location !== undefined ? req.body.location : row.location;
+    const description = req.body.description !== undefined ? req.body.description : row.description;
+    const facebook = req.body.facebook !== undefined ? req.body.facebook : row.facebook;
+    const email = req.body.email !== undefined ? req.body.email : row.email;
+    const logo_url = req.body.logo_url !== undefined ? req.body.logo_url : row.logo_url;
+    const cover_url = req.body.cover_url !== undefined ? req.body.cover_url : row.cover_url;
+    const business_type = req.body.business_type !== undefined ? req.body.business_type : row.business_type;
+    const owner_name = req.body.owner_name !== undefined ? req.body.owner_name : row.owner_name;
+    const floor_section = req.body.floor_section !== undefined ? req.body.floor_section : row.floor_section;
+    const landmark = req.body.landmark !== undefined ? req.body.landmark : row.landmark;
+    const opening_hours = req.body.opening_hours !== undefined ? req.body.opening_hours : row.opening_hours;
+
+    const sql = `
+      UPDATE vendors
+      SET name = ?, category = ?, phone = ?, location = ?, description = ?, facebook = ?, email = ?,
+          logo_url = ?, cover_url = ?, business_type = ?, owner_name = ?, floor_section = ?, landmark = ?,
+          opening_hours = ?, updated_at = CURRENT_TIMESTAMP
+      WHERE id = ? AND tenant_id = ?
+    `;
+    db.run(sql, [
+      name, category, phone, location, description, facebook, email,
+      logo_url, cover_url, business_type, owner_name, floor_section, landmark,
+      opening_hours, vendorId, tenant_id
+    ], function(err2) {
+      if (err2) return res.status(500).json({ error: err2.message });
+      res.json({ message: 'Vendor updated successfully', changes: this.changes });
+    });
   });
 });
 
