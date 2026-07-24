@@ -8,15 +8,15 @@
   <title>Unity Mall SME centre | Local Shopping Reimagined</title>
   <style>
     :root {
-      --primary: #ca8a04;
-      --primary-hover: #a16207;
-      --bg-dark: #111827;
-      --bg-card: #1f2937;
-      --bg-header: #000000;
-      --text-main: #f3f4f6;
-      --text-muted: #9ca3af;
-      --text-accent: #eab308;
-      --border: #374151;
+      --primary: #f3a847;
+      --primary-hover: #e49635;
+      --bg-dark: #eaeded;
+      --bg-card: #ffffff;
+      --bg-header: #131921;
+      --text-main: #111111;
+      --text-muted: #565959;
+      --text-accent: #b12704;
+      --border: #dddddd;
       --whatsapp: #25D366;
       --whatsapp-hover: #1DA851;
       --facebook: #1877f2;
@@ -39,16 +39,18 @@
     ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
 
     .header {
-      background: var(--bg-header);
-      border-bottom: 2px solid var(--primary);
-      padding: 0.75rem 1rem;
+      background: #131921;
+      padding: 0.5rem 1rem;
       position: sticky;
       top: 0;
       z-index: 100;
       display: flex;
-      justify-content: space-between;
+      flex-flow: row wrap;
       align-items: center;
-      height: 64px;
+      justify-content: space-between;
+      gap: 0.5rem;
+      min-height: 60px;
+      height: auto;
     }
 
     .logo-container {
@@ -56,19 +58,98 @@
       align-items: center;
       gap: 10px;
       text-decoration: none;
+      order: 1;
     }
 
     .header h1 {
-      color: var(--text-accent);
+      color: #ffffff;
       font-size: 1.25rem;
       font-weight: 800;
       letter-spacing: -0.025em;
+    }
+
+    /* Amazon Search Bar */
+    .amazon-search {
+      display: flex;
+      align-items: center;
+      background: #fff;
+      border-radius: 4px;
+      overflow: hidden;
+      flex: 1;
+      min-width: 280px;
+      height: 40px;
+      order: 2;
+    }
+
+    .amazon-search:focus-within {
+      box-shadow: 0 0 0 2px #f3a847;
+    }
+
+    .amazon-search select {
+      background: #f3f3f3;
+      border: none;
+      border-right: 1px solid #ccc;
+      padding: 0 10px;
+      height: 100%;
+      font-size: 0.85rem;
+      color: #333;
+      cursor: pointer;
+      outline: none;
+      max-width: 120px;
+      font-family: inherit;
+    }
+
+    .amazon-search select:hover {
+      background: #dadada;
+    }
+
+    .amazon-search input {
+      flex: 1;
+      border: none;
+      padding: 0 12px;
+      height: 100%;
+      font-size: 0.9rem;
+      color: #111;
+      outline: none;
+    }
+
+    .amazon-search button {
+      background: #f3a847;
+      border: none;
+      color: #111;
+      width: 45px;
+      height: 100%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+      transition: background 0.2s;
+    }
+
+    .amazon-search button:hover {
+      background: #e49635;
     }
 
     .header-actions {
       display: flex;
       align-items: center;
       gap: 12px;
+      order: 3;
+    }
+
+    @media (max-width: 768px) {
+      .logo-container {
+        order: 1;
+      }
+      .header-actions {
+        order: 2;
+      }
+      .amazon-search {
+        order: 3;
+        width: 100%;
+        min-width: 100%;
+      }
     }
 
     .cart-trigger {
@@ -130,9 +211,10 @@
 
     .hero-slider {
       position: relative;
-      height: 200px;
+      height: 250px;
       overflow: hidden;
-      background: #000;
+      background: #eaeded;
+      border-bottom: 1px solid var(--border);
     }
 
     .slider-container {
@@ -150,20 +232,21 @@
       align-items: center;
       padding: 2rem;
       text-align: center;
+      background: linear-gradient(180deg, rgba(234,237,237,0) 0%, rgba(234,237,237,1) 100%);
     }
 
     .slide h2 {
-      font-size: 1.5rem;
+      font-size: 2rem;
       font-weight: 800;
       margin-bottom: 0.5rem;
-      color: var(--text-accent);
+      color: #111111;
     }
 
     .slide p {
-      font-size: 0.9rem;
-      color: var(--text-muted);
-      max-width: 300px;
-      margin-bottom: 1rem;
+      font-size: 1rem;
+      color: #333333;
+      max-width: 500px;
+      margin-bottom: 1.25rem;
     }
 
     .slider-dots {
@@ -230,34 +313,44 @@
       color: var(--text-muted);
     }
 
-    .categories {
-      padding: 1rem;
+    .department-nav {
+      background: #232f3e;
+      padding: 0.5rem 1rem;
       display: flex;
-      gap: 8px;
+      gap: 15px;
       overflow-x: auto;
       scrollbar-width: none;
       -ms-overflow-style: none;
+      align-items: center;
+      border-bottom: 1px solid #1a2432;
     }
 
-    .categories::-webkit-scrollbar { display: none; }
+    .department-nav::-webkit-scrollbar {
+      display: none;
+    }
 
-    .cat-btn {
-      white-space: nowrap;
-      padding: 8px 16px;
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: 20px;
-      color: var(--text-muted);
-      font-size: 0.875rem;
+    .department-link {
+      color: #dddddd;
+      text-decoration: none;
+      font-size: 0.85rem;
       font-weight: 500;
+      white-space: nowrap;
       cursor: pointer;
-      transition: all 0.2s;
+      background: none;
+      border: none;
+      font-family: inherit;
+      padding: 4px 0;
+      transition: color 0.2s;
     }
 
-    .cat-btn.active {
-      background: var(--primary);
-      color: #000;
-      border-color: var(--primary);
+    .department-link:hover {
+      color: #ffffff;
+    }
+
+    .department-link.active {
+      color: #f3a847;
+      font-weight: 700;
+      border-bottom: 2px solid #f3a847;
     }
 
     .section-title {
@@ -290,35 +383,91 @@
       }
     }
 
+    /* Category Shelves Styling */
+    .shelf-container {
+      margin-bottom: 2rem;
+      padding: 0 1rem;
+    }
+
+    .shelf-title {
+      font-size: 1.3rem;
+      font-weight: 700;
+      margin-top: 1rem;
+      margin-bottom: 0.75rem;
+      color: #111111;
+      border-bottom: 1.5px solid var(--border);
+      padding-bottom: 6px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .shelf-row {
+      display: flex;
+      gap: 16px;
+      overflow-x: auto;
+      padding: 10px 4px;
+      scrollbar-width: auto;
+    }
+
+    .shelf-row::-webkit-scrollbar {
+      height: 6px;
+    }
+
+    .shelf-row::-webkit-scrollbar-track {
+      background: #f1f1f1;
+      border-radius: 4px;
+    }
+
+    .shelf-row::-webkit-scrollbar-thumb {
+      background: #c1c1c1;
+      border-radius: 4px;
+    }
+
+    .shelf-row .card {
+      min-width: 200px;
+      max-width: 200px;
+      flex-shrink: 0;
+    }
+
+    @media (min-width: 768px) {
+      .shelf-row .card {
+        min-width: 240px;
+        max-width: 240px;
+      }
+    }
+
     .card {
       background: var(--bg-card);
       border: 1px solid var(--border);
-      border-radius: 12px;
+      border-radius: 4px;
       overflow: hidden;
       display: flex;
       flex-direction: column;
-      transition: transform 0.2s, border-color 0.2s;
+      padding: 10px;
+      transition: box-shadow 0.2s, border-color 0.2s;
     }
 
     .card:hover {
-      transform: translateY(-4px);
-      border-color: var(--primary);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      border-color: #b5b5b5;
     }
 
     .card-img-container {
       position: relative;
       aspect-ratio: 1;
-      background: #2d3748;
+      background: #ffffff;
       display: flex;
       align-items: center;
       justify-content: center;
       overflow: hidden;
+      margin-bottom: 8px;
     }
 
     .card-img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
     }
 
     .card-badge {
@@ -335,7 +484,7 @@
     }
 
     .card-content {
-      padding: 12px;
+      padding: 4px;
       flex: 1;
       display: flex;
       flex-direction: column;
@@ -350,26 +499,33 @@
     }
 
     .card-name {
-      font-size: 0.9rem;
-      font-weight: 600;
+      font-size: 0.95rem;
+      font-weight: 500;
       margin-bottom: 4px;
-      color: var(--text-main);
+      color: #007185;
+      cursor: pointer;
+      line-height: 1.3;
       display: -webkit-box;
       -webkit-line-clamp: 2;
       -webkit-box-orient: vertical;
       overflow: hidden;
-      line-height: 1.3;
+      text-decoration: none;
+    }
+
+    .card-name:hover {
+      color: #c45500;
+      text-decoration: underline;
     }
 
     .card-price {
-      font-size: 1.1rem;
-      font-weight: 800;
+      font-size: 1.25rem;
+      font-weight: 700;
       color: var(--text-accent);
-      margin-top: auto;
+      margin-top: 4px;
     }
 
     .card-meta {
-      font-size: 0.75rem;
+      font-size: 0.8rem;
       color: var(--text-muted);
       margin-top: 4px;
       display: flex;
@@ -385,30 +541,40 @@
     }
 
     .btn-cart {
-      background: var(--primary);
-      color: #000;
-      border: none;
-      padding: 8px;
-      border-radius: 8px;
+      background: #f0c14b;
+      border: 1px solid #a88734;
+      color: #111;
+      padding: 8px 12px;
+      border-radius: 20px;
       font-size: 0.8rem;
-      font-weight: 700;
+      font-weight: 600;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 6px;
+      transition: background 0.2s;
+    }
+
+    .btn-cart:hover {
+      background: #e1b12c;
     }
 
     .btn-whatsapp {
       background: var(--whatsapp);
       color: #fff;
       border: none;
-      padding: 8px;
-      border-radius: 8px;
+      padding: 8px 12px;
+      border-radius: 20px;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
+      transition: background 0.2s;
+    }
+
+    .btn-whatsapp:hover {
+      background: var(--whatsapp-hover);
     }
 
     .modal {
@@ -561,6 +727,15 @@
     <a href="#" class="logo-container" onclick="switchScreen('directory')">
       <h1>Unity Mall <span style="font-weight: 300;">SME centre</span></h1>
     </a>
+
+    <div class="amazon-search">
+      <select id="headerCategorySelect" onchange="selectCategory(this.value)">
+        <!-- filled dynamically in JavaScript -->
+      </select>
+      <input type="text" id="searchInput" placeholder="Search products, vendors, categories..." oninput="filterStalls()">
+      <button onclick="filterStalls()">🔍</button>
+    </div>
+
     <div class="header-actions">
       <button onclick="toggleLanguage()" class="auth-btn" style="background:none; border:1px solid var(--border); color:var(--text-muted); cursor:pointer;" id="langBtn">🌐 Tok Pisin</button>
       <button class="cart-trigger" onclick="toggleCart()">
@@ -571,19 +746,21 @@
     </div>
   </header>
 
+  <div class="department-nav" id="categories"></div>
+
   <main>
     <div id="directory" class="screen">
       <section class="hero-slider">
         <div class="slider-container" id="sliderContainer">
-          <div class="slide" style="background: linear-gradient(135deg, #000, var(--bg-card));">
+          <div class="slide" style="background: linear-gradient(135deg, #e3e6e6, #ffffff);">
             <h2 id="heroTitle">Unity Mall SME centre</h2>
             <p>The digital marketplace for PNG's finest local vendors and artisans.</p>
             <button class="auth-btn" onclick="document.getElementById('searchInput').focus()">Shop Now</button>
           </div>
-          <div class="slide" style="background: linear-gradient(135deg, var(--bg-card), #000);">
+          <div class="slide" style="background: linear-gradient(135deg, #ffffff, #e3e6e6);">
             <h2>Grow Your Business</h2>
             <p>Join our network of successful SMEs. Get your own digital storefront and dashboard.</p>
-            <button class="auth-btn" onclick="openAuthModal('register')" style="background: var(--text-accent); color: #000; border-color: var(--text-accent);">Join as Vendor</button>
+            <button class="auth-btn" onclick="openAuthModal('register')" style="background: var(--primary); color: #000; border-color: var(--primary);">Join as Vendor</button>
           </div>
         </div>
         <div class="slider-dots" id="sliderDots">
@@ -591,15 +768,6 @@
           <span class="dot" onclick="goToSlide(1)"></span>
         </div>
       </section>
-
-      <div class="search-container">
-        <div class="search-wrapper">
-          <span class="search-icon">🔍</span>
-          <input type="text" id="searchInput" placeholder="Search products, vendors, categories..." oninput="filterStalls()">
-        </div>
-      </div>
-
-      <div class="categories" id="categories"></div>
 
       <div class="section-title">
         <span>Product Directory</span>
@@ -929,6 +1097,13 @@
     async function init() {
       await loadTenantConfig();
       await fetchProducts();
+
+      // Populate category select dropdown in header
+      const select = document.getElementById('headerCategorySelect');
+      if (select) {
+        select.innerHTML = categories.map(cat => `<option value="${cat}">${cat}</option>`).join('');
+      }
+
       renderCategories();
       filterStalls();
       updateCartUI();
@@ -960,17 +1135,55 @@
 
     function renderCategories() {
       const container = document.getElementById('categories');
-      container.innerHTML = categories.map(cat => `
-        <button class="cat-btn ${cat === currentCategory ? 'active' : ''}" onclick="selectCategory('${cat}')">
-          ${cat}
-        </button>
-      `).join('');
+      if (container) {
+        container.innerHTML = categories.map(cat => `
+          <button class="department-link ${cat === currentCategory ? 'active' : ''}" onclick="selectCategory('${cat}')">
+            ${cat}
+          </button>
+        `).join('');
+      }
     }
 
     function selectCategory(cat) {
       currentCategory = cat;
+      const select = document.getElementById('headerCategorySelect');
+      if (select) {
+        select.value = cat;
+      }
+      switchScreen('directory');
       renderCategories();
       filterStalls();
+    }
+
+    function renderCardHTML(p) {
+      const verifiedBadge = p.vendor_verified ? ` <span class="verified-badge" style="color: #ca8a04; font-weight: bold; background: rgba(202,138,4,0.1); padding: 1px 4px; border-radius: 4px; font-size: 0.7rem;" data-i18n="verifiedBadge">✓ Verified</span>` : '';
+      const ratingVal = p.rating > 0 ? p.rating.toFixed(1) : '0';
+      return `
+        <div class="card">
+          <div class="card-img-container">
+            <img src="${p.image}" class="card-img" alt="${p.name}" loading="lazy" style="cursor: pointer;" onclick="openProductModal(${p.id})">
+            ${p.rating > 4.7 ? '<span class="card-badge">Top Rated</span>' : ''}
+          </div>
+          <div class="card-content">
+            <div class="card-category">${p.category} • <strong>${p.stall}</strong>${verifiedBadge}</div>
+            <h3 class="card-name" onclick="openProductModal(${p.id})">${p.name}</h3>
+            <div class="card-meta">
+              <span>⭐ ${ratingVal}</span>
+              <span>(${p.reviews})</span>
+              <span>• L${p.level}</span>
+            </div>
+            <div class="card-price">K${p.price.toFixed(2)}</div>
+            <div class="card-actions">
+              <button class="btn-cart" onclick="addToCart(${p.id})">
+                <span>🛒</span> Add
+              </button>
+              <button class="btn-whatsapp" onclick="openWhatsApp('${p.stall}', '${p.name}')">
+                <span>💬</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
     }
 
     function filterStalls() {
@@ -990,40 +1203,43 @@
       document.getElementById('results').textContent = `${filtered.length} items found`;
       
       if (filtered.length === 0) {
+        container.style.display = '';
         container.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 3rem; color: var(--text-muted);">No products found matching your search.</div>';
         return;
       }
 
-      container.innerHTML = filtered.map(p => {
-        const verifiedBadge = p.vendor_verified ? ` <span class="verified-badge" style="color: #ca8a04; font-weight: bold; background: rgba(202,138,4,0.1); padding: 1px 4px; border-radius: 4px; font-size: 0.7rem;" data-i18n="verifiedBadge">✓ Verified</span>` : '';
-        const ratingVal = p.rating > 0 ? p.rating.toFixed(1) : '0';
-        return `
-          <div class="card">
-            <div class="card-img-container">
-              <img src="${p.image}" class="card-img" alt="${p.name}" loading="lazy" style="cursor: pointer;" onclick="openProductModal(${p.id})">
-              ${p.rating > 4.7 ? '<span class="card-badge">Top Rated</span>' : ''}
-            </div>
-            <div class="card-content">
-              <div class="card-category">${p.category} • <strong>${p.stall}</strong>${verifiedBadge}</div>
-              <h3 class="card-name" style="cursor: pointer;" onclick="openProductModal(${p.id})">${p.name}</h3>
-              <div class="card-meta">
-                <span>⭐ ${ratingVal}</span>
-                <span>(${p.reviews})</span>
-                <span>• L${p.level}</span>
-              </div>
-              <div class="card-price">K${p.price.toFixed(2)}</div>
-              <div class="card-actions">
-                <button class="btn-cart" onclick="addToCart(${p.id})">
-                  <span>🛒</span> Add
-                </button>
-                <button class="btn-whatsapp" onclick="openWhatsApp('${p.stall}', '${p.name}')">
-                  <span>💬</span>
-                </button>
+      if (search === '' && currentCategory === 'All') {
+        container.style.display = 'block';
+
+        // Group products by category
+        const groups = {};
+        filtered.forEach(p => {
+          if (!groups[p.category]) groups[p.category] = [];
+          groups[p.category].push(p);
+        });
+
+        // Render each category shelf
+        const shelfHTML = Object.keys(groups).map(catName => {
+          const prodList = groups[catName];
+          const cardsHTML = prodList.map(p => renderCardHTML(p)).join('');
+          return `
+            <div class="shelf-container">
+              <h3 class="shelf-title">
+                <span>${catName}</span>
+                <span style="font-size: 0.85rem; font-weight: normal; color: #007185; cursor: pointer;" onclick="selectCategory('${catName}')">See all ›</span>
+              </h3>
+              <div class="shelf-row">
+                ${cardsHTML}
               </div>
             </div>
-          </div>
-        `;
-      }).join('');
+          `;
+        }).join('');
+
+        container.innerHTML = shelfHTML;
+      } else {
+        container.style.display = '';
+        container.innerHTML = filtered.map(p => renderCardHTML(p)).join('');
+      }
     }
 
     function addToCart(productId) {
@@ -1465,7 +1681,7 @@
                 <form id="submitReviewForm" onsubmit="event.preventDefault(); submitReview(${productId});">
                   <div class="form-group" style="margin-bottom: 0.75rem;">
                     <label class="form-label" data-i18n="ratingLabel" style="font-size: 0.85rem;">Rating (1-5)</label>
-                    <select id="reviewRating" class="form-input" required style="width: 100%; max-width: 120px; background: var(--bg-dark); color: #fff;">
+                    <select id="reviewRating" class="form-input" required style="width: 100%; max-width: 120px; background: #ffffff; color: var(--text-main); border: 1px solid var(--border);">
                       <option value="5">5 ⭐⭐⭐⭐⭐</option>
                       <option value="4">4 ⭐⭐⭐⭐</option>
                       <option value="3">3 ⭐⭐⭐</option>
@@ -1475,7 +1691,7 @@
                   </div>
                   <div class="form-group" style="margin-bottom: 0.75rem;">
                     <label class="form-label" data-i18n="commentLabel" style="font-size: 0.85rem;">Comment / Feedback</label>
-                    <textarea id="reviewComment" class="form-input" rows="3" placeholder="Tell us about this product..." style="width: 100%; box-sizing: border-box; background: var(--bg-dark); color: #fff;"></textarea>
+                    <textarea id="reviewComment" class="form-input" rows="3" placeholder="Tell us about this product..." style="width: 100%; box-sizing: border-box; background: #ffffff; color: var(--text-main); border: 1px solid var(--border);"></textarea>
                   </div>
                   <button type="submit" class="auth-btn" style="width: 100%; padding: 8px 12px; font-size: 0.9rem;" data-i18n="submitReviewBtn">Submit Review</button>
                 </form>
