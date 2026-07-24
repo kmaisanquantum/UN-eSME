@@ -1,6 +1,9 @@
 {
   "name": "unity-mall-sme-centre-backend",
   "version": "1.0.0",
+  "engines": {
+    "node": ">=18"
+  },
   "description": "Backend API for Unity Mall SME centre platform",
   "main": "server.js",
   "scripts": {
