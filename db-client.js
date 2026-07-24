@@ -9,6 +9,18 @@ let sqliteDb;
 
 if (DB_ENGINE === 'postgres') {
   console.log('Using PostgreSQL connection strategy');
+
+  const isProduction = process.env.NODE_ENV === 'production';
+  const isDefaultPassword = !process.env.DB_PASSWORD || process.env.DB_PASSWORD === 'SuperSecurePassw0rd!';
+  if (isDefaultPassword) {
+    if (isProduction) {
+      console.error('FATAL ERROR: Default PostgreSQL password is not allowed in production. Exiting.');
+      process.exit(1);
+    } else {
+      console.warn('LOUD WARNING: Default PostgreSQL password is being used in development.');
+    }
+  }
+
   pgPool = new Pool({
     host: process.env.DB_HOST || 'localhost',
     port: parseInt(process.env.DB_PORT || '5432', 10),

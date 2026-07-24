@@ -6,6 +6,32 @@ const path = require('path');
 const fs = require('fs');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
+
+// Fail-safe startup validations
+const isProduction = process.env.NODE_ENV === 'production';
+
+// JWT Secret validation
+if (!process.env.JWT_SECRET || process.env.JWT_SECRET === 'super-secret-unity-mall-key') {
+  if (isProduction) {
+    console.error('FATAL ERROR: Insecure JWT_SECRET in production is not allowed. Exiting.');
+    process.exit(1);
+  } else {
+    console.warn('LOUD WARNING: Insecure default JWT_SECRET is active in development.');
+  }
+}
+
+// Admin Seeding Credentials validation
+if (!process.env.ADMIN_USERNAME || process.env.ADMIN_USERNAME === 'admin' ||
+    !process.env.ADMIN_PASSWORD || process.env.ADMIN_PASSWORD === 'admin123') {
+  if (isProduction) {
+    console.error('FATAL ERROR: Default admin credentials are not allowed in production. Exiting.');
+    process.exit(1);
+  } else {
+    console.warn('LOUD WARNING: Default admin credentials (admin/admin123) are active in development.');
+  }
+}
 
 const db = require('./db-client');
 
@@ -13,11 +39,68 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || 'super-secret-unity-mall-key';
 
+// Rate Limiters
+const globalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 300, // Limit each IP to 300 requests per 15 minutes
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many requests from this IP, please try again after 15 minutes' }
+});
+
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 10, // Limit each IP to 10 requests per 15 minutes
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many registration or login attempts, please try again after 15 minutes' }
+});
+
 // Middleware
-app.use(cors());
-app.use(bodyParser.json({ limit: '50mb' }));
-app.use(bodyParser.urlencoded({ extended: true, limit: '50mb' }));
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://cdn.jsdelivr.net"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net", "https://fonts.googleapis.com"],
+      imgSrc: ["'self'", "data:", "/uploads/", "https:*", "http:*"],
+      fontSrc: ["'self'", "https://fonts.gstatic.com"],
+      connectSrc: ["'self'", "http://localhost:*", "ws://localhost:*", "http://127.0.0.1:*"],
+      objectSrc: ["'none'"],
+      upgradeInsecureRequests: [],
+    }
+  },
+  crossOriginResourcePolicy: { policy: "cross-origin" }
+}));
+const allowedOrigins = process.env.ALLOWED_ORIGINS
+  ? process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim())
+  : [];
+
+const corsOptions = {
+  origin: function (origin, callback) {
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.length === 0) {
+      return callback(null, true); // Dev/fallback mode
+    }
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    return callback(null, false);
+  }
+};
+
+app.use(cors(corsOptions));
+app.use(bodyParser.json({ limit: '2mb' }));
+app.use(bodyParser.urlencoded({ extended: true, limit: '2mb' }));
 app.use('/uploads', express.static('uploads'));
+
+// Apply Rate Limiters
+app.use(globalLimiter);
+app.use('/api/auth/register', authLimiter);
+app.use('/api/auth/login', authLimiter);
+app.use('/api/auth/customer/register', authLimiter);
+app.use('/api/auth/customer/login', authLimiter);
+app.use('/api/admin/login', authLimiter);
 
 // Create uploads directory
 if (!fs.existsSync('uploads')) {
@@ -65,6 +148,16 @@ function tenantResolver(req, res, next) {
     next();
   });
 }
+
+// Health check endpoint (bypasses tenantResolver)
+app.get('/api/health', (req, res) => {
+  db.get('SELECT 1', (err, row) => {
+    if (err) {
+      return res.status(500).json({ status: 'error', db: false });
+    }
+    res.json({ status: 'ok', db: true });
+  });
+});
 
 // Register global tenant resolver
 app.use(tenantResolver);
@@ -2612,6 +2705,19 @@ app.post('/api/bot/webhook', authenticateToken(['vendor', 'centre_admin', 'platf
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
+});
+
+// Centralised error handler middleware (must be registered after all routes)
+app.use((err, req, res, next) => {
+  console.error('Unhandled Error:', err);
+
+  const isProd = process.env.NODE_ENV === 'production';
+  const statusCode = err.status || err.statusCode || 500;
+
+  res.status(statusCode).json({
+    error: isProd ? 'Internal Server Error' : err.message,
+    ...(isProd ? {} : { stack: err.stack })
+  });
 });
 
 // Start server
