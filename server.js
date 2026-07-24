@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
@@ -63,7 +64,7 @@ app.use(helmet({
       defaultSrc: ["'self'"],
       scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://cdn.jsdelivr.net"],
       styleSrc: ["'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net", "https://fonts.googleapis.com"],
-      imgSrc: ["'self'", "data:", "/uploads/", "https:*", "http:*"],
+      imgSrc: ["'self'", "data:", "/uploads/", "https:", "http:"],
       fontSrc: ["'self'", "https://fonts.gstatic.com"],
       connectSrc: ["'self'", "http://localhost:*", "ws://localhost:*", "http://127.0.0.1:*"],
       objectSrc: ["'none'"],
