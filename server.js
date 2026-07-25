@@ -24,12 +24,17 @@ if (!process.env.JWT_SECRET || process.env.JWT_SECRET === 'super-secret-unity-ma
 }
 
 // Admin Seeding Credentials validation
-if (!process.env.ADMIN_USERNAME || process.env.ADMIN_USERNAME === 'admin' ||
-    !process.env.ADMIN_PASSWORD || process.env.ADMIN_PASSWORD === 'admin123') {
-  if (isProduction) {
-    console.error('FATAL ERROR: Default admin credentials are not allowed in production. Exiting.');
+const isDefaultAdminCreds = !process.env.ADMIN_USERNAME || process.env.ADMIN_USERNAME === 'admin' ||
+                            !process.env.ADMIN_PASSWORD || process.env.ADMIN_PASSWORD === 'admin123';
+
+if (isProduction) {
+  // In production, only fail if the password is missing or equals insecure default 'admin123'
+  if (!process.env.ADMIN_PASSWORD || process.env.ADMIN_PASSWORD === 'admin123') {
+    console.error('FATAL ERROR: Default or missing admin password in production is not allowed. Exiting.');
     process.exit(1);
-  } else {
+  }
+} else {
+  if (isDefaultAdminCreds) {
     console.warn('LOUD WARNING: Default admin credentials (admin/admin123) are active in development.');
   }
 }
@@ -162,6 +167,11 @@ app.get('/api/health', (req, res) => {
 
 // Register global tenant resolver
 app.use(tenantResolver);
+
+// Admin portal obscured clean route
+app.get('/@dm1n', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'admin.html'));
+});
 
 // Serve static public folder AFTER tenantResolver so we can inject branding if needed,
 // but actually Express static serves index.html directly.
@@ -569,12 +579,19 @@ function initDatabase() {
             db.run('INSERT INTO admins (username, password, role) VALUES (?, ?, ?)', [adminUser, hashedPass, 'super_admin']);
             console.log(`Admin seeded: ${adminUser}`);
           } else {
-            // Check if existing password is plaintext. Bcrypt hashes always start with $2a$ or $2b$ or $2y$
-            const isHashed = row.password && (row.password.startsWith('$2a$') || row.password.startsWith('$2b$') || row.password.startsWith('$2y$'));
-            if (!isHashed) {
-              console.log(`Migrating plaintext password for admin user: ${adminUser}`);
-              const hashedPass = await bcrypt.hash(row.password, 10);
+            // Overwrite password if explicitly specified in env
+            if (process.env.ADMIN_PASSWORD) {
+              console.log(`Updating stored admin password to match ADMIN_PASSWORD from env for: ${adminUser}`);
+              const hashedPass = await bcrypt.hash(process.env.ADMIN_PASSWORD, 10);
               db.run('UPDATE admins SET password = ? WHERE id = ?', [hashedPass, row.id]);
+            } else {
+              // Check if existing password is plaintext. Bcrypt hashes always start with $2a$ or $2b$ or $2y$
+              const isHashed = row.password && (row.password.startsWith('$2a$') || row.password.startsWith('$2b$') || row.password.startsWith('$2y$'));
+              if (!isHashed) {
+                console.log(`Migrating plaintext password for admin user: ${adminUser}`);
+                const hashedPass = await bcrypt.hash(row.password, 10);
+                db.run('UPDATE admins SET password = ? WHERE id = ?', [hashedPass, row.id]);
+              }
             }
           }
         });
