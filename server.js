@@ -574,24 +574,32 @@ function initDatabase() {
         const adminPass = process.env.ADMIN_PASSWORD || 'admin123';
 
         db.get('SELECT * FROM admins WHERE username = ?', [adminUser], async (err, row) => {
-          if (!row) {
+          if (row) {
+            // NEW_USERNAME already exists, just update its password
+            console.log(`Updating stored admin password to match ADMIN_PASSWORD from env for: ${adminUser}`);
             const hashedPass = await bcrypt.hash(adminPass, 10);
-            db.run('INSERT INTO admins (username, password, role) VALUES (?, ?, ?)', [adminUser, hashedPass, 'super_admin']);
-            console.log(`Admin seeded: ${adminUser}`);
+            db.run('UPDATE admins SET password = ? WHERE id = ?', [hashedPass, row.id]);
           } else {
-            // Overwrite password if explicitly specified in env
-            if (process.env.ADMIN_PASSWORD) {
-              console.log(`Updating stored admin password to match ADMIN_PASSWORD from env for: ${adminUser}`);
-              const hashedPass = await bcrypt.hash(process.env.ADMIN_PASSWORD, 10);
-              db.run('UPDATE admins SET password = ? WHERE id = ?', [hashedPass, row.id]);
+            // NEW_USERNAME does not exist. Check if we need to migrate from 'admin'
+            if (adminUser !== 'admin') {
+              db.get('SELECT * FROM admins WHERE username = ?', ['admin'], async (errOld, oldRow) => {
+                if (oldRow) {
+                  // Migrate 'admin' row to NEW_USERNAME
+                  console.log(`One-time migration: updating admin username from 'admin' to '${adminUser}'`);
+                  const hashedPass = await bcrypt.hash(adminPass, 10);
+                  db.run('UPDATE admins SET username = ?, password = ? WHERE id = ?', [adminUser, hashedPass, oldRow.id]);
+                } else {
+                  // No 'admin' row and no NEW_USERNAME row exists. Insert new.
+                  const hashedPass = await bcrypt.hash(adminPass, 10);
+                  db.run('INSERT INTO admins (username, password, role) VALUES (?, ?, ?)', [adminUser, hashedPass, 'super_admin']);
+                  console.log(`Admin seeded: ${adminUser}`);
+                }
+              });
             } else {
-              // Check if existing password is plaintext. Bcrypt hashes always start with $2a$ or $2b$ or $2y$
-              const isHashed = row.password && (row.password.startsWith('$2a$') || row.password.startsWith('$2b$') || row.password.startsWith('$2y$'));
-              if (!isHashed) {
-                console.log(`Migrating plaintext password for admin user: ${adminUser}`);
-                const hashedPass = await bcrypt.hash(row.password, 10);
-                db.run('UPDATE admins SET password = ? WHERE id = ?', [hashedPass, row.id]);
-              }
+              // adminUser is 'admin' and it does not exist. Insert new.
+              const hashedPass = await bcrypt.hash(adminPass, 10);
+              db.run('INSERT INTO admins (username, password, role) VALUES (?, ?, ?)', [adminUser, hashedPass, 'super_admin']);
+              console.log(`Admin seeded: ${adminUser}`);
             }
           }
         });
