@@ -291,6 +291,17 @@ app.get('/api/health', (req, res) => {
 // Register global tenant resolver
 app.use(tenantResolver);
 
+// API request logger middleware
+app.use('/api', (req, res, next) => {
+  const start = Date.now();
+  res.on('finish', () => {
+    const duration = Date.now() - start;
+    const subdomain = req.tenant ? req.tenant.subdomain : 'unknown';
+    console.log(`[API REQUEST] ${req.method} ${req.originalUrl || req.url} | TENANT: ${subdomain} | STATUS: ${res.statusCode} | ${duration}ms`);
+  });
+  next();
+});
+
 // Admin portal obscured clean route
 app.get('/@dm1n', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'admin.html'));
@@ -837,11 +848,13 @@ app.post('/api/auth/register', async (req, res) => {
     const sql = 'INSERT INTO vendors (name, category, phone, location, description, facebook, password, email, tenant_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)';
     db.run(sql, [name, category, phone, location, description, facebook, hashedPassword, email, tenant_id], function(err) {
       if (err) {
+        console.error('[DB ERROR] Vendor Registration failed:', err);
         return res.status(500).json({ error: err.message });
       }
       res.json({ id: this.lastID, message: 'Vendor registered successfully' });
     });
   } catch (err) {
+    console.error('[TRY-CATCH ERROR] Vendor Registration catch block:', err);
     res.status(500).json({ error: err.message });
   }
 });
@@ -852,7 +865,10 @@ app.post('/api/auth/login', (req, res) => {
   const tenant_id = req.tenant.id;
 
   db.get('SELECT * FROM vendors WHERE email = ? AND tenant_id = ?', [email, tenant_id], async (err, row) => {
-    if (err) return res.status(500).json({ error: err.message });
+    if (err) {
+      console.error('[DB ERROR] Vendor Login failed:', err);
+      return res.status(500).json({ error: err.message });
+    }
     if (!row) return res.status(401).json({ error: 'Invalid email or password' });
 
     const isMatch = await bcrypt.compare(password, row.password);
@@ -960,10 +976,14 @@ app.post("/api/auth/customer/register", async (req, res) => {
 
     const sql = "INSERT INTO users (name, email, phone, password, tenant_id) VALUES (?, ?, ?, ?, ?)";
     db.run(sql, [name, email, phone, hashedPassword, tenant_id], function(err) {
-      if (err) return res.status(500).json({ error: err.message });
+      if (err) {
+        console.error('[DB ERROR] Customer Registration failed:', err);
+        return res.status(500).json({ error: err.message });
+      }
       res.json({ id: this.lastID, message: "Customer registered successfully" });
     });
   } catch (err) {
+    console.error('[TRY-CATCH ERROR] Customer Registration catch block:', err);
     res.status(500).json({ error: err.message });
   }
 });
@@ -974,7 +994,10 @@ app.post("/api/auth/customer/login", (req, res) => {
   const tenant_id = req.tenant.id;
 
   db.get("SELECT * FROM users WHERE email = ? AND tenant_id = ?", [email, tenant_id], async (err, row) => {
-    if (err) return res.status(500).json({ error: err.message });
+    if (err) {
+      console.error('[DB ERROR] Customer Login failed:', err);
+      return res.status(500).json({ error: err.message });
+    }
     if (!row) return res.status(401).json({ error: "Invalid email or password" });
 
     const isMatch = await bcrypt.compare(password, row.password);
@@ -2871,7 +2894,7 @@ app.post('/api/bot/webhook', authenticateToken(['vendor', 'centre_admin', 'platf
 
 // Centralised error handler middleware (must be registered after all routes)
 app.use((err, req, res, next) => {
-  console.error('Unhandled Error:', err);
+  console.error('[CENTRAL ERROR HANDLER] Unhandled Error Stack:', err.stack || err);
 
   const isProd = process.env.NODE_ENV === 'production';
   const statusCode = err.status || err.statusCode || 500;
