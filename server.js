@@ -13,8 +13,49 @@ const rateLimit = require('express-rate-limit');
 // Fail-safe startup validations
 const isProduction = process.env.NODE_ENV === 'production';
 
+const crypto = require('crypto');
+
+function resolveJwtSecret() {
+  if (process.env.JWT_SECRET && process.env.JWT_SECRET !== 'super-secret-unity-mall-key') {
+    return process.env.JWT_SECRET;
+  }
+
+  const secretsDir = process.env.SECRETS_DIR || path.dirname(process.env.DATABASE_FILE || './unity_mall.db');
+  const secretPath = path.join(secretsDir, 'jwt_secret.key');
+
+  if (!fs.existsSync(secretsDir)) {
+    try {
+      fs.mkdirSync(secretsDir, { recursive: true });
+    } catch (err) {
+      console.error(`Failed to create secrets directory: ${err.message}`);
+    }
+  }
+
+  if (fs.existsSync(secretPath)) {
+    try {
+      const persistedSecret = fs.readFileSync(secretPath, 'utf8').trim();
+      if (persistedSecret && persistedSecret !== 'super-secret-unity-mall-key') {
+        return persistedSecret;
+      }
+    } catch (err) {
+      console.error(`Error reading JWT secret from file: ${err.message}`);
+    }
+  }
+
+  const newSecret = crypto.randomBytes(48).toString('hex');
+  try {
+    fs.writeFileSync(secretPath, newSecret, { encoding: 'utf8', mode: 0o600 });
+    console.log(`Generated a new cryptographically strong JWT secret and persisted it to ${secretPath}`);
+  } catch (err) {
+    console.error(`Failed to persist newly generated JWT secret to file: ${err.message}`);
+  }
+  return newSecret;
+}
+
+const JWT_SECRET = resolveJwtSecret();
+
 // JWT Secret validation
-if (!process.env.JWT_SECRET || process.env.JWT_SECRET === 'super-secret-unity-mall-key') {
+if (!JWT_SECRET || JWT_SECRET === 'super-secret-unity-mall-key') {
   if (isProduction) {
     console.error('FATAL ERROR: Insecure JWT_SECRET in production is not allowed. Exiting.');
     process.exit(1);
@@ -43,7 +84,6 @@ const db = require('./db-client');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const JWT_SECRET = process.env.JWT_SECRET || 'super-secret-unity-mall-key';
 
 // Rate Limiters
 const globalLimiter = rateLimit({
