@@ -3,5 +3,6 @@ node_modules/
 uploads/
 .env
 jwt_secret.key
+admin_password.key
 *.log
 .DS_Store

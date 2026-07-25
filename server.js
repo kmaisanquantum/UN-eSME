@@ -64,13 +64,53 @@ if (!JWT_SECRET || JWT_SECRET === 'super-secret-unity-mall-key') {
   }
 }
 
+function resolveAdminPassword() {
+  if (process.env.ADMIN_PASSWORD && process.env.ADMIN_PASSWORD !== 'admin123') {
+    return process.env.ADMIN_PASSWORD;
+  }
+
+  const secretsDir = process.env.SECRETS_DIR || path.dirname(process.env.DATABASE_FILE || './unity_mall.db');
+  const passwordPath = path.join(secretsDir, 'admin_password.key');
+
+  if (!fs.existsSync(secretsDir)) {
+    try {
+      fs.mkdirSync(secretsDir, { recursive: true });
+    } catch (err) {
+      console.error(`Failed to create secrets directory: ${err.message}`);
+    }
+  }
+
+  if (fs.existsSync(passwordPath)) {
+    try {
+      const persistedPassword = fs.readFileSync(passwordPath, 'utf8').trim();
+      if (persistedPassword && persistedPassword !== 'admin123') {
+        return persistedPassword;
+      }
+    } catch (err) {
+      console.error(`Error reading admin password from file: ${err.message}`);
+    }
+  }
+
+  // Generate a cryptographically strong random alphanumeric password
+  const newPassword = crypto.randomBytes(24).toString('base64').replace(/[^a-zA-Z0-9]/g, '');
+  try {
+    fs.writeFileSync(passwordPath, newPassword, { encoding: 'utf8', mode: 0o600 });
+    console.log(`Generated a new secure admin password and persisted it to ${passwordPath}. Password: ${newPassword}`);
+  } catch (err) {
+    console.error(`Failed to persist newly generated admin password to file: ${err.message}`);
+  }
+  return newPassword;
+}
+
+const ADMIN_PASSWORD = resolveAdminPassword();
+
 // Admin Seeding Credentials validation
 const isDefaultAdminCreds = !process.env.ADMIN_USERNAME || process.env.ADMIN_USERNAME === 'admin' ||
-                            !process.env.ADMIN_PASSWORD || process.env.ADMIN_PASSWORD === 'admin123';
+                            !ADMIN_PASSWORD || ADMIN_PASSWORD === 'admin123';
 
 if (isProduction) {
   // In production, only fail if the password is missing or equals insecure default 'admin123'
-  if (!process.env.ADMIN_PASSWORD || process.env.ADMIN_PASSWORD === 'admin123') {
+  if (!ADMIN_PASSWORD || ADMIN_PASSWORD === 'admin123') {
     console.error('FATAL ERROR: Default or missing admin password in production is not allowed. Exiting.');
     process.exit(1);
   }
@@ -609,9 +649,9 @@ function initDatabase() {
         db.run("UPDATE admins SET tenant_id = 1 WHERE tenant_id IS NULL");
         db.run("UPDATE vendors SET published = 0 WHERE published IS NULL");
 
-        // Seed admin from env vars, falling back to 'admin' / 'admin123' if not set
+        // Seed admin from env vars, falling back to 'admin' / resolved fallback if not set
         const adminUser = process.env.ADMIN_USERNAME || 'admin';
-        const adminPass = process.env.ADMIN_PASSWORD || 'admin123';
+        const adminPass = ADMIN_PASSWORD;
 
         db.get('SELECT * FROM admins WHERE username = ?', [adminUser], async (err, row) => {
           if (row) {
