@@ -147,11 +147,34 @@ app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://cdn.jsdelivr.net"],
+      scriptSrc: [
+        "'self'",
+        "'unsafe-inline'",
+        "'unsafe-eval'",
+        "https://cdn.jsdelivr.net",
+        "https://accounts.google.com",
+        "https://apis.google.com",
+        "https://connect.facebook.net"
+      ],
       styleSrc: ["'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net", "https://fonts.googleapis.com"],
       imgSrc: ["'self'", "data:", "/uploads/", "https:", "http:"],
       fontSrc: ["'self'", "https://fonts.gstatic.com"],
-      connectSrc: ["'self'", "http://localhost:*", "ws://localhost:*", "http://127.0.0.1:*"],
+      connectSrc: [
+        "'self'",
+        "http://localhost:*",
+        "ws://localhost:*",
+        "http://127.0.0.1:*",
+        "https://accounts.google.com",
+        "https://www.facebook.com",
+        "https://graph.facebook.com",
+        "https://unity.dspng.tech",
+        "https://gc.dspng.tech"
+      ],
+      frameSrc: [
+        "'self'",
+        "https://accounts.google.com",
+        "https://www.facebook.com"
+      ],
       objectSrc: ["'none'"],
       upgradeInsecureRequests: [],
     }
@@ -220,7 +243,27 @@ function tenantResolver(req, res, next) {
       // Default fallback to subdomain 'unity'
       db.get('SELECT * FROM tenants WHERE subdomain = ?', ['unity'], (err2, defaultRow) => {
         if (err2 || !defaultRow) {
-          return res.status(500).json({ error: 'Tenant configuration missing' });
+          console.warn("Tenant 'unity' fallback is missing in database! Dynamically seeding and recovering on the fly...");
+          const unityBranding = JSON.stringify({
+            name: "Unity Mall SME centre",
+            whatsapp: "67570000000",
+            phone: "(675) 8300 99881",
+            text: "(675) 8300 9881",
+            email: "wokman@dspng.tech",
+            googleClientId: "your-google-client-id.apps.googleusercontent.com",
+            facebookAppId: "your-facebook-app-id"
+          });
+          db.run("INSERT INTO tenants (id, name, subdomain, branding, status, subscription_tier) VALUES (1, 'Unity Mall', 'unity', ?, 'active', 'free')", [unityBranding], (errSeed) => {
+            db.get("SELECT * FROM tenants WHERE subdomain = ?", ["unity"], (err3, rowRecovered) => {
+              if (err3 || !rowRecovered) {
+                console.error("Critical: Failed to recover default tenant 'unity'. Database path: " + (process.env.DATABASE_FILE || './unity_mall.db'));
+                return res.status(500).json({ error: 'Tenant configuration missing and recovery failed' });
+              }
+              req.tenant = rowRecovered;
+              next();
+            });
+          });
+          return;
         }
         if (defaultRow.status === 'inactive') {
           return res.status(403).json({ error: 'This SME centre is not active' });
@@ -304,31 +347,44 @@ function initDatabase() {
     `, (err) => {
       if (err) console.error('Error creating tenants table:', err);
 
-      // Seed tenants if empty
-      db.get('SELECT COUNT(*) as count FROM tenants', (err, row) => {
-        const count = row ? (row.count || row['count(*)']) : 0;
-        if (!count) {
-          const unityBranding = JSON.stringify({
-            name: "Unity Mall SME centre",
-            whatsapp: "67570000000",
-            phone: "(675) 8300 99881",
-            text: "(675) 8300 9881",
-            email: "wokman@dspng.tech",
-            googleClientId: "your-google-client-id.apps.googleusercontent.com",
-            facebookAppId: "your-facebook-app-id"
-          });
-          const gcBranding = JSON.stringify({
-            name: "Garden City eSME",
-            whatsapp: "67571234567",
-            phone: "(675) 8300 99881",
-            text: "(675) 8300 9881",
-            email: "wokman@dspng.tech",
-            googleClientId: "your-google-client-id-gc.apps.googleusercontent.com",
-            facebookAppId: "your-facebook-app-id-gc"
-          });
+      // Seed tenants if empty or missing, ensuring fully idempotent seeding
+      const unityBranding = JSON.stringify({
+        name: "Unity Mall SME centre",
+        whatsapp: "67570000000",
+        phone: "(675) 8300 99881",
+        text: "(675) 8300 9881",
+        email: "wokman@dspng.tech",
+        googleClientId: "your-google-client-id.apps.googleusercontent.com",
+        facebookAppId: "your-facebook-app-id"
+      });
+      const gcBranding = JSON.stringify({
+        name: "Garden City eSME",
+        whatsapp: "67571234567",
+        phone: "(675) 8300 99881",
+        text: "(675) 8300 9881",
+        email: "wokman@dspng.tech",
+        googleClientId: "your-google-client-id-gc.apps.googleusercontent.com",
+        facebookAppId: "your-facebook-app-id-gc"
+      });
 
-          db.run('INSERT INTO tenants (id, name, subdomain, branding) VALUES (1, ?, ?, ?)', ['Unity Mall', 'unity', unityBranding]);
-          db.run('INSERT INTO tenants (id, name, subdomain, branding) VALUES (2, ?, ?, ?)', ['Garden City', 'gc', gcBranding]);
+      db.get('SELECT COUNT(*) as count FROM tenants', (err, row) => {
+        const count = row ? (row.count || row.COUNT || row['count(*)'] || row['COUNT(*)'] || 0) : 0;
+        if (!count) {
+          db.run('INSERT INTO tenants (id, name, subdomain, branding) VALUES (1, ?, ?, ?)', ['Unity Mall', 'unity', unityBranding], () => {
+            db.run('INSERT INTO tenants (id, name, subdomain, branding) VALUES (2, ?, ?, ?)', ['Garden City', 'gc', gcBranding]);
+          });
+        } else {
+          // If the table is not empty, ensure 'unity' and 'gc' subdomains exist individually
+          db.get('SELECT * FROM tenants WHERE subdomain = ?', ['unity'], (errU, rowU) => {
+            if (!rowU) {
+              db.run('INSERT INTO tenants (name, subdomain, branding) VALUES (?, ?, ?)', ['Unity Mall', 'unity', unityBranding]);
+            }
+          });
+          db.get('SELECT * FROM tenants WHERE subdomain = ?', ['gc'], (errG, rowG) => {
+            if (!rowG) {
+              db.run('INSERT INTO tenants (name, subdomain, branding) VALUES (?, ?, ?)', ['Garden City', 'gc', gcBranding]);
+            }
+          });
         }
       });
     });
