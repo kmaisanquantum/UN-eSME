@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <meta name="theme-color" content="#131921">
+  <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Install Unity Mall SME centre | PWA App</title>
+  <style>
+    :root {
+      --primary: #f3a847;
+      --primary-hover: #e49635;
+      --bg-dark: #eaeded;
+      --bg-card: #ffffff;
+      --bg-header: #131921;
+      --text-main: #111111;
+      --text-muted: #565959;
+      --border: #ddd;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: var(--bg-dark);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      color: var(--text-main);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    header {
+      width: 100%;
+      background-color: var(--bg-header);
+      padding: 1.5rem 0;
+      text-align: center;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+    }
+
+    header h1 {
+      color: var(--primary);
+      margin: 0;
+      font-size: 1.8rem;
+      letter-spacing: -0.5px;
+    }
+
+    .container {
+      max-width: 500px;
+      width: 90%;
+      background: var(--bg-card);
+      margin: 2rem auto;
+      padding: 2rem;
+      border-radius: 12px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+      text-align: center;
+      box-sizing: border-box;
+    }
+
+    .app-icon {
+      width: 120px;
+      height: 120px;
+      border-radius: 24px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+      margin-bottom: 1.5rem;
+    }
+
+    h2 {
+      margin: 0 0 0.5rem 0;
+      font-size: 1.6rem;
+    }
+
+    p.subtitle {
+      color: var(--text-muted);
+      font-size: 1rem;
+      margin: 0 0 1.5rem 0;
+      line-height: 1.4;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      padding: 12px 20px;
+      font-size: 1rem;
+      font-weight: bold;
+      border-radius: 8px;
+      cursor: pointer;
+      text-decoration: none;
+      transition: background 0.2s;
+      box-sizing: border-box;
+      margin-bottom: 1rem;
+      border: none;
+    }
+
+    .btn-primary {
+      background-color: var(--primary);
+      color: var(--bg-header);
+    }
+
+    .btn-primary:hover {
+      background-color: var(--primary-hover);
+    }
+
+    .btn-whatsapp {
+      background-color: #25D366;
+      color: white;
+    }
+
+    .btn-whatsapp:hover {
+      background-color: #20ba5a;
+    }
+
+    .qr-section {
+      border-top: 1px solid var(--border);
+      margin-top: 2rem;
+      padding-top: 1.5rem;
+    }
+
+    .qr-section h3 {
+      font-size: 1.1rem;
+      margin: 0 0 1rem 0;
+      color: var(--text-muted);
+    }
+
+    #qrCodeContainer {
+      background: white;
+      display: inline-block;
+      padding: 1rem;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+      margin-bottom: 1rem;
+    }
+
+    #qrCodeContainer img {
+      display: block;
+      width: 180px;
+      height: 180px;
+    }
+
+    .pwa-hint {
+      display: none;
+      background: #fff3cd;
+      border: 1px solid #ffeeba;
+      color: #856404;
+      padding: 1rem;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      margin-top: 1rem;
+      line-height: 1.4;
+    }
+
+    footer {
+      margin-top: auto;
+      padding: 2rem 0;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+    }
+  </style>
+  <!-- Client-side offline-friendly QR code generator -->
+  <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
+</head>
+<body>
+
+  <header>
+    <h1>Unity Mall PWA Center</h1>
+  </header>
+
+  <div class="container">
+    <img src="/icons/icon-512x512.png" alt="Unity Mall SME Centre" class="app-icon">
+    <h2>Unity Mall SME centre</h2>
+    <p class="subtitle">Baim na salim ol samting isi tru!<br>Install our App for an optimized local shopping experience.</p>
+
+    <!-- One-tap Install Button -->
+    <button id="pwaInstallBtn" class="btn btn-primary" style="display: none;">📲 Install App</button>
+
+    <!-- iOS Add to Home Hint -->
+    <div id="pwaIosHint" class="pwa-hint">
+      💡 <strong>iOS / Safari Install:</strong> Tap the <strong>Share</strong> button (at the bottom/top of Safari) then select <strong>'Add to Home Screen'</strong> to install.
+    </div>
+
+    <!-- Share via WhatsApp Button -->
+    <a id="whatsappShareBtn" href="#" target="_blank" class="btn btn-whatsapp">
+      💬 Share via WhatsApp
+    </a>
+
+    <!-- QR Code Section -->
+    <div class="qr-section">
+      <h3>Scan to Install on Mobile</h3>
+      <div id="qrCodeContainer"></div>
+      <p style="font-size: 0.85rem; color: var(--text-muted); margin: 0;">Scan this QR code with your mobile phone's camera to open this page and install instantly.</p>
+    </div>
+  </div>
+
+  <footer>
+    &copy; 2026 Unity Mall SME centre
+  </footer>
+
+  <script>
+    // 1. Generate client-side QR Code for current page
+    try {
+      const qr = qrcode(0, 'M');
+      // Use index page instead of install.html page to make sure we redirect to store home after installation
+      const targetUrl = window.location.origin + '/';
+      qr.addData(targetUrl);
+      qr.make();
+      document.getElementById('qrCodeContainer').innerHTML = qr.createImgTag(6);
+    } catch (err) {
+      console.error('Failed to generate QR Code', err);
+    }
+
+    // 2. Setup WhatsApp share link
+    const shareText = encodeURIComponent("Hey! Check out the Unity Mall SME centre app! Install it here: " + window.location.origin + '/install.html');
+    document.getElementById('whatsappShareBtn').href = "https://wa.me/?text=" + shareText;
+
+    // 3. PWA Install Prompt handling
+    let deferredPrompt = null;
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+
+      const installBtn = document.getElementById('pwaInstallBtn');
+      if (installBtn && !window.matchMedia('(display-mode: standalone)').matches) {
+        installBtn.style.display = 'inline-flex';
+      }
+    });
+
+    const installBtn = document.getElementById('pwaInstallBtn');
+    if (installBtn) {
+      installBtn.addEventListener('click', async () => {
+        if (deferredPrompt) {
+          deferredPrompt.prompt();
+          const { outcome } = await deferredPrompt.userChoice;
+          console.log(`User Choice: ${outcome}`);
+          deferredPrompt = null;
+          installBtn.style.display = 'none';
+        }
+      });
+    }
+
+    // 4. iOS Detection
+    const isIos = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    const isStandalone = window.navigator.standalone || window.matchMedia('(display-mode: standalone)').matches;
+    if (isIos && !isStandalone) {
+      document.getElementById('pwaIosHint').style.display = 'block';
+    }
+
+    // 5. Hide button if already running standalone
+    if (isStandalone) {
+      if (installBtn) installBtn.style.display = 'none';
+    }
+
+    // Register Service Worker
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("/sw.js").then(reg => {
+          console.log("Service Worker registered!", reg);
+        }).catch(err => {
+          console.log("Service Worker registration failed", err);
+        });
+      });
+    }
+  </script>
+</body>
+</html>

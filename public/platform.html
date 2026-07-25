@@ -2,6 +2,10 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <meta name="theme-color" content="#131921">
+  <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Platform Admin Console | Unity Mall eSME</title>
   <style>
@@ -712,6 +716,16 @@
 
     // Auto load dashboard if token exists
     if (localStorage.getItem('um_platform_admin')) showDashboard();
+
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("/sw.js").then(reg => {
+          console.log("Service Worker registered!", reg);
+        }).catch(err => {
+          console.log("Service Worker registration failed", err);
+        });
+      });
+    }
   </script>
 </body>
 </html>
