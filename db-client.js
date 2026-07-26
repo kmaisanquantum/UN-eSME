@@ -9,6 +9,28 @@ const DB_ENGINE = process.env.DB_ENGINE || 'sqlite';
 let pgPool;
 let sqliteDb;
 
+const rawPath = process.env.DATABASE_FILE || './unity_mall.db';
+const absPath = path.resolve(rawPath);
+const parentDir = path.dirname(absPath);
+
+// Ensure parent directory exists
+try {
+  fs.mkdirSync(parentDir, { recursive: true });
+} catch (err) {
+  console.error(`Error creating directory for SQLite database at ${parentDir}:`, err.message);
+}
+
+// Check write capabilities
+let isWritable = false;
+try {
+  fs.accessSync(parentDir, fs.constants.W_OK);
+  isWritable = true;
+} catch (err) {
+  console.error(`Writability check failed for database directory ${parentDir}:`, err.message);
+}
+
+console.log(`[STARTUP DB DIAGNOSTICS] ENGINE: ${DB_ENGINE} | ABSOLUTE PATH: ${absPath} | WRITABLE: ${isWritable}`);
+
 if (DB_ENGINE === 'postgres') {
   console.log('Using PostgreSQL connection strategy');
 
@@ -32,27 +54,6 @@ if (DB_ENGINE === 'postgres') {
     max: parseInt(process.env.DB_POOL_MAX || '10', 10),
   });
 } else {
-  const rawPath = process.env.DATABASE_FILE || './unity_mall.db';
-  const absPath = path.resolve(rawPath);
-  const parentDir = path.dirname(absPath);
-
-  // Ensure parent directory exists
-  try {
-    fs.mkdirSync(parentDir, { recursive: true });
-  } catch (err) {
-    console.error(`Error creating directory for SQLite database at ${parentDir}:`, err.message);
-  }
-
-  // Check write capabilities
-  let isWritable = false;
-  try {
-    fs.accessSync(parentDir, fs.constants.W_OK);
-    isWritable = true;
-  } catch (err) {
-    console.error(`Writability check failed for database directory ${parentDir}:`, err.message);
-  }
-
-  console.log(`[STARTUP DB DIAGNOSTICS] ENGINE: ${DB_ENGINE} | ABSOLUTE PATH: ${absPath} | WRITABLE: ${isWritable}`);
   sqliteDb = new sqlite3.Database(absPath);
 }
 

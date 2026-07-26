@@ -1,4 +1,4 @@
-const CACHE_NAME = 'unity-sme-v3';
+const CACHE_NAME = 'unity-sme-v4';
 const PRECACHE_ASSETS = [
   '/',
   '/index.html',
@@ -52,13 +52,34 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
-  // Network-first strategy for API routes (GET only)
-  if (url.pathname.includes('/api/')) {
+  // Check if it is a navigation request or one of the app shell HTML pages
+  const isNavigation = event.request.mode === 'navigate' ||
+                       ['/', '/index.html', '/backend.html', '/admin.html', '/platform.html'].includes(url.pathname);
+
+  if (isNavigation) {
+    // Network-first strategy for HTML/navigation requests
+    event.respondWith(
+      fetch(event.request)
+        .then((response) => {
+          if (response.status === 200 && event.request.method === 'GET') {
+            const responseClone = response.clone();
+            caches.open(CACHE_NAME).then((cache) => {
+              cache.put(event.request, responseClone);
+            });
+          }
+          return response;
+        })
+        .catch(() => {
+          // Fall back to cache only when offline
+          return caches.match(event.request);
+        })
+    );
+  } else if (url.pathname.includes('/api/')) {
     if (event.request.method === 'GET') {
+      // Dynamic endpoints: always go to network, only fall back to cache when genuinely offline, and never cache non-200 or error bodies.
       event.respondWith(
         fetch(event.request)
           .then((response) => {
-            // Put a copy in the cache
             if (response.status === 200) {
               const responseClone = response.clone();
               caches.open(CACHE_NAME).then((cache) => {
@@ -68,7 +89,6 @@ self.addEventListener('fetch', (event) => {
             return response;
           })
           .catch(() => {
-            // Offline fallback from cache
             return caches.match(event.request);
           })
       );
@@ -77,14 +97,13 @@ self.addEventListener('fetch', (event) => {
       event.respondWith(fetch(event.request));
     }
   } else {
-    // Cache-first strategy for app shell and static resources
+    // Cache-first strategy for other static assets (CSS, JS, images, fonts)
     event.respondWith(
       caches.match(event.request).then((cachedResponse) => {
         if (cachedResponse) {
           return cachedResponse;
         }
         return fetch(event.request).then((networkResponse) => {
-          // Cache newly fetched static files
           if (networkResponse.status === 200 && event.request.method === 'GET') {
             const responseClone = networkResponse.clone();
             caches.open(CACHE_NAME).then((cache) => {
