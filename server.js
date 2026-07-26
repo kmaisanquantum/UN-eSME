@@ -159,6 +159,7 @@ app.use(helmet({
       styleSrc: ["'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net", "https://fonts.googleapis.com"],
       imgSrc: ["'self'", "data:", "/uploads/", "https:", "http:"],
       fontSrc: ["'self'", "https://fonts.gstatic.com"],
+      manifestSrc: ["'self'"],
       connectSrc: [
         "'self'",
         "http://localhost:*",
