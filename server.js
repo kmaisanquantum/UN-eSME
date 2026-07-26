@@ -235,16 +235,27 @@ function tenantResolver(req, res, next) {
 
   db.get('SELECT * FROM tenants WHERE subdomain = ?', [subdomain], (err, row) => {
     if (err) {
+      console.error(`[TENANT RESOLVER ERROR] DB query failed for subdomain: ${subdomain} | Error: ${err.message}`);
       return res.status(500).json({ error: 'Tenant resolution error' });
     }
+
     if (!row || row.status === 'inactive') {
       if (row && row.status === 'inactive') {
+        console.warn(`[TENANT RESOLVER] Subdomain '${subdomain}' is inactive.`);
         return res.status(403).json({ error: 'This SME centre is not active' });
       }
+
+      console.warn(`[TENANT RESOLVER] Subdomain '${subdomain}' not found. Falling back to default 'unity'...`);
+
       // Default fallback to subdomain 'unity'
       db.get('SELECT * FROM tenants WHERE subdomain = ?', ['unity'], (err2, defaultRow) => {
-        if (err2 || !defaultRow) {
-          console.warn("Tenant 'unity' fallback is missing in database! Dynamically seeding and recovering on the fly...");
+        if (err2) {
+          console.error(`[TENANT RESOLVER ERROR] DB query failed for fallback 'unity' | Error: ${err2.message}`);
+          return res.status(500).json({ error: 'Tenant configuration missing and fallback resolution failed' });
+        }
+
+        if (!defaultRow) {
+          console.warn("[TENANT RESOLVER] Default tenant 'unity' is missing in database! Dynamically seeding and recovering on the fly...");
           const unityBranding = JSON.stringify({
             name: "Unity Mall SME centre",
             whatsapp: "67570000000",
@@ -254,27 +265,41 @@ function tenantResolver(req, res, next) {
             googleClientId: "your-google-client-id.apps.googleusercontent.com",
             facebookAppId: "your-facebook-app-id"
           });
-          db.run("INSERT INTO tenants (id, name, subdomain, branding, status, subscription_tier) VALUES (1, 'Unity Mall', 'unity', ?, 'active', 'free')", [unityBranding], (errSeed) => {
+
+          // Seed without hardcoding ID to reliably avoid constraint violations, status defaults to active
+          db.run("INSERT INTO tenants (name, subdomain, branding, status, subscription_tier) VALUES ('Unity Mall', 'unity', ?, 'active', 'free')", [unityBranding], (errSeed) => {
+            if (errSeed) {
+              console.error(`[TENANT RESOLVER ERROR] Failed to dynamically seed 'unity' tenant | Error: ${errSeed.message}`);
+            }
+
             db.get("SELECT * FROM tenants WHERE subdomain = ?", ["unity"], (err3, rowRecovered) => {
               if (err3 || !rowRecovered) {
-                console.error("Critical: Failed to recover default tenant 'unity'. Database path: " + (process.env.DATABASE_FILE || './unity_mall.db'));
+                console.error("Critical: Failed to recover default tenant 'unity'. Database path: " + (process.env.DATABASE_FILE || './unity_mall.db') + (err3 ? ` | Error: ${err3.message}` : ''));
                 return res.status(500).json({ error: 'Tenant configuration missing and recovery failed' });
               }
+
               req.tenant = rowRecovered;
+              console.log(`[TENANT RESOLVER] Successfully resolved default fallback 'unity' on-the-fly (tenant_id: ${req.tenant.id})`);
               next();
             });
           });
           return;
         }
+
         if (defaultRow.status === 'inactive') {
+          console.warn("[TENANT RESOLVER] Default 'unity' tenant is inactive.");
           return res.status(403).json({ error: 'This SME centre is not active' });
         }
+
         req.tenant = defaultRow;
+        console.log(`[TENANT RESOLVER] Resolved fallback 'unity' (tenant_id: ${req.tenant.id})`);
         next();
       });
       return;
     }
+
     req.tenant = row;
+    console.log(`[TENANT RESOLVER] Resolved host: ${host} | subdomain: ${subdomain} -> tenant_id: ${req.tenant.id} (${req.tenant.subdomain})`);
     next();
   });
 }
