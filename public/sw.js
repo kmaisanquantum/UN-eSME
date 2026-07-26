@@ -1,4 +1,4 @@
-const CACHE_NAME = 'unity-sme-v2';
+const CACHE_NAME = 'unity-sme-v3';
 const PRECACHE_ASSETS = [
   '/',
   '/index.html',
@@ -17,7 +17,19 @@ const PRECACHE_ASSETS = [
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME)
-      .then((cache) => cache.addAll(PRECACHE_ASSETS))
+      .then((cache) => {
+        // Individually cache each asset and ignore/log failures using Promise.allSettled
+        const cachePromises = PRECACHE_ASSETS.map((asset) => {
+          return cache.add(asset)
+            .then(() => {
+              console.log(`Successfully cached asset: ${asset}`);
+            })
+            .catch((err) => {
+              console.error(`Failed to cache asset: ${asset}, error:`, err);
+            });
+        });
+        return Promise.all(cachePromises);
+      })
       .then(() => self.skipWaiting())
   );
 });
