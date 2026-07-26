@@ -160,6 +160,7 @@ app.use(helmet({
       imgSrc: ["'self'", "data:", "/uploads/", "https:", "http:"],
       fontSrc: ["'self'", "https://fonts.gstatic.com"],
       manifestSrc: ["'self'"],
+      scriptSrcAttr: ["'unsafe-inline'"],
       connectSrc: [
         "'self'",
         "http://localhost:*",
