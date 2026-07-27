@@ -3,8 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <link rel="manifest" href="/manifest.webmanifest">
-  <meta name="theme-color" content="#131921">
+  <meta name="theme-color" content="#1E7FD1">
   <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+  <link rel="icon" href="/icons/icon-192x192.png">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <script async defer crossorigin="anonymous" src="https://connect.facebook.net/en_US/sdk.js"></script>
@@ -12,11 +13,13 @@
   <title>Unity Mall SME centre | Local Shopping Reimagined</title>
   <style>
     :root {
-      --primary: #f3a847;
-      --primary-hover: #e49635;
+      --primary: #1E7FD1;
+      --primary-hover: #15609F;
+      --accent-orange: #F7941D;
+      --accent-orange-hover: #D97A0C;
       --bg-dark: #eaeded;
       --bg-card: #ffffff;
-      --bg-header: #131921;
+      --bg-header: #ffffff;
       --text-main: #111111;
       --text-muted: #565959;
       --text-accent: #b12704;
@@ -43,7 +46,8 @@
     ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
 
     .header {
-      background: #131921;
+      background: var(--bg-header);
+      border-bottom: 1px solid var(--border);
       padding: 0.5rem 1rem;
       position: sticky;
       top: 0;
@@ -65,8 +69,14 @@
       order: 1;
     }
 
+    .logo-img {
+      height: 40px;
+      width: auto;
+      object-fit: contain;
+    }
+
     .header h1 {
-      color: #ffffff;
+      color: var(--primary);
       font-size: 1.25rem;
       font-weight: 800;
       letter-spacing: -0.025em;
@@ -86,7 +96,7 @@
     }
 
     .amazon-search:focus-within {
-      box-shadow: 0 0 0 2px #f3a847;
+      box-shadow: 0 0 0 2px var(--primary);
     }
 
     .amazon-search select {
@@ -118,7 +128,7 @@
     }
 
     .amazon-search button {
-      background: #f3a847;
+      background: var(--accent-orange);
       border: none;
       color: #111;
       width: 45px;
@@ -132,7 +142,7 @@
     }
 
     .amazon-search button:hover {
-      background: #e49635;
+      background: var(--accent-orange-hover);
     }
 
     .header-actions {
@@ -187,7 +197,7 @@
 
     .auth-btn {
       background: var(--primary);
-      color: #000;
+      color: #fff;
       border: none;
       padding: 0.5rem 1rem;
       border-radius: 8px;
@@ -352,9 +362,9 @@
     }
 
     .department-link.active {
-      color: #f3a847;
+      color: var(--accent-orange);
       font-weight: 700;
-      border-bottom: 2px solid #f3a847;
+      border-bottom: 2px solid var(--accent-orange);
     }
 
     .section-title {
@@ -729,6 +739,7 @@
 
   <header class="header">
     <a href="#" class="logo-container" onclick="switchScreen('directory')">
+      <img src="/logo.png" alt="Unity Mall SME Centre" class="logo-img" id="headerLogoImg">
       <h1>Unity Mall <span style="font-weight: 300;">SME centre</span></h1>
     </a>
 
@@ -770,7 +781,7 @@
           <div class="slide" style="background: linear-gradient(135deg, #ffffff, #e3e6e6);">
             <h2>Grow Your Business</h2>
             <p>Join our network of successful SMEs. Get your own digital storefront and dashboard.</p>
-            <button class="auth-btn" onclick="openAuthModal('register')" style="background: var(--primary); color: #000; border-color: var(--primary);">Join as Vendor</button>
+            <button class="auth-btn" onclick="openAuthModal('register')" style="background: var(--primary); color: #fff; border-color: var(--primary);">Join as Vendor</button>
           </div>
         </div>
         <div class="slider-dots" id="sliderDots">
@@ -1059,6 +1070,11 @@
         const logoText = document.querySelector('.logo-container h1');
         if (logoText) {
           logoText.innerHTML = `${b.name.split(' ')[0]} <span style="font-weight: 300;">${b.name.split(' ').slice(1).join(' ')}</span>`;
+        }
+
+        const logoImg = document.getElementById('headerLogoImg');
+        if (logoImg) {
+          logoImg.src = b.logo || '/logo.png';
         }
 
         const heroTitle = document.getElementById('heroTitle');

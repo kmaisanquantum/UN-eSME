@@ -1,4 +1,4 @@
-const CACHE_NAME = 'unity-sme-v4';
+const CACHE_NAME = 'unity-sme-v5';
 const PRECACHE_ASSETS = [
   '/',
   '/index.html',
